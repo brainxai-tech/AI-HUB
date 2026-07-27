@@ -1,0 +1,15 @@
+.worktrees/
+node_modules/
+coverage/
+data/
+backups/
+.env
+.env.*
+!.env.example
+project-client.env
+*.pem
+*.key
+*.bak
+*.bak.*
+*.backup-*
+work-*.log

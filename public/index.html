@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="zh-CN" >
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI 项目汇集库</title>
+    <meta
+      name="description"
+      content="集中发现 AI 项目，了解 GPT、Gemini 与 Anthropic 的能力差异，以及 AI HUB 的自动路由产品方向。"
+    />
+    <meta name="theme-color" content="#f7f9fc" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='Arial' font-size='30' font-weight='700' fill='white'%3EAI%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/hub/styles.css?v=20260724-routing-promo1" />
+    <link rel="stylesheet" href="/hub/suite-theme.css?v=20260717-frontend5" />
+  </head>
+  <body >
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="./index.html">
+          <span class="brand-mark" aria-hidden="true">
+            <span></span>
+          </span>
+          <span>
+            <span class="eyebrow">Workspace</span>
+            <h1>AI 项目汇集库</h1>
+            <span class="brand-description">集中发现、筛选并打开全部 AI 项目</span>
+          </span>
+        </a>
+        <div class="status-strip" aria-label="项目统计">
+          <a class="hub-config-entry" href="/hub/key-config/">配置 API Key</a>
+          <span id="projectCount">0 个项目</span>
+          <span id="lastUpdated">等待收录</span>
+        </div>
+      </header>
+
+      <p id="projectLaunchStatus" class="action-status" role="status" aria-live="polite"></p>
+
+      <section id="projectsPage" class="page-panel" data-page-panel="projects">
+        <section id="routingHero" class="routing-hero" aria-labelledby="routingHeroTitle">
+          <div class="routing-hero__copy">
+            <div class="routing-hero__status">
+              <span class="eyebrow">AI ROUTING · 产品方向</span>
+              <span class="planning-pill">自动路由能力建设中</span>
+            </div>
+            <h2 id="routingHeroTitle">一个 API Key，让每个任务用上更合适的模型</h2>
+            <p class="routing-hero__lead">
+              AI HUB 正在向统一模型入口演进：未来将根据任务难度、内容类型、响应速度和成本要求，
+              在 GPT、Gemini 与 Anthropic 之间选择更合适的具体型号。
+            </p>
+            <ul class="routing-outcomes" aria-label="自动路由的目标价值">
+              <li><strong>选得准</strong><span>复杂任务匹配更强的推理与理解能力</span></li>
+              <li><strong>花得少</strong><span>简单任务避免不必要的高价模型调用</span></li>
+              <li><strong>看得懂</strong><span>展示候选模型以及为什么这样选择</span></li>
+            </ul>
+            <div class="routing-hero__actions">
+              <a class="action-button" href="/hub/key-config/">配置 API Key</a>
+              <a class="action-button action-button--secondary" href="/hub/models.html">了解模型差异</a>
+              <a class="action-button action-button--secondary" href="#featuredSection">查看项目方案</a>
+            </div>
+            <p class="routing-boundary">
+              <strong>当前阶段：</strong>先展示模型能力与项目推荐方案；当前阶段不会自动切换模型，也不会调用未配置的模型。
+            </p>
+          </div>
+
+          <aside class="routing-preview" aria-label="未来自动路由体验示例">
+            <div class="routing-preview__head">
+              <span>未来体验示例</span>
+              <strong>AUTO</strong>
+            </div>
+            <ol class="routing-preview__steps">
+              <li>
+                <span>01</span>
+                <div><small>识别任务</small><strong>长文本 · 深度推理</strong></div>
+              </li>
+              <li>
+                <span>02</span>
+                <div><small>比较候选</small><strong>质量、速度与成本</strong></div>
+              </li>
+              <li data-state="selected">
+                <span>03</span>
+                <div><small>主要候选</small><strong>Anthropic · claude-opus-4-8</strong></div>
+              </li>
+            </ol>
+            <div class="routing-key-promise">
+              <span aria-hidden="true">KEY</span>
+              <p><strong>目标体验：一个 API Key</strong><small>一个统一入口 · 三类模型候选</small></p>
+            </div>
+          </aside>
+        </section>
+
+        <section id="modelStrengths" class="home-section model-strengths" aria-labelledby="modelStrengthsTitle">
+          <div class="section-heading">
+            <div class="section-heading__copy">
+              <span class="eyebrow">不同模型，各有所长</span>
+              <h2 id="modelStrengthsTitle">不是永远选最贵，而是为任务选更合适</h2>
+              <p class="section-description">模型优势会作为未来路由判断依据；具体选择仍会结合任务内容和实时可用状态。</p>
+            </div>
+          </div>
+          <div class="model-strength-grid">
+            <article data-provider="gpt">
+              <div class="model-strength__head"><span aria-hidden="true">G</span><div><small>GPT</small><h3>推理与结构</h3></div></div>
+              <p>更适合复杂推理、数据分析、结构化输出和多步骤决策。</p>
+              <ul><li>业务数据分析</li><li>品牌策略</li><li>决策模拟</li></ul>
+              <small class="model-strength__models">候选：gpt-5.5 · gpt-5.4-mini</small>
+            </article>
+            <article data-provider="gemini">
+              <div class="model-strength__head"><span aria-hidden="true">Ge</span><div><small>Gemini</small><h3>多模态与速度</h3></div></div>
+              <p>更适合图像理解、多模态内容、实时交互和高频快速生成。</p>
+              <ul><li>图片与设计分析</li><li>口语陪练</li><li>批量内容生成</li></ul>
+              <small class="model-strength__models">候选：gemini-3.1-pro-preview · gemini-3.5-flash</small>
+            </article>
+            <article data-provider="anthropic">
+              <div class="model-strength__head"><span aria-hidden="true">A</span><div><small>Anthropic</small><h3>长文与表达</h3></div></div>
+              <p>更适合长文理解、自然写作、细腻语气和审慎表达。</p>
+              <ul><li>论文与合同阅读</li><li>情绪陪伴</li><li>语气改写</li></ul>
+              <small class="model-strength__models">候选：claude-opus-4-8 · claude-sonnet-4-6</small>
+            </article>
+          </div>
+        </section>
+
+        <section class="routing-plan" aria-label="自动路由产品规划">
+          <div id="routingFlow" class="routing-flow" aria-labelledby="routingFlowTitle">
+            <span class="eyebrow">未来如何工作</span>
+            <h2 id="routingFlowTitle">从任务到模型，选择过程保持透明</h2>
+            <ol>
+              <li><span>1</span><div><strong>识别任务</strong><small>内容类型、复杂度与上下文长度</small></div></li>
+              <li><span>2</span><div><strong>比较候选</strong><small>质量、速度、成本与可用状态</small></div></li>
+              <li><span>3</span><div><strong>选择模型</strong><small>主要候选与失败后的备用方案</small></div></li>
+              <li><span>4</span><div><strong>说明原因</strong><small>告诉用户选了谁，以及为什么</small></div></li>
+            </ol>
+          </div>
+          <aside id="routingModes" class="routing-modes" aria-labelledby="routingModesTitle">
+            <span class="planning-pill">偏好模式 · 规划预览</span>
+            <h2 id="routingModesTitle">把选择权留给用户</h2>
+            <ul>
+              <li data-mode="balanced"><strong>智能平衡</strong><span>综合效果、速度与成本</span></li>
+              <li><strong>质量优先</strong><span>优先高能力型号</span></li>
+              <li><strong>省钱优先</strong><span>满足要求后降低成本</span></li>
+              <li><strong>速度优先</strong><span>优先低延迟型号</span></li>
+            </ul>
+            <p>这些模式目前用于说明产品方向，尚未成为真实路由开关。</p>
+          </aside>
+        </section>
+
+        <section class="discovery-hero" aria-labelledby="discoveryTitle">
+          <div>
+            <span class="eyebrow">进入项目</span>
+            <h2 id="discoveryTitle">选择任务，查看它的模型方案</h2>
+            <p>每个项目都展示主要候选型号和具体原因，为后续自动路由建立清晰依据。</p>
+          </div>
+          <nav id="purposeNav" class="purpose-nav" aria-label="按使用目的浏览">
+            <button type="button" data-purpose="work">处理工作</button>
+            <button type="button" data-purpose="learning">学习成长</button>
+            <button type="button" data-purpose="entertainment">轻松一下</button>
+            <button type="button" data-purpose="games">玩一局</button>
+            <button type="button" data-purpose="all">查看全部</button>
+          </nav>
+        </section>
+
+        <section id="recentSection" class="home-section" aria-labelledby="recentTitle" hidden>
+          <div class="section-heading">
+            <div class="section-heading__copy">
+              <span class="eyebrow">继续使用</span>
+              <h2 id="recentTitle">最近打开</h2>
+              <p class="section-description">使用记录只保存在当前浏览器。</p>
+            </div>
+          </div>
+          <div id="recentGrid" class="project-grid recent-grid"></div>
+        </section>
+
+        <section id="featuredSection" class="home-section" aria-labelledby="featuredTitle">
+          <div class="section-heading">
+            <div class="section-heading__copy">
+              <span class="eyebrow">路由方案示例</span>
+              <h2 id="featuredTitle">六个更容易理解模型差异的项目</h2>
+              <p class="section-description">从数据分析到游戏讲解，查看不同任务为什么需要不同模型。</p>
+            </div>
+          </div>
+          <div id="featuredGrid" class="project-grid featured-grid" aria-live="polite"></div>
+        </section>
+
+        <section id="privacyCenter" class="trust-center" aria-labelledby="privacyCenterTitle">
+          <div class="trust-center__heading">
+            <span class="eyebrow">数据与使用说明</span>
+            <h2 id="privacyCenterTitle">提交前，先知道数据会去哪里</h2>
+          </div>
+          <div class="trust-center__grid">
+            <article>
+              <strong>模型处理</strong>
+              <p>只有在你主动生成时，必要内容才会经 Hub 网关发送给当前启用的模型供应商。</p>
+            </article>
+            <article>
+              <strong>运行记录</strong>
+              <p>Hub 只记录访问、生成是否成功和耗时等技术指标，不记录提示词正文或生成结果正文。</p>
+            </article>
+            <article>
+              <strong>敏感内容</strong>
+              <p>请先移除身份证号、银行账号、客户资料和公司机密；法律、求职与防诈结果仅供辅助判断。</p>
+            </article>
+            <article>
+              <strong>本机足迹</strong>
+              <p>“最近打开”和使用次数只保存在当前浏览器，清除浏览器站点数据即可删除。</p>
+            </article>
+          </div>
+        </section>
+
+        <details id="allProjectsDisclosure" class="catalog-disclosure">
+          <summary>
+            <span>
+              <span class="eyebrow">完整项目库</span>
+              <strong>浏览全部 32 个项目</strong>
+            </span>
+            <span class="catalog-disclosure__hint">展开搜索与筛选</span>
+          </summary>
+
+          <section class="tool-band" aria-label="项目筛选">
+            <label class="search-field" for="searchInput">
+              <span class="field-label">搜索</span>
+              <span class="search-control">
+                <span class="search-icon" aria-hidden="true"></span>
+                <input
+                  id="searchInput"
+                  type="search"
+                  autocomplete="off"
+                  placeholder="搜索项目名称、分类、状态或描述"
+                />
+              </span>
+            </label>
+
+            <div class="select-group">
+              <label class="select-field">
+                <span>分类</span>
+                <select id="categoryFilter" aria-label="按分类筛选项目"></select>
+              </label>
+              <label class="select-field">
+                <span>排序</span>
+                <select id="sortFilter" aria-label="项目排序方式">
+                  <option value="updated">最近更新</option>
+                  <option value="name">项目名称</option>
+                  <option value="category">项目分类</option>
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <section class="content-band" aria-labelledby="projectListTitle">
+            <div class="section-heading">
+              <div class="section-heading__copy">
+                <h2 id="projectListTitle">全部项目</h2>
+                <p class="section-description">按最近更新优先展示，点击卡片即可打开项目。</p>
+              </div>
+              <div class="result-tools">
+                <p id="resultSummary">暂无项目</p>
+                <button id="resetFilters" class="filter-reset" type="button" hidden>恢复默认</button>
+              </div>
+            </div>
+
+            <div id="projectGrid" class="project-grid" aria-live="polite"></div>
+
+            <div id="emptyState" class="empty-state" role="status">
+              <div class="empty-visual" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+              <h3 id="emptyTitle">还没有收录项目</h3>
+              <p id="emptyMessage">把项目加入数据文件后，这里会出现可点击跳转的项目入口。</p>
+              <div class="empty-actions">
+                <button id="reloadButton" class="action-button" type="button">刷新列表</button>
+                <button id="copyTemplateButton" class="action-button action-button--secondary" type="button">
+                  复制项目模板
+                </button>
+              </div>
+              <p id="emptyActionStatus" class="action-status" aria-live="polite"></p>
+            </div>
+          </section>
+        </details>
+      </section>
+
+    </main>
+
+    <script src="/hub/capabilities.js?v=20260710-capabilities"></script>
+    <script src="/hub/projects.js?v=20260726-image2"></script>
+    <script src="/hub/cover-manifest.js?v=20260727-image2-office-hub-style-v2"></script>
+    <script src="/hub/app.js?v=20260724-dice-estate1"></script>
+    <script defer src="/hub/suite-shell.js?v=20260723-ux1" data-suite-project="AI 项目汇集库" data-suite-hub="/hub/"></script>
+  </body>
+</html>

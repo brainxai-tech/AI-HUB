@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>骰子地产战</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23d9a83c'/%3E%3Ccircle cx='10' cy='10' r='2.5' fill='%23213129'/%3E%3Ccircle cx='22' cy='22' r='2.5' fill='%23213129'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./styles.css?v=20260724-hub1" />
+    <script src="./engine.js?v=20260724-bankruptcy-survival-21" defer></script>
+    <script src="./difficulty.js?v=20260711-playtest" defer></script>
+    <script src="./agents.js?v=20260722-player-names" defer></script>
+    <script src="./audio.js" defer></script>
+    <script src="./dice-animation.js" defer></script>
+    <script src="./map-layout.js?v=20260723-free-zoom" defer></script>
+    <script src="./onboarding.js?v=20260711-playtest" defer></script>
+    <script src="./property-art.js?v=20260724-fixed-district-art-24" defer></script>
+    <script src="./player-models.js?v=20260722-image2-cutouts" defer></script>
+    <script src="./trade-flow.js?v=20260724-trade-transfer-1" defer></script>
+    <script src="./app.js?v=20260724-hub1" defer></script>
+  </head>
+  <body>
+    <main id="appShell" class="app-shell" data-view="action">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">D6</div>
+          <div>
+            <h1>骰子地产战</h1>
+            <p class="subtitle">你与 3 个独立 Agent 的四人地产棋</p>
+          </div>
+        </div>
+        <section class="status-strip" aria-label="对局状态">
+          <div class="status-pill">
+            <span>轮次</span>
+            <strong id="round">1 / 18</strong>
+          </div>
+          <div class="status-pill">
+            <span>阶段</span>
+            <strong id="phase">等待掷骰</strong>
+          </div>
+          <div class="status-pill">
+            <span>当前</span>
+            <strong id="turn">你</strong>
+          </div>
+          <div class="status-pill status-pill-dice">
+            <span>骰子</span>
+            <strong id="dice">--</strong>
+          </div>
+        </section>
+        <p id="mobileStatus" class="mobile-status" aria-live="polite">R1 · 林浩 · 等待掷骰</p>
+        <button
+          id="menuButton"
+          class="menu-button"
+          type="button"
+          data-action="toggle-menu"
+          aria-label="打开游戏菜单"
+          aria-controls="pauseMenu"
+          aria-expanded="false"
+        >
+          <span aria-hidden="true">☰</span>
+          <span>菜单</span>
+        </button>
+      </header>
+
+      <button id="menuBackdrop" class="menu-backdrop" type="button" data-action="close-menu" aria-label="关闭游戏菜单" hidden></button>
+      <aside id="pauseMenu" class="pause-menu" role="dialog" aria-modal="true" aria-labelledby="pauseMenuTitle" hidden>
+        <div class="pause-menu-heading">
+          <div>
+            <p class="panel-label">暂停菜单</p>
+            <h2 id="pauseMenuTitle">查看与设置</h2>
+          </div>
+          <button class="pause-menu-close" type="button" data-action="close-menu" aria-label="关闭游戏菜单">×</button>
+        </div>
+        <nav class="view-tabs menu-navigation" aria-label="游戏页面">
+          <button id="tabAction" class="view-tab menu-return is-active" data-action="switch-view" data-view="action">返回棋盘</button>
+          <div class="menu-nav-group">
+            <p>对局</p>
+            <div>
+              <button id="tabSituation" class="view-tab" data-action="switch-view" data-view="situation">局势简报</button>
+              <button id="tabAssets" class="view-tab" data-action="switch-view" data-view="assets">资产管理</button>
+            </div>
+          </div>
+          <div class="menu-nav-group">
+            <p>参考</p>
+            <div>
+              <button id="tabLog" class="view-tab" data-action="switch-view" data-view="log">事件日志</button>
+              <button id="tabRules" class="view-tab" data-action="switch-view" data-view="rules">游戏规则</button>
+            </div>
+          </div>
+          <div class="menu-nav-group">
+            <p>系统</p>
+            <div>
+              <button id="tabSettings" class="view-tab" data-action="switch-view" data-view="settings">体验设置</button>
+              <button id="restartGameButton" class="view-tab danger" type="button" data-action="new-game">重新开始</button>
+              <a class="hub-return-link" href="/hub/">返回 AI HUB</a>
+            </div>
+          </div>
+        </nav>
+        <p class="pause-menu-note">按 Esc 返回棋盘；切换页面后菜单会自动关闭。</p>
+      </aside>
+      <section id="viewGuide" class="view-guide" aria-live="polite"></section>
+
+      <section class="game-layout" aria-label="游戏区域">
+        <section class="board-wrap view-section view-action" aria-label="棋盘">
+          <div class="map-toolbar">
+            <div>
+              <p class="panel-label">城市地图</p>
+              <h2>城市资产路网</h2>
+            </div>
+            <div class="map-toolbar-actions">
+              <span class="map-pan-hint" aria-hidden="true">拖动浏览 · Ctrl＋滚轮缩放</span>
+              <div class="map-mode-controls" role="group" aria-label="地图视图">
+                <button type="button" data-action="set-map-mode" data-map-mode="overview" aria-pressed="false">全图</button>
+                <button type="button" data-action="set-map-mode" data-map-mode="focus" aria-pressed="false">放大</button>
+              </div>
+              <div class="map-zoom-control" role="group" aria-label="地图自由缩放">
+                <button type="button" class="map-zoom-step" data-action="adjust-map-zoom" data-zoom-delta="-0.1" aria-label="缩小地图">−</button>
+                <input id="mapZoomSlider" type="range" min="60" max="220" step="1" value="110" aria-label="地图缩放比例" />
+                <button type="button" class="map-zoom-step" data-action="adjust-map-zoom" data-zoom-delta="0.1" aria-label="放大地图">＋</button>
+                <button type="button" id="mapZoomValue" class="map-zoom-value" data-action="reset-map-zoom" aria-label="恢复默认缩放比例">110%</button>
+              </div>
+            </div>
+          </div>
+          <section id="players" class="players seat-pods" aria-label="四名玩家席位"></section>
+          <div id="boardViewport" class="board-viewport" data-map-mode="focus" tabindex="0" aria-label="可拖动地图；可用滚动条、方向键或 Ctrl 加滚轮缩放">
+            <div id="boardStage" class="board-stage">
+              <div id="board" class="board"></div>
+            </div>
+          </div>
+          <section id="tileDetail" class="map-detail-panel view-section view-action" role="dialog" aria-labelledby="tileDetailTitle" aria-live="polite" hidden></section>
+        </section>
+
+        <section id="actions" class="side-panel action-dock view-section view-action" aria-label="当前行动"></section>
+
+        <aside class="side" aria-label="控制面板">
+          <section id="situationPanel" class="side-panel situation-panel view-section view-situation"></section>
+          <section id="management" class="side-panel view-section view-assets"></section>
+          <section class="log-panel view-section view-log">
+            <div class="panel-heading">
+              <p class="panel-label">日志</p>
+              <h2>最近事件</h2>
+            </div>
+            <ol id="log" aria-live="polite"></ol>
+          </section>
+          <section class="side-panel rules-panel view-section view-rules">
+            <div class="panel-heading">
+              <p class="panel-label">规则</p>
+              <h2>怎么玩</h2>
+            </div>
+            <ol class="rules-quick" aria-label="四步快速上手">
+              <li><strong>1</strong><span>掷骰并沿路线移动</span></li>
+              <li><strong>2</strong><span>购买、竞拍或支付租金</span></li>
+              <li><strong>3</strong><span>凑齐街区并均匀建房</span></li>
+              <li><strong>4</strong><span>保住现金并让三名 Agent 全部破产</span></li>
+            </ol>
+            <div class="rule-list">
+              <details class="rule-group" open>
+                <summary><span>基础回合</span><small>移动、买地、收租</small></summary>
+                <div>
+                  <article><strong>掷骰移动</strong><span>行动页点击掷骰，棋子会沿城市路线移动。掷出对子会获得额外行动；连续三次对子会被送往交通管制区。</span></article>
+                  <article><strong>买地与竞拍</strong><span>无人街道、交通站和公用事业可以直接购买；不想买或现金不足时进入拍卖，起价 10，每次至少加价 1，可出价或放弃。</span></article>
+                  <article><strong>收租要求</strong><span>落到别人未抵押地块时先进入收租要求；业主要在下一次掷骰前确认收租，也可以放弃本次租金。</span></article>
+                </div>
+              </details>
+              <details class="rule-group">
+                <summary><span>地产经营</span><small>街区、建造、交易</small></summary>
+                <div>
+                  <article><strong>街区垄断</strong><span>买齐同一街区后，未建房地块租金翻倍，并解锁建房。建房和卖房都要保持同街区均匀，不能只把一块地堆满。</span></article>
+                  <article><strong>交通站与公用事业</strong><span>交通站不能建房，租金按持有数量提高；公用事业不能建房，租金按本次骰点的 4 倍或 10 倍计算。</span></article>
+                  <article><strong>建房与抵押</strong><span>标准局每块地最多 4 栋房，第 5 级为地标；短局 3 栋房后即可升级地标。银行只有 32 个房屋和 12 个地标。</span></article>
+                  <article><strong>地契交易与通行证交易</strong><span>只要当前是你的回合，就可从资产页向任一在场 Agent 发起双边报价；双方可提供无建筑地产和现金，交通管制通行证也可在对应交易阶段出售。抵押地产接手方需支付转让手续费。</span></article>
+                </div>
+              </details>
+              <details class="rule-group">
+                <summary><span>风险与特殊规则</span><small>管制、税务、债务</small></summary>
+                <div>
+                  <article><strong>交通管制</strong><span>正常停到管制区只是临时停靠；被卡牌或三次对子送入管制时，下回合可用通行证、缴费离开，或最多尝试三次掷对子离开。</span></article>
+                  <article><strong>所得税</strong><span>落到所得税格时，选择缴纳固定 200 金币，或按总资产 10% 结算；其它税费格按格面金额付款。</span></article>
+                  <article><strong>债务处理</strong><span>现金为负时先卖房、抵押或自动清算；无法偿还则破产。你破产时，全部地产归还银行并变为无主，建筑和抵押同时清除；Agent 破产时按债权关系结算。</span></article>
+                </div>
+              </details>
+              <details class="rule-group">
+                <summary><span>对局模式与胜利</span><small>短局、破产、生存</small></summary>
+                <div>
+                  <article><strong>官方短局</strong><span>设置页可选择官方短局；新开局时每个席位各免费获得 3 张地契，并启用短局的 3 房升地标。</span></article>
+                  <article><strong>胜利条件</strong><span>对局没有轮数上限。你破产时立即失败；三名 Agent 全部破产时立即获胜。其它情况下游戏必须继续。</span></article>
+                </div>
+              </details>
+            </div>
+          </section>
+          <section class="side-panel settings-panel view-section view-settings">
+            <div class="panel-heading">
+              <p class="panel-label">设置</p>
+              <h2>游戏体验</h2>
+            </div>
+            <div id="settingsPanel" class="settings-list"></div>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <section id="resultModal" class="modal-backdrop" hidden>
+      <div id="resultContent" class="modal" role="dialog" aria-modal="true" aria-label="对局结果"></div>
+    </section>
+    <section id="feedbackLayer" class="feedback-layer" aria-live="polite" hidden></section>
+  </body>
+</html>

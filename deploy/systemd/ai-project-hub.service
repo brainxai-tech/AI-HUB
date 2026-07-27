@@ -1,0 +1,54 @@
+[Unit]
+Description=AI Project Hub gateway
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=admin
+Group=admin
+WorkingDirectory=/opt/ai-project-hub/current
+Environment=NODE_ENV=production
+Environment=HUB_PROJECT_TOKENS_PATH=/var/lib/ai-project-hub/project-tokens.json
+EnvironmentFile=/etc/ai-project-hub/ai-project-hub.env
+ExecStart=/usr/bin/node /opt/ai-project-hub/current/server.mjs
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=15
+UMask=0077
+
+StateDirectory=ai-project-hub
+StateDirectoryMode=0700
+LogsDirectory=ai-project-hub
+LogsDirectoryMode=0700
+ReadWritePaths=/var/lib/ai-project-hub /var/log/ai-project-hub
+ReadOnlyPaths=/opt/ai-project-hub
+InaccessiblePaths=-/home/admin/backups
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectHostname=true
+ProtectClock=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectProc=invisible
+ProcSubset=pid
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RemoveIPC=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

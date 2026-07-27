@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="referrer" content="no-referrer" />
+    <title>API Key 配置 · AI 项目汇集库</title>
+    <meta
+      name="description"
+      content="验证 AI Routing API Key、选择默认模型并恢复 AI HUB 项目。"
+    />
+    <meta name="theme-color" content="#f7f9fc" />
+    <link rel="stylesheet" href="/hub/styles.css?v=20260724-routing-promo1" />
+    <link rel="stylesheet" href="/hub/suite-theme.css?v=20260717-frontend5" />
+    <link rel="stylesheet" href="/hub/key-config/key-config.css?v=20260727-key-config2" />
+    <script defer src="/hub/key-config/key-config.js?v=20260727-key-config2"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#configuration">跳到配置表单</a>
+
+    <main class="app-shell key-config-shell">
+      <header class="topbar">
+        <a class="brand" href="/hub/">
+          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          <span>
+            <span class="eyebrow">Workspace</span>
+            <h1>API Key 配置</h1>
+            <span class="brand-description">连接 AI Routing，让模型项目恢复可用</span>
+          </span>
+        </a>
+        <div class="status-strip" aria-label="配置状态">
+          <span id="connectionBadge" class="key-status" data-state="checking">
+            <i class="key-status__lamp" aria-hidden="true"></i>
+            <strong id="connectionText">正在检查网关</strong>
+          </span>
+          <span class="provider-state key-status key-status--provider">
+            <small>AI Routing</small>
+            <strong id="providerState">读取中</strong>
+          </span>
+        </div>
+      </header>
+
+      <nav class="page-tabs key-config-tabs" aria-label="AI HUB 页面">
+        <a class="page-tab" href="/hub/">项目中心</a>
+        <a class="page-tab" href="/hub/models.html">模型指南</a>
+        <a class="page-tab" href="/hub/key-config/" aria-current="page">API Key 配置</a>
+      </nav>
+
+      <section class="routing-hero key-config-hero" aria-labelledby="pageTitle">
+        <div class="routing-hero__copy">
+          <div class="routing-hero__status">
+            <span class="eyebrow">AI ROUTING · 管理入口</span>
+            <span class="planning-pill">三步完成配置</span>
+          </div>
+          <h2 id="pageTitle">配置一次，让依赖模型的项目恢复可用</h2>
+          <p class="routing-hero__lead">
+            验证管理员、检测 AI Routing Key、选择默认模型。保存后，HUB 会自动解除对应项目的维护状态。
+          </p>
+          <ul class="routing-outcomes" aria-label="配置结果">
+            <li><strong>先验证</strong><span>管理员口令只用于本次授权</span></li>
+            <li><strong>再检测</strong><span>确认 Key 有效并读取模型列表</span></li>
+            <li><strong>后启用</strong><span>选择默认模型并立即生效</span></li>
+          </ul>
+          <div class="routing-hero__actions">
+            <a class="action-button action-button--secondary" href="/hub/">返回项目中心</a>
+            <a class="action-button action-button--secondary" href="/hub/admin/">打开完整管理页</a>
+          </div>
+          <p class="routing-boundary">
+            <strong>安全边界：</strong>管理员口令不会写进网页源码；你可以让浏览器密码管理器记住它。Routing Key 只提交到 HUB 服务端，已保存的 Key 不会回显。
+          </p>
+        </div>
+
+        <aside class="routing-preview key-config-preview" aria-label="配置进度">
+          <div class="routing-preview__head">
+            <span>当前配置流程</span>
+            <strong>SECURE</strong>
+          </div>
+          <ol class="routing-preview__steps">
+            <li id="stepAuth" data-state="current">
+              <span>01</span>
+              <div><small>验证管理员</small><strong id="stepAuthStatus">等待输入管理员口令</strong></div>
+            </li>
+            <li id="stepKey" data-state="waiting">
+              <span>02</span>
+              <div><small>检测 Routing Key</small><strong id="stepKeyStatus">验证后开放</strong></div>
+            </li>
+            <li id="stepModel" data-state="waiting">
+              <span>03</span>
+              <div><small>选择并启用模型</small><strong id="stepModelStatus">等待模型列表</strong></div>
+            </li>
+          </ol>
+          <div class="routing-key-promise">
+            <span aria-hidden="true">KEY</span>
+            <p><strong>一个统一入口</strong><small>配置完成后自动解锁模型能力</small></p>
+          </div>
+        </aside>
+      </section>
+
+      <section id="configuration" class="key-config-workspace" aria-labelledby="configTitle">
+        <div class="section-heading">
+          <div class="section-heading__copy">
+            <span class="eyebrow">开始配置</span>
+            <h2 id="configTitle">按顺序完成三步</h2>
+            <p class="section-description">每一步验证通过后，下一步才会开放。</p>
+          </div>
+        </div>
+
+        <form id="configForm" class="key-config-grid" autocomplete="on" novalidate>
+          <fieldset class="key-config-card">
+            <legend><span>01</span>管理员验证</legend>
+            <p class="stage-copy">输入服务器的管理员口令，授权本次配置操作。</p>
+            <label class="key-field" for="adminTokenInput">
+              <span>管理员口令</span>
+              <input
+                id="adminTokenInput"
+                name="hub-admin-token"
+                type="password"
+                autocomplete="current-password"
+                autocapitalize="off"
+                spellcheck="false"
+                placeholder="输入 HUB_ADMIN_TOKEN"
+                required
+              />
+            </label>
+            <button id="verifyAdminButton" class="action-button key-action" type="button">
+              验证并继续
+            </button>
+            <small class="field-hint">可使用浏览器密码管理器安全记住口令。</small>
+          </fieldset>
+
+          <fieldset id="credentialStage" class="key-config-card" disabled>
+            <legend><span>02</span>AI Routing Key</legend>
+            <p id="keyGuidance" class="stage-copy">粘贴新的 API Key。检测成功前不会保存。</p>
+            <label class="key-field" for="routingKeyInput">
+              <span>API Key</span>
+              <span class="secret-control">
+                <input
+                  id="routingKeyInput"
+                  name="routing-key"
+                  type="password"
+                  autocomplete="new-password"
+                  autocapitalize="off"
+                  spellcheck="false"
+                  placeholder="粘贴 AI Routing API Key"
+                />
+                <button id="toggleKeyButton" class="secret-toggle" type="button" aria-pressed="false">
+                  显示
+                </button>
+              </span>
+            </label>
+            <button id="fetchModelsButton" class="action-button action-button--secondary key-action" type="button">
+              检测并获取模型
+            </button>
+            <small class="field-hint">固定入口：drhknode.airouting.com/v1</small>
+          </fieldset>
+
+          <fieldset id="modelStage" class="key-config-card" disabled>
+            <legend><span>03</span>默认模型</legend>
+            <p class="stage-copy">从通过验证的模型列表中选择 HUB 默认模型。</p>
+            <label class="key-field" for="modelSelect">
+              <span>默认模型</span>
+              <select id="modelSelect" name="default-model">
+                <option value="">请先获取模型列表</option>
+              </select>
+            </label>
+            <button id="saveConfigButton" class="action-button key-action" type="button">
+              保存并启用
+            </button>
+            <small id="modelCount" class="field-hint">尚未获取模型</small>
+          </fieldset>
+        </form>
+
+        <section id="actionNotice" class="action-notice" data-state="neutral" aria-live="polite" aria-atomic="true">
+          <span class="action-notice__mark" aria-hidden="true"></span>
+          <div>
+            <strong id="noticeTitle">准备开始</strong>
+            <p id="noticeBody">先验证管理员口令，再配置 AI Routing Key。</p>
+          </div>
+        </section>
+
+        <footer class="key-config-footer">
+          <button id="clearSessionButton" class="filter-reset" type="button">清空本页凭证</button>
+          <div>
+            <a href="/hub/">返回 AI HUB</a>
+            <a href="/hub/admin/">进入完整管理页</a>
+          </div>
+        </footer>
+      </section>
+    </main>
+
+    <script
+      defer
+      src="/hub/suite-shell.js?v=20260723-ux1"
+      data-suite-project="API Key 配置"
+      data-suite-hub="/hub/"
+    ></script>
+  </body>
+</html>
