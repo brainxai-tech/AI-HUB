@@ -44,7 +44,9 @@ test("fresh-clone CI installs, verifies, scans, and runs browser E2E", async () 
   assert.match(workflow, /npm run security:scan/);
   assert.match(workflow, /npm run e2e/);
   assert.match(tasks, /manifest\.projects/);
-  assert.match(tasks, /npm\.cmd/);
+  assert.match(tasks, /npm-cli\.js/);
+  assert.match(tasks, /process\.execPath/);
+  assert.doesNotMatch(tasks, /spawnSync\([^\n]*npm\.cmd/);
   assert.match(scanner, /git.*ls-files/s);
   assert.match(e2e, /manifest\.projects/);
   assert.match(e2e, /chromium\.launch/);

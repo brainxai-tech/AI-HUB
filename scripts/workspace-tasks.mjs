@@ -5,7 +5,8 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const manifest = JSON.parse(readFileSync(path.join(root, "deploy/project-manifest.json"), "utf8"));
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+const npmCommand = process.platform === "win32" ? process.execPath : "npm";
+const npmArgumentPrefix = process.platform === "win32" ? [resolveWindowsNpmCli()] : [];
 const command = process.argv[2] || "check";
 
 const packages = [
@@ -46,11 +47,25 @@ function installPackage(directory, id) {
     return;
   }
   if (!hasLock) throw new Error(`${id} has dependencies but no package-lock.json`);
-  run(npmCommand, ["ci", "--no-audit", "--no-fund"], directory, `[install] ${id}`);
+  run(npmCommand, [...npmArgumentPrefix, "ci", "--no-audit", "--no-fund"], directory, `[install] ${id}`);
 }
 
 function runNpm(item, script) {
-  run(npmCommand, ["run", script], item.directory, `[${script}] ${item.id}`, projectEnvironment(item));
+  run(npmCommand, [...npmArgumentPrefix, "run", script], item.directory, `[${script}] ${item.id}`, projectEnvironment(item));
+}
+
+function resolveWindowsNpmCli() {
+  const candidates = [
+    process.env.npm_execpath,
+    path.join(path.dirname(process.execPath), "node_modules", "npm", "bin", "npm-cli.js"),
+    ...String(process.env.PATH || "")
+      .split(path.delimiter)
+      .filter(Boolean)
+      .map((directory) => path.join(directory, "node_modules", "npm", "bin", "npm-cli.js")),
+  ];
+  const npmCli = candidates.find((candidate) => candidate && existsSync(candidate));
+  if (!npmCli) throw new Error("Unable to locate npm-cli.js for the current Node.js installation.");
+  return npmCli;
 }
 
 function projectEnvironment(item) {
