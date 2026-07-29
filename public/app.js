@@ -31,19 +31,18 @@
     games: ["游戏原型"],
   };
   const supportedRecommendationModels = {
-    GPT: new Set(["gpt-5.5", "gpt-5.5-pro", "gpt-5.4", "gpt-5.4-mini"]),
-    Gemini: new Set([
-      "gemini-3.5-flash",
-      "gemini-3.1-pro-preview",
-      "gemini-3-flash-preview",
-      "gemini-3.1-flash-lite",
+    GPT: new Set([
+      "gpt-5.3-codex-spark",
+      "gpt-5.4",
+      "gpt-5.4-mini",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
     ]),
-    Anthropic: new Set(["claude-opus-4-8", "claude-sonnet-4-6", "claude-haiku-4-5"]),
   };
   const providerRoutingStrengths = {
     GPT: ["复杂推理", "结构化输出"],
-    Gemini: ["多模态理解", "快速响应"],
-    Anthropic: ["长文理解", "自然表达"],
   };
   const recentProjectsStorageKey = "aiHub.recentProjects.v1";
   const trustProfiles = {
@@ -75,6 +74,7 @@
     pageTabs: Array.from(document.querySelectorAll("[data-page-target]")),
     pagePanels: Array.from(document.querySelectorAll("[data-page-panel]")),
     count: document.querySelector("#projectCount"),
+    catalogCount: document.querySelector("#catalogCount"),
     updated: document.querySelector("#lastUpdated"),
     search: document.querySelector("#searchInput"),
     category: document.querySelector("#categoryFilter"),
@@ -406,6 +406,10 @@
   }
 
   function renderStatus(projects, filteredProjects) {
+    if (elements.catalogCount) {
+      elements.catalogCount.textContent = `浏览全部 ${projects.length} 个项目`;
+    }
+
     if (modelState.loaded || modelState.loadFailed) {
       const readyCount = projects.filter((project) => getProjectAvailability(project) === "ready").length;
       const unavailableCount = projects.length - readyCount;
@@ -457,24 +461,35 @@
     const trustNote = project.trust
       ? `<span class="project-card__trust">${escapeHtml(project.trust.boundary)}</span>`
       : "";
-    const routingStrengths = project.modelRecommendation
-      ? (providerRoutingStrengths[project.modelRecommendation.provider] || [])
+    const availableModels = new Set();
+    if (modelState.loaded && Array.isArray(modelState.config?.providers)) {
+      for (const provider of modelState.config.providers) {
+        if (!provider?.enabled || !provider?.configured) continue;
+        const models = Array.isArray(provider.enabledModels) ? provider.enabledModels : provider.models;
+        for (const model of Array.isArray(models) ? models : []) availableModels.add(model);
+      }
+    }
+    const modelRecommendation = project.modelRecommendation && availableModels.has(project.modelRecommendation.model)
+      ? project.modelRecommendation
+      : null;
+    const routingStrengths = modelRecommendation
+      ? (providerRoutingStrengths[modelRecommendation.provider] || [])
           .map((strength) => `<span>${escapeHtml(strength)}</span>`)
           .join("")
       : "";
-    const recommendation = project.modelRecommendation
-      ? `<details class="project-card__recommendation" data-recommendation-details data-provider="${escapeHtml(project.modelRecommendation.provider.toLowerCase())}">
+    const recommendation = modelRecommendation
+      ? `<details class="project-card__recommendation" data-recommendation-details data-provider="${escapeHtml(modelRecommendation.provider.toLowerCase())}">
           <summary>
             <span class="project-card__recommendation-label">自动路由方案 <em>规划中</em></span>
             <span class="project-card__recommendation-candidate">
               <small>主要候选</small>
-              <strong>${escapeHtml(project.modelRecommendation.provider)} · <code>${escapeHtml(project.modelRecommendation.model)}</code></strong>
+              <strong>${escapeHtml(modelRecommendation.provider)} · <code>${escapeHtml(modelRecommendation.model)}</code></strong>
             </span>
             <span class="project-card__recommendation-toggle" aria-hidden="true"></span>
           </summary>
           <span class="project-card__recommendation-reason">
             <strong>为什么它是主要候选</strong>
-            <span>${escapeHtml(project.modelRecommendation.reason)}</span>
+            <span>${escapeHtml(modelRecommendation.reason)}</span>
             <span class="project-card__routing-strengths" aria-label="模型优势">${routingStrengths}</span>
             <span class="project-card__routing-future">
               <strong>未来路由方式</strong>
@@ -738,52 +753,22 @@
     return `<span class="provider-state provider-state--${escapeHtml(state)}">${escapeHtml(label)}</span>`;
   }
 
-  function selectedProviderModels(provider) {
-    const enabledModels = Array.isArray(provider.enabledModels)
-      ? provider.enabledModels.filter((model) => typeof model === "string" && model.trim() !== "")
-      : [];
-    if (enabledModels.length > 0) {
-      return new Set(enabledModels);
-    }
-    return new Set(provider.model ? [provider.model] : []);
-  }
-
-  function renderModelOptions(models, selectedModel) {
-    if (!Array.isArray(models) || models.length === 0) {
-      return '<option value="">请先获取模型列表</option>';
-    }
-
-    return models
-      .map(
-        (model) =>
-          `<option value="${escapeHtml(model)}" ${model === selectedModel ? "selected" : ""}>${escapeHtml(model)}</option>`,
-      )
-      .join("");
-  }
-
-  function renderModelChoices(models, selectedModels) {
+  function renderModelCatalog(models) {
     if (!Array.isArray(models) || models.length === 0) {
       return '<p class="action-status">输入 API Key 后点击“获取模型列表”。</p>';
     }
 
     return models
       .map(
-        (model) => `
-          <label class="model-choice">
-            <input type="checkbox" data-provider-enabled-model value="${escapeHtml(model)}" ${selectedModels.has(model) ? "checked" : ""} />
-            <span>${escapeHtml(model)}</span>
-          </label>
-        `,
+        (model) => `<span class="model-choice" data-provider-model-name="${escapeHtml(model)}">${escapeHtml(model)}</span>`,
       )
       .join("");
   }
 
   function renderProviderRow(provider) {
     const status = providerStatusMeta(provider);
-    const selectedModels = selectedProviderModels(provider);
     const keyPlaceholder = provider.configured ? "留空使用已保存的 Key" : "粘贴 AI Routing API Key";
-    const modelOptions = renderModelOptions(provider.models, provider.model);
-    const modelChoices = renderModelChoices(provider.models, selectedModels);
+    const modelCatalog = renderModelCatalog(provider.models);
     return `
       <div class="provider-row" data-provider="${escapeHtml(provider.id)}" data-provider-state="${escapeHtml(status.state)}">
         <div class="provider-row__head">
@@ -792,7 +777,7 @@
               <input type="checkbox" data-provider-enabled ${provider.enabled ? "checked" : ""} />
               <span class="provider-name">${escapeHtml(provider.label)}</span>
             </label>
-            <p>${escapeHtml(provider.adapter)} · 默认 ${escapeHtml(provider.model || "待选择")}</p>
+            <p>${escapeHtml(provider.adapter)} · ${provider.models.length} 个模型可供各项目独立选择</p>
           </div>
           ${statusBadge(status.label, status.state)}
         </div>
@@ -810,13 +795,9 @@
             <span>Base URL</span>
             <input data-provider-base-url value="${escapeHtml(provider.baseUrl)}" readonly aria-readonly="true" />
           </label>
-          <label class="text-field">
-            <span>默认模型</span>
-            <select data-provider-model>${modelOptions}</select>
-          </label>
           <fieldset class="model-multi-field">
-            <legend>可用模型</legend>
-            <div class="model-choice-list" data-provider-model-choices>${modelChoices}</div>
+            <legend>API Key 可用模型（在具体项目中选择）</legend>
+            <div class="model-choice-list" data-provider-model-catalog>${modelCatalog}</div>
           </fieldset>
           <button class="inline-button" data-provider-clear type="button">移除密钥</button>
         </div>
@@ -954,18 +935,14 @@
 
     for (const row of rows) {
       const id = row.getAttribute("data-provider");
-      const models = Array.from(row.querySelectorAll("[data-provider-model] option"))
-        .map((option) => option.value.trim())
-        .filter(Boolean);
-      const enabledModels = Array.from(row.querySelectorAll("[data-provider-enabled-model]:checked"))
-        .map((input) => input.value.trim())
+      const models = Array.from(row.querySelectorAll("[data-provider-model-name]"))
+        .map((item) => item.getAttribute("data-provider-model-name").trim())
         .filter(Boolean);
       providers[id] = {
         enabled: Boolean(row.querySelector("[data-provider-enabled]").checked),
         apiKey: row.querySelector("[data-provider-key]").value.trim(),
-        model: row.querySelector("[data-provider-model]").value.trim(),
         models,
-        enabledModels,
+        enabledModels: models,
         baseUrl: row.querySelector("[data-provider-base-url]").value.trim(),
         clearKey: row.getAttribute("data-clear-key") === "true",
       };
@@ -996,14 +973,9 @@
 
   async function refreshProviderModels(row, button) {
     const apiKeyInput = row.querySelector("[data-provider-key]");
-    const modelSelect = row.querySelector("[data-provider-model]");
-    const choices = row.querySelector("[data-provider-model-choices]");
+    const catalog = row.querySelector("[data-provider-model-catalog]");
     const status = row.querySelector("[data-provider-model-status]");
     const apiKey = apiKeyInput.value.trim();
-    const selectedModels = new Set(
-      Array.from(row.querySelectorAll("[data-provider-enabled-model]:checked")).map((input) => input.value),
-    );
-    const previousModel = modelSelect.value;
 
     button.disabled = true;
     status.textContent = "正在从 AI Routing 获取模型…";
@@ -1014,18 +986,11 @@
         body: apiKey ? { apiKey } : {},
       });
       const models = Array.isArray(result.models) ? result.models : [];
-      const nextModel = models.includes(previousModel) ? previousModel : models[0] || "";
-      const nextSelectedModels = new Set(
-        models.filter((model) => selectedModels.has(model) || model === nextModel),
-      );
-
-      modelSelect.innerHTML = renderModelOptions(models, nextModel);
-      modelSelect.value = nextModel;
-      choices.innerHTML = renderModelChoices(models, nextSelectedModels);
+      catalog.innerHTML = renderModelCatalog(models);
       row.removeAttribute("data-clear-key");
-      row.querySelector("[data-provider-enabled]").checked = Boolean(nextModel);
+      row.querySelector("[data-provider-enabled]").checked = models.length > 0;
       row.querySelector(".provider-state").textContent = apiKey ? "保存后启用" : "模型已刷新";
-      status.textContent = `已获取 ${models.length} 个模型，请选择后保存。`;
+      status.textContent = `已获取 ${models.length} 个模型。保存后由每个项目独立选择。`;
     } catch (error) {
       status.textContent = `获取失败：${error.message}`;
     } finally {
@@ -1043,8 +1008,8 @@
 
     const nextConfig = collectModelConfig();
     const routing = nextConfig.providers.routing;
-    if (routing?.enabled && !routing.model) {
-      elements.modelConfigStatus.textContent = "请先获取模型列表并选择默认模型";
+    if (routing?.enabled && routing.models.length === 0) {
+      elements.modelConfigStatus.textContent = "请先获取 API Key 可用模型列表";
       elements.projectGateStatus.textContent = "配置未保存";
       return;
     }
@@ -1094,19 +1059,6 @@
       modelState.adminToken = elements.adminToken.value.trim();
     });
     elements.saveModelConfig.addEventListener("click", saveModelConfig);
-    elements.providerList.addEventListener("change", (event) => {
-      if (!event.target.matches("[data-provider-model]")) {
-        return;
-      }
-
-      const row = event.target.closest("[data-provider]");
-      const matchingModel = Array.from(row.querySelectorAll("[data-provider-enabled-model]")).find(
-        (input) => input.value === event.target.value,
-      );
-      if (matchingModel) {
-        matchingModel.checked = true;
-      }
-    });
     elements.providerList.addEventListener("input", (event) => {
       if (!event.target.matches("[data-provider-key]")) {
         return;

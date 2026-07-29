@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI 读书拆解器</title>
+    <link rel="stylesheet" href="/hub/suite-theme.css?v=20260628-suite2" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script
+      defer
+      src="/hub/suite-shell.js?v=20260728-model-compat-v8"
+      data-suite-project="AI · 读书拆解器"
+      data-suite-hub="/hub/"
+      data-suite-id="ai-book-decomposer"
+      data-suite-api="/book"
+    ></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand-block">
+        <div class="brand-mark" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+        <div>
+          <h1>AI 读书拆解器</h1>
+          <p>章节地图 · 核心观点 · 行动清单 · 反方观点</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span id="connectionStatus" class="status-pill" data-state="idle">等待 Hub 配置</span>
+        <button id="copyMarkdownButton" class="button secondary" type="button" disabled>复制 Markdown</button>
+        <button id="downloadMarkdownButton" class="button secondary" type="button" disabled>下载</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="control-panel" aria-labelledby="controlTitle">
+        <div class="section-heading">
+          <div>
+            <h2 id="controlTitle">模型与输入</h2>
+            <p>模型密钥由 AI Hub 统一保存，本项目不会要求重复填写。</p>
+          </div>
+          <a class="inline-link" href="/hub/#models">Hub 配置</a>
+        </div>
+
+        <form id="analysisForm" class="analysis-form">
+          <div id="modelGate" class="model-gate" role="status">
+            正在读取 Hub 模型配置。
+          </div>
+
+          <div class="field-row two">
+            <label class="field" for="providerSelect">
+              <span>供应商</span>
+              <select id="providerSelect" name="provider" aria-label="供应商"></select>
+            </label>
+            <label class="field" for="modelSelect">
+              <span>模型</span>
+              <select id="modelSelect" name="model" aria-label="模型"></select>
+            </label>
+          </div>
+
+          <div class="inline-options">
+            <button id="refreshModelsButton" class="button secondary" type="button">刷新模型</button>
+            <button id="testProviderButton" class="button secondary" type="button">测试模型</button>
+          </div>
+
+          <div class="segmented" role="group" aria-label="输入类型">
+            <button class="segment active" type="button" data-mode="excerpt" aria-pressed="true">摘录</button>
+            <button class="segment" type="button" data-mode="title" aria-pressed="false">书名</button>
+            <button class="segment" type="button" data-mode="toc" aria-pressed="false">目录</button>
+            <button class="segment" type="button" data-mode="notes" aria-pressed="false">笔记</button>
+          </div>
+
+          <label class="field">
+            <span>书名或主题</span>
+            <input id="titleInput" name="title" type="text" placeholder="例如：深度工作" />
+          </label>
+
+          <label class="field grow">
+            <span id="contentLabel">摘录</span>
+            <textarea
+              id="contentInput"
+              name="content"
+              rows="14"
+              placeholder="粘贴你想拆解的摘录、目录或读书笔记"
+            ></textarea>
+          </label>
+
+          <div class="field-row two">
+            <label class="field" for="depthSelect">
+              <span>深度</span>
+              <select id="depthSelect" name="depth" aria-label="深度">
+                <option value="quick">快速</option>
+                <option value="focused" selected>标准</option>
+                <option value="deep">深度</option>
+              </select>
+            </label>
+            <label class="field" for="orientationSelect">
+              <span>取向</span>
+              <select id="orientationSelect" name="orientation" aria-label="取向">
+                <option value="balanced" selected>平衡</option>
+                <option value="action">行动</option>
+                <option value="critical">批判</option>
+                <option value="teaching">讲解</option>
+              </select>
+            </label>
+          </div>
+
+          <button id="generateButton" class="button primary" type="submit">生成拆解</button>
+          <p id="formStatus" class="form-status" role="status"></p>
+        </form>
+      </section>
+
+      <section class="result-panel" aria-labelledby="resultTitle">
+        <div class="result-toolbar">
+          <div>
+            <h2 id="resultTitle">拆解结果</h2>
+            <p id="sourceBoundary">等待输入</p>
+          </div>
+          <div id="confidenceBadge" class="confidence-badge">-</div>
+        </div>
+
+        <nav class="result-tabs" aria-label="结果模块">
+          <button class="result-tab active" type="button" data-tab="chapterMap">章节地图</button>
+          <button class="result-tab" type="button" data-tab="coreIdeas">核心观点</button>
+          <button class="result-tab" type="button" data-tab="actionList">行动清单</button>
+          <button class="result-tab" type="button" data-tab="counterArguments">反方观点</button>
+          <button class="result-tab" type="button" data-tab="questions">追问</button>
+          <button class="result-tab" type="button" data-tab="warnings">风险</button>
+        </nav>
+
+        <div id="resultContent" class="result-content" aria-live="polite">
+          <div class="empty-state">
+            <div class="empty-visual" aria-hidden="true"></div>
+            <h3>准备拆解</h3>
+            <p>选择 Hub 已启用模型后，输入书名、目录、摘录或笔记。</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>

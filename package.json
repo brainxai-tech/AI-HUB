@@ -7,7 +7,14 @@
     "start": "node server.mjs",
     "dev": "node server.mjs",
     "test": "node --test tests/*.test.mjs",
-    "verify": "node --check server.mjs && node --check public/app.js && node --check public/key-config/key-config.js && node --check public/model-guide-data.js && node --check public/model-guide.js && node --test tests/*.test.mjs"
+    "verify": "node --check server.mjs && node --check local-project-proxy.mjs && node --check public/app.js && node --check public/key-config/key-config.js && node --check public/model-guide-data.js && node --check public/model-guide.js && node --test tests/*.test.mjs",
+    "workspace:install": "node scripts/workspace-tasks.mjs install",
+    "workspace:build": "node scripts/workspace-tasks.mjs build",
+    "workspace:verify": "node scripts/workspace-tasks.mjs verify",
+    "workspace:check": "node scripts/workspace-tasks.mjs check",
+    "security:scan": "node scripts/security-scan.mjs",
+    "start:suite": "node scripts/local-suite.mjs",
+    "e2e": "node scripts/local-suite-e2e.mjs"
   },
   "engines": {
     "node": ">=20"

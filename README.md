@@ -1,115 +1,90 @@
 # AI Project Hub
 
-AI 项目汇集库，用来集中展示项目入口，并提供统一模型配置和共享模型网关。
+AI-HUB 集中展示 AI 项目，并提供统一的 AI Routing Key 配置、GPT 型号目录、项目独立型号选择和项目级模型代理。
 
-项目数据放在 `public/projects.js`。页面会把项目渲染成可搜索、可筛选、可点击跳转的入口卡片。
-
-## 运行
+## 全新克隆与一键启动
 
 ```powershell
-npm start
+git clone https://github.com/brainxai-tech/AI-HUB.git
+cd AI-HUB
+npm run workspace:install
+npm run workspace:verify
+.\打开本地AI-HUB.cmd
 ```
 
-默认地址：
+首次打开后进入 `http://127.0.0.1:4194/hub/key-config/`，只需在 Hub 配置一次自己的 AI Routing Key。之后所有非游戏 AI 项目都通过 Hub 项目级代理使用 GPT 型号；项目页面不填写、接收或保存 API Key。
+
+一键启动包含四个本地服务：
+
+| 服务 | 端口 | 用途 |
+|---|---:|---|
+| Hub | 4194 | 首页、Key 配置、统一模型目录、本地同源入口与项目级代理 |
+| shared-project-runtime | 4195 | 27 个共享项目的页面与 API 适配 |
+| AI PPT 汇报教练 | 4201 | 文件解析、GPT 汇报生成和 PPTX 导出 |
+| AI 工作汇报生成器 | 4202 | 日报、周报和月报生成 |
+
+停止本地套件：
+
+```powershell
+.\stop-local-suite.ps1
+```
+
+`start-ai-project-hub.cmd` 只启动 Hub 单进程，保留给网关调试；完整体验请使用上面的一键入口。
+
+## 统一模型规则
+
+- Hub 只展示和接受 `gpt-*` 型号。
+- 每个项目通过页面顶部统一选择器独立保存当前 GPT 型号。
+- 浏览器只向项目同源 API 发送业务输入。
+- shared runtime 或专用项目服务端为请求注入项目身份，再调用 Hub。
+- 用户 Key 只保存在 Hub 服务端配置中，不回显到公开配置，也不会写进项目代码。
+
+统一调用链：
 
 ```text
-http://127.0.0.1:4194/
+项目页面 -> 项目同源 /api -> shared/dedicated runtime -> Hub 项目级代理 -> AI Routing
 ```
 
-## 统一模型网关
-
-hub 后端提供这些接口：
-
-```text
-GET  /api/health
-GET  /api/model-config
-PUT  /api/model-config
-POST /api/provider-models
-POST /api/chat
-POST /api/v1/chat/completions
-```
-
-模型统一通过 OpenAI 兼容的 AI Routing 入口转发：
-
-```text
-https://drhknode.airouting.com/v1
-```
-
-管理员在 `/hub/admin/` 输入自己的 AI Routing API Key，先从 `/v1/models`
-获取模型列表，再选择默认模型并保存。Key 仅保存在 Hub 服务端配置中，不会通过
-公开配置接口回显。输入密钥时必须使用 HTTPS 或 SSH 隧道。
-
-`PUT /api/model-config` 需要管理口令：
-
-```text
-X-Hub-Admin-Token: <HUB_ADMIN_TOKEN>
-```
-
-项目服务端调用模型网关时使用项目口令：
-
-```text
-X-Hub-Project-Token: <HUB_PROJECT_TOKEN>
-```
-
-不要把 `HUB_PROJECT_TOKEN` 写进浏览器前端代码。浏览器项目应先请求自己的后端，再由后端调用 hub 网关。
-
-OpenAI 兼容调用示例：
-
-```js
-const response = await fetch("http://127.0.0.1:4194/api/v1/chat/completions", {
-  method: "POST",
-  headers: {
-    "content-type": "application/json",
-    "x-hub-project-token": process.env.HUB_PROJECT_TOKEN,
-  },
-  body: JSON.stringify({
-    provider: "routing",
-    model: "<从 AI Routing 模型列表中选择的模型 ID>",
-    messages: [{ role: "user", content: "你好" }],
-  }),
-});
-
-const data = await response.json();
-```
-
-生产环境公网路径：
-
-```text
-http://47.84.108.192/hub/api/v1/chat/completions
-```
-
-## 添加项目
-
-以后把项目填到 `public/projects.js`：
-
-```js
-window.AI_PROJECTS = [
-  {
-    id: "unique-project-id",
-    name: "AI · 项目名称",
-    description: "一句话说明这个 AI 项目做什么。",
-    url: "https://example.com",
-    category: "实用工具",
-    stage: "live",
-    tags: ["Agent", "Web"],
-    updatedAt: "2026-06-25",
-  },
-];
-```
-
-## 验证
+## 常用验证命令
 
 ```powershell
 npm run verify
+npm run workspace:build
+npm run workspace:verify
+npm run security:scan
+npm run e2e
 ```
+
+`workspace:verify` 会按 `deploy/project-manifest.json` 验证 29 个非游戏项目；`e2e` 使用本机模拟上游，不需要真实 Key，并验证 29 个项目页面、统一型号选择和工作汇报浏览器生成链路。
+
+## Hub API
+
+```text
+GET  /hub/api/health
+GET  /hub/api/model-config
+PUT  /hub/api/model-config
+POST /hub/api/provider-models
+GET  /hub/api/project-model-selection
+PUT  /hub/api/project-model-selection
+POST /hub/api/chat
+POST /hub/api/v1/chat/completions
+```
+
+生产环境中，配置写入需要 `X-Hub-Admin-Token`，项目模型调用需要项目级 `X-Hub-Project-Token`。这些口令都不得进入浏览器代码、Git、日志或构建产物。输入真实 Key 时必须使用 HTTPS、SSH 隧道或本机回环地址。
+
+## 项目清单与源码约定
+
+- `apps/<project-id>/`：29 个非游戏项目。
+- `packages/shared-project-runtime/`：统一页面服务与 API 适配层。
+- `public/`：Hub 首页、Key 配置页、型号选择器和共享视觉资源。
+- `deploy/project-manifest.json`：项目 ID、路由、源码目录、技术栈和运行方式的唯一清单。
+- `SOURCE-RECOVERY.md`：仅有服务器 release 产物的项目会明确记录恢复边界，不声称拥有未恢复的 TS/TSX 源码。
+
+不得提交 `.env`、真实 API Key、管理员口令、项目口令、SSH 私钥、`node_modules`、`.next`、日志、PID、用户数据或备份目录。
 
 ## 原子发布与回滚
 
-生产版本放在 `/opt/ai-project-hub/releases/<commit>`，`/opt/ai-project-hub/current`
-只通过原子软链切换。密钥和运行数据分别保留在 `/etc/ai-project-hub`、
-`/var/lib/ai-project-hub` 和 `/var/log/ai-project-hub`，不得打入 release 包。
-
-从已验证的 Git 提交生成并上传 release：
+生产版本放在 `/opt/ai-project-hub/releases/<commit>`，`/opt/ai-project-hub/current` 只通过原子软链接切换。密钥与运行数据分别保存在 `/etc/ai-project-hub`、`/var/lib/ai-project-hub` 和 `/var/log/ai-project-hub`，不得打入 release。
 
 ```bash
 commit=$(git rev-parse --short HEAD)
@@ -119,11 +94,7 @@ sudo /opt/ai-project-hub/current/deploy/deploy.sh \
   "/home/admin/staging/releases/ai-project-hub-$commit.tar.gz" "$commit"
 ```
 
-部署脚本会先拒绝 `.env`、`data/`、`backups/` 和 `.git`，再运行完整验证，
-备份 Nginx/systemd 配置，原子切换 `current`，重启并检查本机与 Nginx 健康端点。
-任一步失败都会恢复上一个软链和配置。
-
-回滚到上一个成功版本，或指定已保留的提交：
+回滚：
 
 ```bash
 sudo /opt/ai-project-hub/current/deploy/rollback.sh

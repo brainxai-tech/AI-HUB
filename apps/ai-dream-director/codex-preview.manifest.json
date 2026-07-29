@@ -1,0 +1,8 @@
+{
+  "name": "AI 梦境导演",
+  "startUrl": "http://127.0.0.1:5178",
+  "commands": {
+    "dev": "npm run dev",
+    "verify": "npm run verify"
+  }
+}

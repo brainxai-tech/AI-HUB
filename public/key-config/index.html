@@ -6,15 +6,13 @@
     <meta name="robots" content="noindex,nofollow" />
     <meta name="referrer" content="no-referrer" />
     <title>API Key 配置 · AI 项目汇集库</title>
-    <meta
-      name="description"
-      content="验证 AI Routing API Key、选择默认模型并恢复 AI HUB 项目。"
-    />
+    <meta name="description" content="验证 AI Routing API Key，并将真实可调用的具体 GPT 型号统一提供给全部 AI HUB 项目。" />
     <meta name="theme-color" content="#f7f9fc" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='Arial' font-size='30' font-weight='700' fill='white'%3EAI%3C/text%3E%3C/svg%3E" />
     <link rel="stylesheet" href="/hub/styles.css?v=20260724-routing-promo1" />
     <link rel="stylesheet" href="/hub/suite-theme.css?v=20260717-frontend5" />
     <link rel="stylesheet" href="/hub/key-config/key-config.css?v=20260727-key-config2" />
-    <script defer src="/hub/key-config/key-config.js?v=20260727-key-config2"></script>
+    <script defer src="/hub/key-config/key-config.js?v=20260728-gpt-only1"></script>
   </head>
   <body>
     <a class="skip-link" href="#configuration">跳到配置表单</a>
@@ -26,7 +24,7 @@
           <span>
             <span class="eyebrow">Workspace</span>
             <h1>API Key 配置</h1>
-            <span class="brand-description">连接 AI Routing，让模型项目恢复可用</span>
+            <span class="brand-description">连接 AI Routing，把可用模型统一交给全部项目</span>
           </span>
         </a>
         <div class="status-strip" aria-label="配置状态">
@@ -53,21 +51,21 @@
             <span class="eyebrow">AI ROUTING · 管理入口</span>
             <span class="planning-pill">三步完成配置</span>
           </div>
-          <h2 id="pageTitle">配置一次，让依赖模型的项目恢复可用</h2>
+          <h2 id="pageTitle">配置一次 Key，全部项目立即可用</h2>
           <p class="routing-hero__lead">
-            验证管理员、检测 AI Routing Key、选择默认模型。保存后，HUB 会自动解除对应项目的维护状态。
+            这里验证管理员、检测 AI Routing Key，并只保存该 Key 真实可调用的具体 GPT 型号；项目会先使用可用默认模型，之后可独立切换。
           </p>
           <ul class="routing-outcomes" aria-label="配置结果">
             <li><strong>先验证</strong><span>管理员口令只用于本次授权</span></li>
             <li><strong>再检测</strong><span>确认 Key 有效并读取模型列表</span></li>
-            <li><strong>后启用</strong><span>选择默认模型并立即生效</span></li>
+            <li><strong>项目内选择</strong><span>保存后立即可用，也能按项目单独切换</span></li>
           </ul>
           <div class="routing-hero__actions">
             <a class="action-button action-button--secondary" href="/hub/">返回项目中心</a>
             <a class="action-button action-button--secondary" href="/hub/admin/">打开完整管理页</a>
           </div>
           <p class="routing-boundary">
-            <strong>安全边界：</strong>管理员口令不会写进网页源码；你可以让浏览器密码管理器记住它。Routing Key 只提交到 HUB 服务端，已保存的 Key 不会回显。
+            <strong>安全边界：</strong>管理员口令不会写进网页源码；Routing Key 只提交到 HUB 服务端，已保存的 Key 不会回显。每个项目只会看到可用模型名称。
           </p>
         </div>
 
@@ -87,12 +85,12 @@
             </li>
             <li id="stepModel" data-state="waiting">
               <span>03</span>
-              <div><small>选择并启用模型</small><strong id="stepModelStatus">等待模型列表</strong></div>
+              <div><small>保存可用模型目录</small><strong id="stepModelStatus">等待模型列表</strong></div>
             </li>
           </ol>
           <div class="routing-key-promise">
             <span aria-hidden="true">KEY</span>
-            <p><strong>一个统一入口</strong><small>配置完成后自动解锁模型能力</small></p>
+            <p><strong>一个统一入口</strong><small>全部项目共享 Key，模型可分别选择</small></p>
           </div>
         </aside>
       </section>
@@ -102,7 +100,7 @@
           <div class="section-heading__copy">
             <span class="eyebrow">开始配置</span>
             <h2 id="configTitle">按顺序完成三步</h2>
-            <p class="section-description">每一步验证通过后，下一步才会开放。</p>
+            <p class="section-description">这里只配置统一连接；项目先获得可用默认模型，也可在各自页面调整。</p>
           </div>
         </div>
 
@@ -123,9 +121,7 @@
                 required
               />
             </label>
-            <button id="verifyAdminButton" class="action-button key-action" type="button">
-              验证并继续
-            </button>
+            <button id="verifyAdminButton" class="action-button key-action" type="button">验证并继续</button>
             <small class="field-hint">可使用浏览器密码管理器安全记住口令。</small>
           </fieldset>
 
@@ -144,9 +140,7 @@
                   spellcheck="false"
                   placeholder="粘贴 AI Routing API Key"
                 />
-                <button id="toggleKeyButton" class="secret-toggle" type="button" aria-pressed="false">
-                  显示
-                </button>
+                <button id="toggleKeyButton" class="secret-toggle" type="button" aria-pressed="false">显示</button>
               </span>
             </label>
             <button id="fetchModelsButton" class="action-button action-button--secondary key-action" type="button">
@@ -156,17 +150,13 @@
           </fieldset>
 
           <fieldset id="modelStage" class="key-config-card" disabled>
-            <legend><span>03</span>默认模型</legend>
-            <p class="stage-copy">从通过验证的模型列表中选择 HUB 默认模型。</p>
-            <label class="key-field" for="modelSelect">
-              <span>默认模型</span>
-              <select id="modelSelect" name="default-model">
-                <option value="">请先获取模型列表</option>
-              </select>
-            </label>
-            <button id="saveConfigButton" class="action-button key-action" type="button">
-              保存并启用
-            </button>
+            <legend><span>03</span>可用模型目录</legend>
+            <p class="stage-copy">只保存 Key 当前真实可调用的具体 GPT 型号。所有项目会立即可用，并允许单独调整。</p>
+            <div class="key-field">
+              <span>项目可选模型</span>
+              <div id="modelCatalog" class="model-choice-list" aria-live="polite">请先获取模型列表</div>
+            </div>
+            <button id="saveConfigButton" class="action-button key-action" type="button">保存 Key 与模型目录</button>
             <small id="modelCount" class="field-hint">尚未获取模型</small>
           </fieldset>
         </form>
@@ -189,11 +179,6 @@
       </section>
     </main>
 
-    <script
-      defer
-      src="/hub/suite-shell.js?v=20260723-ux1"
-      data-suite-project="API Key 配置"
-      data-suite-hub="/hub/"
-    ></script>
+    <script defer src="/hub/suite-shell.js?v=20260728-gpt-only1" data-suite-project="API Key 配置" data-suite-hub="/hub/"></script>
   </body>
 </html>

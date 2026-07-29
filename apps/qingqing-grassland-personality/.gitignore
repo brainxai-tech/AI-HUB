@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# next
+.next/
+out/
+
+# production
+build/
+dist/
+
+# environment
+.env
+.env.local
+.env.*.local
+
+# vercel
+.vercel/
+
+# logs and local dev server state
+*.log
+dev-server.pid
+dev-server.port
+tsconfig.tsbuildinfo
+
+# OS/editor
+.DS_Store
+Thumbs.db

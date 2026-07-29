@@ -197,9 +197,16 @@ test("model configuration stores one AI Routing provider without exposing its Ke
         routing: {
           enabled: true,
           apiKey: "test-routing-key-that-must-never-be-returned",
-          models: ["gpt-test", "claude-test", "gpt-test", "bad\u0000model"],
+          models: [
+            "gpt-test",
+            "gemini-test",
+            "claude-test",
+            "deepseek-test",
+            "gpt-test",
+            "bad\u0000model",
+          ],
           model: "gpt-test",
-          enabledModels: ["gpt-test", "claude-test", "not-in-catalog"],
+          enabledModels: ["gpt-test", "gemini-test", "claude-test", "not-in-catalog"],
         },
       },
     }),
@@ -212,8 +219,25 @@ test("model configuration stores one AI Routing provider without exposing its Ke
   assert.equal(config.providers[0].id, "routing");
   assert.equal(config.providers[0].baseUrl, "https://drhknode.airouting.com/v1");
   assert.equal(config.providers[0].configured, true);
-  assert.deepEqual(config.providers[0].models, ["gpt-test", "claude-test"]);
-  assert.deepEqual(config.providers[0].enabledModels, ["gpt-test", "claude-test"]);
+  assert.deepEqual(config.providers[0].models, ["gpt-test"]);
+  assert.deepEqual(config.providers[0].enabledModels, ["gpt-test"]);
+  assert.equal(JSON.stringify(config).includes("test-routing-key"), false);
+});
+
+test("authenticated projects receive a legacy-compatible view of the central routing model", async () => {
+  const response = await fetch(`${baseUrl}/api/model-config`, {
+    headers: { "x-hub-project-token": legacyToken },
+  });
+  const config = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(config.defaultProvider, "openai");
+  assert.equal(config.providers.some((provider) => provider.id === "routing"), false);
+  const alias = config.providers.find((provider) => provider.id === "openai");
+  assert.equal(alias?.configured, true);
+  assert.equal(alias?.enabled, true);
+  assert.equal(alias?.model, "gpt-test");
+  assert.deepEqual(alias?.enabledModels, ["gpt-test"]);
   assert.equal(JSON.stringify(config).includes("test-routing-key"), false);
 });
 

@@ -1,8 +1,14 @@
 (function () {
   const data = window.AI_MODEL_GUIDE_DATA || { models: [], sources: [] };
-  const models = Array.isArray(data.models) ? data.models.slice() : [];
-  const sources = Array.isArray(data.sources) ? data.sources.slice() : [];
-  const providers = Array.isArray(data.providers) ? data.providers.slice() : [];
+  const models = Array.isArray(data.models)
+    ? data.models.filter(function (model) { return model.provider === "OpenAI"; })
+    : [];
+  const sources = Array.isArray(data.sources)
+    ? data.sources.filter(function (source) { return source.id === "OpenAI"; })
+    : [];
+  const providers = Array.isArray(data.providers)
+    ? data.providers.filter(function (provider) { return provider.id === "OpenAI"; })
+    : [];
   const benchmarkSources = data.benchmarkSources || {};
   const metricCatalog = [
     { id: "overall", label: "LiveBench 综合" },
@@ -14,10 +20,9 @@
     { id: "language", label: "语言" },
     { id: "instruction", label: "指令遵循" },
   ];
-  const providerOrder = ["OpenAI", "Gemini", "Anthropic", "Kimi", "GLM", "DeepSeek", "Grok"];
+  const providerOrder = ["OpenAI"];
   const providerMarks = {
-    OpenAI: "GPT", Gemini: "Ge", Anthropic: "A", Kimi: "K",
-    GLM: "GLM", DeepSeek: "DS", Grok: "xAI",
+    OpenAI: "GPT",
   };
   const elements = {
     rankingTabs: document.getElementById("rankingTabs"),
@@ -103,7 +108,7 @@
     const availableProviders = providerOrder.filter(function (provider) {
       return models.some(function (model) { return model.provider === provider; });
     });
-    const buttons = [{ id: "all", label: "全部提供商" }].concat(
+    const buttons = [{ id: "all", label: "全部 GPT 型号" }].concat(
       availableProviders.map(function (provider) { return { id: provider, label: provider }; }),
     );
     elements.providerFilters.innerHTML = buttons.map(function (provider) {

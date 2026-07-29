@@ -1,0 +1,8 @@
+node_modules
+.next
+.vercel
+dev-server.err.log
+dev-server.out.log
+dev-server.pid
+dev-server.port
+tsconfig.tsbuildinfo

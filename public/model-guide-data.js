@@ -892,5 +892,10 @@
     model.sourcesVerifiedAt = "2026-07-27";
   });
 
-  window.AI_MODEL_GUIDE_DATA = { sources, providers, models, benchmarkSources };
+  window.AI_MODEL_GUIDE_DATA = {
+    sources: sources.filter((source) => source.id === "OpenAI"),
+    providers: providers.filter((provider) => provider.id === "OpenAI"),
+    models: models.filter((model) => model.provider === "OpenAI"),
+    benchmarkSources,
+  };
 })();

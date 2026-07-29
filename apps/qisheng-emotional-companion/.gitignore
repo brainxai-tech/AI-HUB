@@ -1,0 +1,8 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+server.out.log
+server.err.log

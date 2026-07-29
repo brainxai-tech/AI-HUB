@@ -1,0 +1,35 @@
+{
+  "name": "idol-match-test",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/build-idol-profiles.mjs",
+    "dev": "next dev",
+    "dev:detached": "node scripts/start-dev-server.mjs 3220",
+    "prebuild": "node scripts/build-idol-profiles.mjs",
+    "build": "next build",
+    "start": "next start",
+    "export:experience-map": "node scripts/export-experience-match-map.mjs",
+    "export:professional-map": "node scripts/export-experience-match-map.mjs --mode professional --output-dir outputs/professional-match-map",
+    "test": "node --test tests/*.test.ts tests/*.test.mjs",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run test && npm run lint && npm run typecheck && npm run build"
+  },
+  "dependencies": {
+    "next": "^16.2.7",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.0",
+    "@types/node": "^20.19.41",
+    "@types/react": "^19.2.16",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.7",
+    "tailwindcss": "^4.3.0",
+    "typescript": "^5.9.3"
+  }
+}
