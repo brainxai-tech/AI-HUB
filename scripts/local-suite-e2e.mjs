@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -10,6 +10,9 @@ import { pathToFileURL, fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const manifest = JSON.parse(await import("node:fs/promises").then(({ readFile }) => readFile(path.join(root, "deploy/project-manifest.json"), "utf8")));
 const runtimeDirectory = await mkdtemp(path.join(os.tmpdir(), "ai-hub-suite-e2e-"));
+const artifactDirectory = process.env.AIHUB_E2E_ARTIFACT_DIR
+  ? path.resolve(process.env.AIHUB_E2E_ARTIFACT_DIR)
+  : path.join(runtimeDirectory, "artifacts");
 const mockRequests = [];
 let supervisor;
 let browser;
@@ -33,8 +36,31 @@ const mockUpstream = createServer(async (request, response) => {
     return sendJson(response, 200, { data: [{ id: "gpt-e2e" }] });
   }
   if (request.url === "/v1/chat/completions" && request.method === "POST") {
+    const payload = JSON.parse(body);
+    const systemPrompt = payload.messages?.find(({ role }) => role === "system")?.content || "";
+    let content;
+    if (systemPrompt.includes("Dice Estate strategy decision module")) {
+      const userMessage = payload.messages?.find(({ role }) => role === "user")?.content || "{}";
+      const diceRequest = JSON.parse(userMessage);
+      const legalAction = diceRequest.legal_actions?.[0];
+      content = JSON.stringify({
+        turnId: diceRequest.turn_id,
+        stateVersion: diceRequest.state_version,
+        legalActionsHash: diceRequest.legal_actions_hash,
+        agentId: diceRequest.agent_id,
+        actionId: legalAction?.actionId,
+        actionType: legalAction?.actionType,
+        params: legalAction?.params || {},
+        publicLine: "E2E Hub GPT 决策",
+        decisionCode: diceRequest.allowed_decision_codes?.[0],
+      });
+    } else if (/chess coach|Xiangqi|9x9 Go/i.test(systemPrompt)) {
+      content = JSON.stringify({ explanation: "E2E Hub GPT 教练讲解" });
+    } else {
+      content = JSON.stringify(mockReport);
+    }
     return sendJson(response, 200, {
-      choices: [{ message: { role: "assistant", content: JSON.stringify(mockReport) } }],
+      choices: [{ message: { role: "assistant", content } }],
     });
   }
   return sendJson(response, 404, { error: { message: "Not found" } });
@@ -59,6 +85,9 @@ try {
     waitUntilReady("http://127.0.0.1:4195/health", supervisor, 240_000),
     waitUntilReady("http://127.0.0.1:4201/ppt-report-coach/api/providers", supervisor, 240_000),
     waitUntilReady("http://127.0.0.1:4202/work-report/api/providers", supervisor, 240_000),
+    ...manifest.games.map((game) =>
+      waitUntilReady(`http://127.0.0.1:4194${game.route}`, supervisor, 240_000),
+    ),
   ]);
 
   const discovered = await fetchJson("http://127.0.0.1:4194/hub/api/provider-models", {
@@ -86,6 +115,15 @@ try {
   assert.equal(configured.defaultProvider, "routing");
   assert.equal(JSON.stringify(configured).includes("e2e-routing-key"), false);
 
+  for (const route of ["/xiangqi", "/chess", "/go"]) {
+    const providerCheck = await fetchJson(`http://127.0.0.1:4194${route}/api/provider/test`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ provider: "openai", model: "gpt-5.4-mini" }),
+    });
+    assert.deepEqual(providerCheck.models, ["gpt-e2e"], `${route} did not inherit the Hub GPT catalog`);
+  }
+
   const selection = await fetchJson("http://127.0.0.1:4194/work-report/api/model-selection", {
     method: "PUT",
     headers: { "content-type": "application/json" },
@@ -93,7 +131,7 @@ try {
   });
   assert.equal(selection.model, "gpt-e2e");
 
-  for (const project of manifest.projects) {
+  for (const project of [...manifest.projects, ...manifest.games]) {
     const response = await fetch(`http://127.0.0.1:4194${project.route}`, {
       redirect: "manual",
       signal: AbortSignal.timeout(30_000),
@@ -111,6 +149,10 @@ try {
   const { chromium } = await import(playwrightUrl);
   browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  page.on("pageerror", (error) => console.error(`[browser page error] ${error.message}`));
+  page.on("requestfailed", (request) =>
+    console.error(`[browser request failed] ${request.method()} ${request.url()}: ${request.failure()?.errorText || "unknown"}`),
+  );
 
   await page.goto("http://127.0.0.1:4194/hub/", { waitUntil: "networkidle" });
   assert.ok(await page.locator("[data-project-card]").count() >= 29, "Hub project catalog did not render");
@@ -132,7 +174,125 @@ try {
   assert.equal(chatPayload.model, "gpt-e2e");
   assert.equal(chatPayload.provider, undefined);
 
-  console.log(`Local suite E2E passed: ${manifest.projects.length} project routes and browser generation through Hub GPT routing.`);
+  await page.goto("http://127.0.0.1:4194/xiangqi/", { waitUntil: "networkidle" });
+  await page.locator("#setup-title").waitFor({ state: "visible" });
+  await assertNoBrowserCredentials(page, "ai-xiangqi-duel");
+  await assertEventually(
+    async () => (await page.locator('output[aria-label*="Hub GPT"]').textContent())?.trim() === "gpt-e2e",
+    "Xiangqi did not display the Hub GPT model",
+  );
+  await page.locator("button.start-button").click();
+  await page.locator(".xiangqi-board").waitFor({ state: "visible" });
+  await page.locator('button.board-point:has(.coord:text-is("a9"))').click();
+  await page.locator('button.board-point:has(.coord:text-is("a8"))').click();
+  await page.locator(".move-callout.engine").waitFor({ state: "visible", timeout: 60_000 });
+
+  await page.goto("http://127.0.0.1:4194/chess/", { waitUntil: "networkidle" });
+  await page.locator(".chess-board").waitFor({ state: "visible" });
+  await assertNoBrowserCredentials(page, "ai-chess-duel");
+  await assertEventually(
+    async () => (await page.locator('output[aria-label*="Hub GPT"]').textContent())?.trim() === "gpt-e2e",
+    "Chess did not display the Hub GPT model",
+  );
+  await page.locator('button[aria-label^="e2"]').click();
+  await page.locator('button[aria-label^="e4"]').click();
+  await assertEventually(
+    async () => (await page.locator(".move-list li").count()) >= 2,
+    "Chess AI did not answer the legal e2-e4 move",
+  );
+  const chessCoachPanel = page.locator(".panel").filter({ has: page.locator(".model-readout") });
+  await chessCoachPanel.locator("button.primary-button").click();
+  await chessCoachPanel.locator(".coach-box").filter({ hasText: "E2E Hub GPT 教练讲解" }).waitFor({
+    state: "visible",
+    timeout: 30_000,
+  });
+
+  await page.goto("http://127.0.0.1:4194/go/", { waitUntil: "networkidle" });
+  await page.locator(".go-board").waitFor({ state: "visible" });
+  await assertNoBrowserCredentials(page, "ai-go-duel");
+  await assertEventually(
+    async () => (await page.locator('output[aria-label*="Hub GPT"]').textContent())?.trim() === "gpt-e2e",
+    "Go did not display the Hub GPT model",
+  );
+  await page.locator('button[aria-label="5,5"]').click();
+  await assertEventually(
+    async () => (await page.locator(".move-list li").count()) >= 2,
+    "Go AI did not answer the legal center move",
+  );
+
+  await page.goto("http://127.0.0.1:4194/fury-flock/", { waitUntil: "networkidle" });
+  await page.locator("#site-home-title").waitFor({ state: "visible" });
+  await assertNoBrowserCredentials(page, "fury-flock");
+  await page.locator("[data-site-planner]").first().click();
+  await page.locator("#site-chapter-card").click();
+  await page.locator("#site-planner-start-button").click();
+  await page.locator("canvas").waitFor({ state: "visible", timeout: 30_000 });
+  const initialHint = await page.locator("#hint-text").innerText();
+  await page.locator("#fire-button").click();
+  await assertEventually(
+    async () => (await page.locator("#hint-text").innerText()) !== initialHint,
+    "Fury Flock did not react to the fire action",
+  );
+  await mkdir(artifactDirectory, { recursive: true });
+  const furyScreenshot = path.join(artifactDirectory, "fury-flock-gameplay.png");
+  await page.screenshot({ path: furyScreenshot, fullPage: true });
+
+  await page.evaluate(() => {
+    localStorage.removeItem("dice-estate-duel-save");
+    localStorage.setItem(
+      "dice-estate-duel-settings",
+      JSON.stringify({ agentMode: "hub", animationSpeed: "fast", reduceMotion: true, muted: true }),
+    );
+    localStorage.setItem(
+      "dice-estate-duel-profile",
+      JSON.stringify({ tutorialEnabled: false, tutorialCompleted: true, tutorialProgress: {} }),
+    );
+  });
+  await page.goto("http://127.0.0.1:4194/hub/dice-estate/", { waitUntil: "networkidle" });
+  await page.locator("#board").waitFor({ state: "visible" });
+  await assertNoBrowserCredentials(page, "dice-estate-duel");
+  await page.locator('#actions [data-action="roll"]').click();
+  await assertEventually(
+    async () => Boolean(await page.evaluate(() => localStorage.getItem("dice-estate-duel-save"))),
+    "Dice Estate did not persist the played turn",
+  );
+  await assertEventually(
+    async () => {
+      if (findChatRequest("Dice Estate strategy decision module")) return true;
+      const action = page.locator(
+        '#actions button[data-action]:not([disabled]):not([data-action="toggle-agent-speed"]):not([data-action="skip-agent-show"])',
+      ).first();
+      if (await action.isVisible().catch(() => false)) {
+        await action.click({ force: true, timeout: 500 }).catch(() => undefined);
+      }
+      return false;
+    },
+    "Dice Estate did not route an Agent decision through Hub GPT",
+    30_000,
+  );
+
+  const chessRequest = findChatRequest("chess coach");
+  const diceRequest = findChatRequest("Dice Estate strategy decision module");
+  assert.ok(chessRequest, "Chess coach request did not reach the routing upstream");
+  assert.ok(diceRequest, "Dice Estate decision did not reach the routing upstream");
+  assert.equal(JSON.parse(chessRequest.body).model, "gpt-e2e");
+  assert.equal(JSON.parse(diceRequest.body).model, "gpt-e2e");
+
+  const observability = (await readFile(path.join(runtimeDirectory, "observability-events.jsonl"), "utf8"))
+    .trim()
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
+  for (const projectId of ["ai-chess-duel", "dice-estate-duel"]) {
+    assert.ok(
+      observability.some((event) => event.eventType === "generate" && event.projectId === projectId && event.statusCode === 200),
+      `${projectId} was not recorded as a successful Hub generation`,
+    );
+  }
+
+  console.log(
+    `Local suite E2E passed: ${manifest.projects.length} tools, ${manifest.games.length} games, Hub GPT routing, and Fury screenshot at ${furyScreenshot}.`,
+  );
 } catch (error) {
   if (supervisor) {
     const output = supervisor.__capturedOutput?.() || "";
@@ -201,8 +361,31 @@ function sendJson(response, status, payload) {
   response.end(JSON.stringify(payload));
 }
 
-async function assertEventually(predicate, message) {
-  const deadline = Date.now() + 10_000;
+function findChatRequest(systemPromptFragment) {
+  return mockRequests.find(({ url, body }) => {
+    if (url !== "/v1/chat/completions") return false;
+    try {
+      const payload = JSON.parse(body);
+      return payload.messages?.some(
+        ({ role, content }) => role === "system" && String(content).includes(systemPromptFragment),
+      );
+    } catch {
+      return false;
+    }
+  });
+}
+
+async function assertNoBrowserCredentials(page, projectId) {
+  assert.equal(await page.locator('input[type="password"]').count(), 0, `${projectId} exposed a password input`);
+  assert.equal(
+    await page.locator('input[name*="api" i], input[id*="api-key" i], input[placeholder*="API Key" i]').count(),
+    0,
+    `${projectId} exposed an API Key input`,
+  );
+}
+
+async function assertEventually(predicate, message, timeoutMs = 10_000) {
+  const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     if (await predicate()) return;
     await new Promise((resolve) => setTimeout(resolve, 100));

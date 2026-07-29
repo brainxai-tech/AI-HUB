@@ -1,111 +1,112 @@
-# AI Project Hub
+# AI HUB
 
-## Local game services
-
-The one-click suite also starts the three dedicated board-game servers and serves both static games from the Hub:
-
-| Game | Local URL | Runtime |
-|---|---|---:|
-| AI Xiangqi Duel | `http://127.0.0.1:4211/xiangqi/` | 4211 |
-| AI Chess Duel | `http://127.0.0.1:4212/chess/` | 4212 |
-| AI Go Duel | `http://127.0.0.1:4213/go/` | 4213 |
-| Fury Flock | `http://127.0.0.1:4194/fury-flock/` | Hub 4194 |
-| Dice Estate Duel | `http://127.0.0.1:4194/hub/dice-estate/` | Hub 4194 |
-
-象棋服务首次随完整套件启动时，会自动下载官方固定版本
-[`Pikafish-2026-01-02`](https://github.com/official-pikafish/Pikafish/releases/tag/Pikafish-2026-01-02)，
-并在解压前校验发布资产的固定 SHA-256。引擎只缓存到被 Git 忽略的
-`.local-runtime/engines/`，仓库不提交压缩包或可执行文件；后续启动会校验并复用缓存。
-当前自动选择支持 Windows x64（优先）、Linux x64 和 macOS Apple Silicon；Linux 需要
-`7zz`、`7z` 或 `bsdtar` 之一。高级用户可预先设置 `PIKAFISH_PATH` 跳过自动下载。
-Pikafish 按 [GNU GPL v3](https://github.com/official-pikafish/Pikafish/blob/master/Copying.txt)
-发布，固定版本源码见[官方仓库](https://github.com/official-pikafish/Pikafish/tree/Pikafish-2026-01-02)。
-
-AI-HUB 集中展示 AI 项目，并提供统一的 AI Routing Key 配置、GPT 型号目录、项目独立型号选择和项目级模型代理。
+AI HUB 把 29 个 AI 工具和 5 款游戏放进同一个可复现仓库，并统一提供项目目录、GPT 型号目录、项目级模型代理和本地一键启动。用户从 GitHub 全新克隆后，只需在 Hub 配置一次自己的 AI Routing API Key；各项目页面不接收、保存或显示 API Key。
 
 ## 全新克隆与一键启动
+
+需要 Node.js 20 或更高版本，推荐使用 Node.js 24。
 
 ```powershell
 git clone https://github.com/brainxai-tech/AI-HUB.git
 cd AI-HUB
 npm run workspace:install
+npm run workspace:build
 npm run workspace:verify
 .\打开本地AI-HUB.cmd
 ```
 
-首次打开后进入 `http://127.0.0.1:4194/hub/key-config/`，只需在 Hub 配置一次自己的 AI Routing Key。之后所有非游戏 AI 项目都通过 Hub 项目级代理使用 GPT 型号；项目页面不填写、接收或保存 API Key。
+也可以在终端中运行：
 
-一键启动包含四个本地服务：
+```powershell
+npm run start:suite
+```
 
-| 服务 | 端口 | 用途 |
-|---|---:|---|
-| Hub | 4194 | 首页、Key 配置、统一模型目录、本地同源入口与项目级代理 |
-| shared-project-runtime | 4195 | 27 个共享项目的页面与 API 适配 |
-| AI PPT 汇报教练 | 4201 | 文件解析、GPT 汇报生成和 PPTX 导出 |
-| AI 工作汇报生成器 | 4202 | 日报、周报和月报生成 |
+打开 `http://127.0.0.1:4194/hub/`，再进入 `http://127.0.0.1:4194/hub/key-config/` 配置自己的 AI Routing API Key。Hub 只接受并展示 `gpt-*` 型号，所有模型感知工具和游戏都通过项目级服务端凭证调用 Hub；浏览器中没有供应商 Key、项目令牌或共享令牌。
 
-停止本地套件：
+停止完整套件：
 
 ```powershell
 .\stop-local-suite.ps1
 ```
 
-`start-ai-project-hub.cmd` 只启动 Hub 单进程，保留给网关调试；完整体验请使用上面的一键入口。
+`start-ai-project-hub.cmd` 只启动 Hub 单进程，适合网关调试；完整体验请使用一键套件。
+
+## 本地服务与游戏
+
+完整套件启动 7 个本地进程，并由 Hub 直接托管 2 款静态游戏：
+
+| 服务 | 端口 | 用途 |
+|---|---:|---|
+| Hub | 4194 | 首页、Key 配置、模型目录、项目代理、Fury Flock、Dice Estate |
+| shared-project-runtime | 4195 | 27 个共享运行时工具的页面和 API |
+| AI PPT 汇报教练 | 4201 | 专用工具服务 |
+| AI 工作汇报生成器 | 4202 | 专用工具服务 |
+| AI 象棋对弈 | 4211 | Next.js 专用游戏服务 |
+| AI 国际象棋 | 4212 | Next.js 专用游戏服务 |
+| AI 围棋 9 路 | 4213 | Next.js 专用游戏服务 |
+
+用户从 Hub 访问游戏时使用以下稳定地址：
+
+| 游戏 | Hub 地址 | AI / 运行边界 |
+|---|---|---|
+| AI 象棋对弈 | `http://127.0.0.1:4194/xiangqi/` | Pikafish 对弈，Hub GPT 可选讲解 |
+| AI 国际象棋 | `http://127.0.0.1:4194/chess/` | 本地规则 AI，Hub GPT 教练 |
+| AI 围棋 9 路 | `http://127.0.0.1:4194/go/` | 本地规则 AI，Hub GPT 教练 |
+| Fury Flock | `http://127.0.0.1:4194/fury-flock/` | Phaser / Canvas，本机进度存档 |
+| Dice Estate Duel | `http://127.0.0.1:4194/hub/dice-estate/` | Hub GPT Agent，非法或失败响应自动回退本地规则 |
+
+## Pikafish 自动安装
+
+象棋服务首次随完整套件启动时，会自动下载官方固定版本 [`Pikafish-2026-01-02`](https://github.com/official-pikafish/Pikafish/releases/tag/Pikafish-2026-01-02)。安装器在解压前校验固定 SHA-256，并在以后启动时重新校验、复用 `.local-runtime/engines/` 中的缓存。仓库不提交压缩包或可执行文件。
+
+自动安装支持：
+
+- Windows x64（优先使用系统 PowerShell 下载、系统 `tar` 解压）
+- Linux x64（需要 `7zz`、`7z` 或 `bsdtar`）
+- macOS Apple Silicon
+
+高级用户可预先设置 `PIKAFISH_PATH` 指向自己的兼容可执行文件，跳过自动下载。Pikafish 按 [GNU GPL v3](https://github.com/official-pikafish/Pikafish/blob/master/Copying.txt) 发布，固定版本源码见[官方仓库](https://github.com/official-pikafish/Pikafish/tree/Pikafish-2026-01-02)。
 
 ## 统一模型规则
-
-- Hub 只展示和接受 `gpt-*` 型号。
-- 每个项目通过页面顶部统一选择器独立保存当前 GPT 型号。
-- 浏览器只向项目同源 API 发送业务输入。
-- shared runtime 或专用项目服务端为请求注入项目身份，再调用 Hub。
-- 用户 Key 只保存在 Hub 服务端配置中，不回显到公开配置，也不会写进项目代码。
-
-统一调用链：
 
 ```text
 项目页面 -> 项目同源 /api -> shared/dedicated runtime -> Hub 项目级代理 -> AI Routing
 ```
 
-## 常用验证命令
+- Hub 只接受和展示 `gpt-*` 型号。
+- 每个项目独立继承或保存当前 GPT 型号。
+- 浏览器只向项目同源 API 发送业务输入。
+- 项目运行时注入项目身份和项目令牌，再调用 Hub。
+- 用户 Key 只保存在 Hub 服务端配置中，不回显到公开配置，也不写入源码、日志或构建产物。
+- Dice Estate 的模型只能选择服务端给出的合法动作；服务端回填合法参数，失败时自动使用确定性 Agent。
+
+## 验证
 
 ```powershell
-npm run verify
-npm run workspace:build
+npm test
 npm run workspace:verify
 npm run security:scan
 npm run e2e
 ```
 
-`workspace:verify` 会按 `deploy/project-manifest.json` 验证 29 个非游戏项目；`e2e` 使用本机模拟上游，不需要真实 Key，并验证 29 个项目页面、统一型号选择和工作汇报浏览器生成链路。
+`workspace:verify` 会验证 29 个工具和 4 个带独立依赖的游戏包；Hub 静态游戏 Dice Estate 由根仓库测试覆盖。`e2e` 使用本机模拟上游，不需要真实 Key，并验证 29 个工具路由、5 款游戏的浏览器操作、Hub GPT 型号、项目身份、浏览器存档和 Fury Flock Canvas 截图。
 
-## Hub API
+## 仓库结构
 
-```text
-GET  /hub/api/health
-GET  /hub/api/model-config
-PUT  /hub/api/model-config
-POST /hub/api/provider-models
-GET  /hub/api/project-model-selection
-PUT  /hub/api/project-model-selection
-POST /hub/api/chat
-POST /hub/api/v1/chat/completions
-```
+- `apps/<project-id>/`：29 个工具的可构建源码。
+- `games/`：象棋、国际象棋、围棋和 Fury Flock 源码。
+- `public/dice-estate/`：Dice Estate 的 Hub 静态游戏资源。
+- `packages/shared-project-runtime/`：共享页面服务和 API 适配层。
+- `public/`：Hub 首页、Key 配置页、统一选择器和共享视觉资源。
+- `deploy/project-manifest.json`：29 个 `projects` 和 5 个 `games` 的唯一运行清单。
+- `scripts/local-suite.mjs`：完整套件的进程监督、项目凭证和 Pikafish 准备。
+- `SOURCE-RECOVERY.md`：仅有服务器发布产物的项目恢复边界。
 
-生产环境中，配置写入需要 `X-Hub-Admin-Token`，项目模型调用需要项目级 `X-Hub-Project-Token`。这些口令都不得进入浏览器代码、Git、日志或构建产物。输入真实 Key 时必须使用 HTTPS、SSH 隧道或本机回环地址。
+不得提交 `.env`、真实 API Key、管理员令牌、项目令牌、SSH 私钥、`node_modules`、`.next`、本地日志、PID、用户数据、备份或下载的引擎文件。
 
-## 项目清单与源码约定
+## 生产发布与回滚
 
-- `apps/<project-id>/`：29 个非游戏项目。
-- `packages/shared-project-runtime/`：统一页面服务与 API 适配层。
-- `public/`：Hub 首页、Key 配置页、型号选择器和共享视觉资源。
-- `deploy/project-manifest.json`：项目 ID、路由、源码目录、技术栈和运行方式的唯一清单。
-- `SOURCE-RECOVERY.md`：仅有服务器 release 产物的项目会明确记录恢复边界，不声称拥有未恢复的 TS/TSX 源码。
-
-不得提交 `.env`、真实 API Key、管理员口令、项目口令、SSH 私钥、`node_modules`、`.next`、日志、PID、用户数据或备份目录。
-
-## 原子发布与回滚
-
-生产版本放在 `/opt/ai-project-hub/releases/<commit>`，`/opt/ai-project-hub/current` 只通过原子软链接切换。密钥与运行数据分别保存在 `/etc/ai-project-hub`、`/var/lib/ai-project-hub` 和 `/var/log/ai-project-hub`，不得打入 release。
+生产版本位于 `/opt/ai-project-hub/releases/<commit>`，`/opt/ai-project-hub/current` 只通过原子软链接切换。密钥与运行数据分别保存在 `/etc/ai-project-hub`、`/var/lib/ai-project-hub` 和 `/var/log/ai-project-hub`，不得打入 release。
 
 ```bash
 commit=$(git rev-parse --short HEAD)

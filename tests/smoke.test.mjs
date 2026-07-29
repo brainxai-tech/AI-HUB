@@ -99,8 +99,11 @@ test("dice estate game runtime is packaged for the Hub", async () => {
   const html = await readProjectFile("public/dice-estate/index.html");
   const app = await readProjectFile("public/dice-estate/app.js");
   assert.match(html, /href="\/hub\/">返回 AI HUB<\/a>/);
-  assert.match(app, /agentMode:\s*"deterministic"/);
-  assert.doesNotMatch(app, /<option value="auto"/);
+  assert.match(app, /agentMode:\s*"hub"/);
+  assert.match(app, /fetch\("\/api\/agent\/decision"/);
+  assert.match(app, /Hub GPT/);
+  assert.doesNotMatch(app, /agentMode\s*=\s*"deterministic"/);
+  assert.doesNotMatch(app, /<select id="agentMode"/);
 });
 
 test("all project covers have fingerprinted responsive AVIF and WebP variants", async () => {
