@@ -1,0 +1,32 @@
+{
+  "name": "ai-go-duel",
+  "version": "0.1.0",
+  "private": true,
+  "overrides": {
+    "postcss": "8.5.25",
+    "sharp": "0.35.3"
+  },
+  "scripts": {
+    "dev": "next dev -H 127.0.0.1",
+    "build": "next build",
+    "start": "next start -H 127.0.0.1",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sabaki/go-board": "^1.4.3",
+    "lucide-react": "latest",
+    "next": "16.2.12",
+    "react": "latest",
+    "react-dom": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "typescript": "6.0.3",
+    "vitest": "latest"
+  }
+}

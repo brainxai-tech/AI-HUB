@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#fff4d6" />
+    <meta name="description" content="怒羽突击：一款原创物理弹射浏览器游戏。" />
+    <link rel="icon" type="image/png" href="/assets/birds/scarlet.png" />
+    <title>怒羽突击 · Fury Flock</title>
+  </head>
+  <body>
+    <div id="site-portal" class="site-portal" aria-label="怒羽突击官方网站">
+      <header class="site-header">
+        <button class="site-brand" type="button" data-site-target="home" aria-label="返回官网首页">
+          <span class="site-brand-mark" aria-hidden="true"><img src="/assets/birds/scarlet.png" alt="" /></span>
+          <span><strong>怒羽突击</strong><small>FURY FLOCK</small></span>
+        </button>
+        <nav class="site-nav" aria-label="官网导航">
+          <button type="button" data-site-target="home" aria-current="page">首页</button>
+          <button type="button" data-site-target="mission">章节战役</button>
+          <button type="button" data-site-target="roster">怒羽图鉴</button>
+        </nav>
+        <button class="site-play-compact" type="button" data-site-planner>进入战役 <span aria-hidden="true">→</span></button>
+      </header>
+
+      <div class="site-pages">
+        <section class="site-page site-home is-active" data-site-page="home" aria-labelledby="site-home-title">
+          <div class="site-hero-copy">
+            <p class="site-kicker">晴空弹射行动</p>
+            <h1 id="site-home-title">松手！<br /><em>全线倾倒。</em></h1>
+            <p class="site-lede">四只怒羽，四十座堡垒。</p>
+            <div class="site-hero-actions">
+              <button class="site-primary-action" type="button" data-site-planner>查看章节 <span aria-hidden="true">↓</span></button>
+              <button class="site-secondary-action" type="button" data-site-target="roster">看小队 <span aria-hidden="true">→</span></button>
+            </div>
+            <dl class="site-facts" aria-label="游戏内容概览">
+              <div><dt>4</dt><dd>怒羽</dd></div>
+              <div><dt>40</dt><dd>堡垒</dd></div>
+              <div><dt>∞</dt><dd>连锁</dd></div>
+            </dl>
+          </div>
+
+          <div class="site-flight" aria-label="怒羽小队飞向暮云堡垒">
+            <span class="site-flight-line" aria-hidden="true"></span>
+            <img class="site-flight-bird scarlet" src="/assets/birds/scarlet.png" alt="赤羽先锋" />
+            <img class="site-flight-bird iron" src="/assets/birds/iron.png" alt="铁喙重炮" />
+            <img class="site-flight-bird gale" src="/assets/birds/gale.png" alt="风翎游侠" />
+            <img class="site-flight-bird verdant" src="/assets/birds/verdant.png" alt="翠影穿梭" />
+            <div class="site-flight-feathers" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          </div>
+
+        </section>
+
+        <section class="site-page site-mission" data-site-page="mission" aria-labelledby="site-mission-title" hidden>
+          <header class="site-page-intro site-mission-intro">
+            <p class="site-kicker">怒羽远征录</p>
+            <h1 id="site-mission-title">先选章节，再踏上战线。</h1>
+            <p>每一章都是一段完整远征。打开章节后，才能查看其中的关卡、堡垒结构与逐发编队。</p>
+          </header>
+
+          <section id="site-chapter-select" class="site-chapter-select" aria-labelledby="site-chapter-heading">
+            <button id="site-chapter-card" class="site-chapter-card" type="button" data-site-chapter="chapter-1-muyun-siege">
+              <span class="site-chapter-cover" aria-hidden="true">
+                <span class="site-chapter-number">CHAPTER 01</span>
+                <span class="site-chapter-badge">已开放</span>
+              </span>
+              <span class="site-chapter-copy">
+                <span class="site-chapter-kicker">第一章 · 晴空远征</span>
+                <strong id="site-chapter-heading">暮云破城</strong>
+                <span class="site-chapter-subtitle">从木桥前哨一路攻上万羽天门</span>
+                <span class="site-chapter-description">四十座不重复的堡垒串成一场完整远征：试翼、破阵、深入地宫，最后在天门前完成总攻。</span>
+              </span>
+              <span class="site-chapter-stats" aria-label="章节内容">
+                <span><strong>40</strong><small>关卡</small></span>
+                <span><strong>5</strong><small>战线</small></span>
+                <span><strong id="site-chapter-star-total">0/120</strong><small>星级</small></span>
+              </span>
+              <span class="site-chapter-enter">打开第一章 <span aria-hidden="true">→</span></span>
+            </button>
+          </section>
+
+          <section id="site-mission-planner" class="site-mission-planner" aria-labelledby="site-planner-title" hidden>
+            <div class="site-planner-chapter-bar">
+              <button id="site-chapter-back-button" type="button"><span aria-hidden="true">←</span> 返回章节</button>
+              <div><span>第一章</span><strong>暮云破城</strong><small>40 关 · 5 段战线</small></div>
+            </div>
+            <div class="site-planner-summary">
+              <div id="site-planner-preview" class="site-planner-preview" aria-hidden="true"></div>
+              <div class="site-planner-copy" aria-live="polite">
+                <span id="site-planner-level-number">第1关</span>
+                <h2 id="site-planner-title">木桥前哨</h2>
+                <p id="site-planner-level-subtitle">先试试承重点</p>
+                <small id="site-planner-level-meta">2 个目标 / 4 枚怒羽</small>
+                <span id="site-planner-best-stars" class="site-planner-best-stars" aria-label="历史最高 0 星">☆☆☆ 历史最高</span>
+              </div>
+              <div id="site-planner-star-requirements" class="site-planner-star-requirements" aria-label="本关星级要求"></div>
+              <button id="site-planner-start-button" class="site-planner-start" type="button" data-enter-game>
+                开始第1关 <span aria-hidden="true">➤</span>
+              </button>
+            </div>
+
+            <div class="site-planner-controls">
+              <div class="site-level-picker">
+                <div class="site-planner-label"><strong>选关</strong><small>五段战线 · 40 座堡垒</small></div>
+                <div id="site-level-route" class="site-level-route" role="group" aria-label="关卡选择"></div>
+              </div>
+              <div class="site-squad-picker">
+                <div class="site-planner-label"><strong>逐发编队</strong><small>先点槽位，再选小鸟</small></div>
+                <div class="site-squad-controls">
+                  <div id="site-ammo-loadout" class="site-ammo-loadout" role="group" aria-label="逐发小鸟编队"></div>
+                  <div id="site-bird-options" class="site-bird-options" role="group" aria-label="小鸟选择"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="site-page site-roster" data-site-page="roster" aria-labelledby="site-roster-title" hidden>
+          <header class="site-page-intro">
+            <p class="site-kicker">全员作战档案</p>
+            <h1 id="site-roster-title">战场图鉴</h1>
+            <p>看清四只现役怒羽与两名第二章增援的属性、特点与技能，也别低估堡垒里三种苔鼻猪的反制手段。</p>
+          </header>
+          <section class="site-codex-section" aria-labelledby="site-bird-codex-title">
+            <header><span>01</span><div><h2 id="site-bird-codex-title">怒羽小队</h2><p>第一章四名现役成员可以直接编队；第二章增援仅展示设计，暂不可装填。</p></div></header>
+            <div id="site-bird-codex" class="site-codex-grid site-bird-codex"></div>
+            <header class="site-future-roster-heading" aria-labelledby="site-future-bird-codex-title">
+              <span aria-hidden="true">02</span>
+              <div><p>CHAPTER 02 · LOCKED REINFORCEMENTS</p><h3 id="site-future-bird-codex-title">第二章增援预告</h3><small>能力与解锁条件已经设计；角色将在第二章发布后进入编队。</small></div>
+            </header>
+            <div id="site-future-bird-codex" class="site-codex-grid site-future-bird-codex"></div>
+          </section>
+          <section class="site-codex-section enemy" aria-labelledby="site-pig-codex-title">
+            <header><span>03</span><div><h2 id="site-pig-codex-title">苔鼻军团</h2><p>普通、装甲与远程三类目标，先认清威胁再寻找承重点。</p></div></header>
+            <div id="site-pig-codex" class="site-codex-grid site-pig-codex"></div>
+          </section>
+          <div class="site-page-cta"><p>档案看完，去打开第一章并安排出战顺序。</p><button type="button" data-site-planner>前往章节 <span>→</span></button></div>
+        </section>
+      </div>
+    </div>
+
+    <button id="site-return-button" class="site-return-button" type="button" hidden><span aria-hidden="true">⌂</span> 主站</button>
+    <main id="app">
+      <section class="game-shell" aria-label="怒羽突击游戏">
+        <div id="game-container" aria-label="游戏画面"></div>
+        <div id="mission-launch-screen" class="mission-launch-screen" aria-hidden="true" aria-live="polite">
+          <span class="launch-feather" aria-hidden="true"></span>
+          <strong>正在部署怒羽小队</strong>
+          <small>暮云作战台正在校准弹道…</small>
+        </div>
+
+        <section id="loadout-screen" class="loadout-screen visible" aria-label="战前整备" aria-hidden="false">
+          <div class="loadout-sky" aria-hidden="true"><i></i><i></i><i></i></div>
+          <header class="loadout-header">
+            <div class="loadout-brand">
+              <span class="brand-mark" aria-hidden="true">✦</span>
+              <span><strong>怒羽突击</strong><small>暮云作战台</small></span>
+            </div>
+            <div class="loadout-tools">
+              <span class="loadout-kicker">战前整备 · 全关卡开放</span>
+              <button id="loadout-sound-button" class="loadout-tool-button" type="button" aria-label="关闭音效">
+                <span aria-hidden="true">♫</span> 音效开
+              </button>
+            </div>
+          </header>
+
+          <div class="loadout-layout">
+            <section class="mission-select" aria-labelledby="mission-heading">
+              <div class="loadout-section-heading">
+                <div><span>山谷作战路线</span><h1 id="mission-heading">选择进攻目标</h1></div>
+                <small>← → 切换关卡</small>
+              </div>
+              <nav id="level-route" class="level-route" aria-label="关卡选择"></nav>
+
+              <article class="mission-preview">
+                <div id="fortress-preview" class="fortress-preview" aria-hidden="true">
+                  <span class="fortress-moon"></span>
+                  <div id="fortress-miniature" class="fortress-miniature"></div>
+                </div>
+                <div class="mission-copy">
+                  <span id="selected-level-number" class="eyebrow">第1关</span>
+                  <h2 id="selected-level-name">木桥前哨</h2>
+                  <p id="selected-level-subtitle">先试试承重点</p>
+                  <div id="selected-level-meta" class="mission-meta"></div>
+                  <div id="selected-level-materials" class="material-tags"></div>
+                  <div id="selected-level-best-stars" class="selected-level-best-stars" aria-label="历史最高 0 星">☆☆☆ 历史最高</div>
+                  <div id="selected-level-star-requirements" class="selected-level-star-requirements" aria-label="本关星级要求"></div>
+                </div>
+              </article>
+            </section>
+
+            <aside class="bird-select" aria-labelledby="bird-heading">
+              <div class="loadout-section-heading compact">
+                <div><span>怒羽小队</span><h2 id="bird-heading">逐发编队</h2></div>
+                <small>1–5 选槽 · ↑ ↓ 换鸟</small>
+              </div>
+              <div class="ammo-loadout-panel">
+                <div class="ammo-loadout-heading"><span>装填顺序</span><small>左 → 右依次发射</small></div>
+                <div id="ammo-loadout" class="ammo-loadout" role="group" aria-label="逐发小鸟弹药编队"></div>
+              </div>
+              <div id="bird-options" class="bird-options" role="group" aria-label="小鸟选择"></div>
+              <div class="bird-detail" aria-live="polite">
+                <div id="selected-bird-avatar" class="bird-avatar generated large" aria-hidden="true">
+                  <img src="/assets/birds/scarlet.png" alt="" />
+                </div>
+                <div class="bird-detail-copy">
+                  <span id="selected-bird-role" class="eyebrow">稳定直击</span>
+                  <h3 id="selected-bird-name">赤羽先锋</h3>
+                  <p id="selected-bird-description"></p>
+                </div>
+              </div>
+              <div class="bird-stats" aria-label="小鸟能力">
+                <div><span>破坏力</span><b id="bird-power"></b></div>
+                <div><span>弹道高度</span><b id="bird-arc"></b></div>
+                <div><span>操控性</span><b id="bird-control"></b></div>
+              </div>
+              <p id="bird-recommendation" class="recommendation"></p>
+            </aside>
+          </div>
+
+          <footer class="loadout-footer">
+            <p><strong>轻松操作</strong><span>拖拽瞄准 · 松手发射 · 特殊能力自动触发</span></p>
+            <button id="mission-start-button" class="mission-start-button" type="button">开始第1关 <span>➤</span></button>
+          </footer>
+        </section>
+
+        <header class="topbar">
+          <div class="brand" aria-label="怒羽突击">
+            <span class="brand-mark" aria-hidden="true">✦</span>
+            <span><strong>怒羽突击</strong><small>FURY FLOCK</small></span>
+          </div>
+          <div class="stage-chip"><span>关卡</span><strong id="level-value">1 / 40</strong></div>
+          <div class="score-chip"><span>战果</span><strong id="score-value">000000</strong></div>
+        </header>
+
+        <aside class="ammo-panel" aria-label="剩余怒羽">
+          <span id="ammo-label" class="eyebrow">赤羽先锋</span>
+          <div id="ammo-value" class="ammo-icons" aria-live="polite"></div>
+        </aside>
+
+        <div id="combo-chip" class="combo-chip" aria-live="polite">连锁 ×2</div>
+
+        <div id="hint" class="hint" aria-live="polite">
+          <span class="mouse-icon" aria-hidden="true"></span>
+          <span id="hint-text">拖拽怒羽瞄准，或点右下角「发射」</span>
+        </div>
+
+        <nav class="game-actions" aria-label="游戏操作">
+          <button id="fire-button" class="fire-button" type="button" aria-label="一键发射">发射 <span aria-hidden="true">➤</span></button>
+          <button id="sound-button" class="icon-button" type="button" aria-label="关闭音效" title="音效">♫</button>
+          <button id="pause-button" class="icon-button" type="button" aria-label="暂停" title="暂停">Ⅱ</button>
+          <button id="restart-button" class="icon-button" type="button" aria-label="重开本关" title="重开本关">↻</button>
+        </nav>
+
+        <div id="result-overlay" class="overlay" aria-hidden="true">
+          <div class="result-card">
+            <span id="result-kicker" class="eyebrow">阵地清除</span>
+            <h1 id="result-title">漂亮一击！</h1>
+            <p id="result-copy">果冻盗贼的堡垒已经瓦解。</p>
+            <div id="result-star-panel" class="result-star-panel">
+              <div id="result-stars" class="result-stars" aria-label="本次 0 星"><i>☆</i><i>☆</i><i>☆</i></div>
+              <strong id="result-star-record">本次 0 星 · 历史最高 0 星</strong>
+              <div id="result-star-requirements" class="result-star-requirements" aria-label="本关星级要求"></div>
+            </div>
+            <div class="result-stats">
+              <div><span>本关得分</span><strong id="result-score">0</strong></div>
+              <div><span>最佳连锁</span><strong id="result-combo">×1</strong></div>
+              <div><span>本次星级</span><strong id="result-star-count">0 / 3</strong></div>
+            </div>
+            <div class="result-actions">
+              <button id="result-button" class="primary-button" type="button">下一关 <span>→</span></button>
+              <button id="result-loadout-button" class="secondary-button" type="button">返回本章选关</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <p class="rotate-note">横屏体验更佳 · 支持鼠标与触屏</p>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

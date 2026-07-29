@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">AI Chess Duel</title>
+  <desc id="desc">A chess knight on a green and gold board.</desc>
+  <rect width="128" height="128" rx="24" fill="#13231f"/>
+  <path d="M24 92h80v13H24z" fill="#e7c873"/>
+  <path d="M37 83h54l7 9H30z" fill="#f7f2dd"/>
+  <path d="M44 75c4-14 11-23 20-29-5-1-11-4-14-10 12-3 23 1 31 11 7 9 10 21 8 28z" fill="#f7f2dd"/>
+  <path d="M67 34c7 1 13 4 18 10l-4 5c-5-5-10-8-16-9z" fill="#e7c873"/>
+  <circle cx="59" cy="48" r="4" fill="#13231f"/>
+  <path d="M49 63c10 4 23 4 34-2" fill="none" stroke="#13231f" stroke-width="5" stroke-linecap="round"/>
+  <path d="M24 24h16v16H24zm16 16h16v16H40zm16-16h16v16H56zm16 16h16v16H72zm16-16h16v16H88z" fill="#2e6f63" opacity=".7"/>
+</svg>

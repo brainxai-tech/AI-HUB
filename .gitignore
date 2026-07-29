@@ -49,6 +49,9 @@ project-client.env
 work-*.log
 *.log
 *.pid
+*.tsbuildinfo
+test-results/
+playwright-report/
 *.pfx
 *.p12
 *.crt
