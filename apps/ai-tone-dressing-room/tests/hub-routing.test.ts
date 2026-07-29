@@ -53,7 +53,7 @@ describe("recovered Hub routing artifacts", () => {
 
   it("sends project identity and token to the Hub boundary", async () => {
     let capturedHeaders: Headers | undefined;
-    const fetchImpl = vi.fn(async (_url: string | URL, init?: RequestInit) => {
+    const fetchImpl = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
       capturedHeaders = new Headers(init?.headers);
       return new Response(JSON.stringify({ choices: [{ message: { content: "{}" } }] }), { status: 200 });
     });
