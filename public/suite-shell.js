@@ -24,9 +24,7 @@
   const legacyModelFieldPattern = /(?:^|[-_.\s])(?:provider|vendor|model)(?:$|[-_.\s])|供应商|提供商|模型/i;
   let sanitizingLegacyUi = false;
 
-  document.documentElement.classList.add("suite-enhanced-root");
-  document.documentElement.dataset.suiteId = projectId;
-  document.documentElement.dataset.suiteKind = suiteKind;
+  applySuiteIdentity();
 
   loadPickerStyles();
   if (suiteKind === "tool") {
@@ -36,6 +34,7 @@
   recordRecentVisit();
 
   const ensureShell = () => {
+    applySuiteIdentity();
     document.body.classList.add("suite-enhanced");
     document.body.dataset.suiteId = projectId;
     document.body.dataset.suiteKind = suiteKind;
@@ -276,15 +275,18 @@
     if (document.querySelector('link[data-suite-tool-foundation]')) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "/hub/suite-tool-foundation.css?v=20260728-tool-foundation4";
+    link.href = "/hub/suite-tool-foundation.css?v=20260730-signal-routing1";
     link.dataset.suiteToolFoundation = "true";
     document.head.append(link);
   }
 
   function loadProjectStyles() {
     const projectStyleVersions = {
-      idol: "20260729-idol1",
-      qisheng: "20260729-qisheng2",
+      idol: "20260730-idol2",
+      qisheng: "20260730-qisheng3",
+      tarot: "20260730-tarot1",
+      grassland: "20260730-grassland1",
+      elder: "20260730-elder1",
     };
     const version = projectStyleVersions[projectId];
     if (!version || document.querySelector("link[data-suite-project-styles]")) return;
@@ -590,6 +592,12 @@
     if (!firstSegment) return "";
     if (firstSegment !== "hub") return `/${firstSegment}`;
     return projectId !== "hub" && segments[1] ? `/hub/${segments[1]}` : "";
+  }
+
+  function applySuiteIdentity() {
+    document.documentElement.classList.add("suite-enhanced-root");
+    document.documentElement.dataset.suiteId = projectId;
+    document.documentElement.dataset.suiteKind = suiteKind;
   }
 
   function inferSuiteKind(id, pathname) {

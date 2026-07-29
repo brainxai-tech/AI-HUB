@@ -47,18 +47,21 @@
           </div>
         </section>
         <p id="mobileStatus" class="mobile-status" aria-live="polite">R1 · 林浩 · 等待掷骰</p>
-        <button
-          id="menuButton"
-          class="menu-button"
-          type="button"
-          data-action="toggle-menu"
-          aria-label="打开游戏菜单"
-          aria-controls="pauseMenu"
-          aria-expanded="false"
-        >
-          <span aria-hidden="true">☰</span>
-          <span>菜单</span>
-        </button>
+        <div class="topbar-actions">
+          <a class="hub-home-link" href="/hub/" aria-label="返回 AI HUB"><span aria-hidden="true">↗</span><span class="hub-home-label">AI HUB</span></a>
+          <button
+            id="menuButton"
+            class="menu-button"
+            type="button"
+            data-action="toggle-menu"
+            aria-label="打开游戏菜单"
+            aria-controls="pauseMenu"
+            aria-expanded="false"
+          >
+            <span aria-hidden="true">☰</span>
+            <span>菜单</span>
+          </button>
+        </div>
       </header>
 
       <button id="menuBackdrop" class="menu-backdrop" type="button" data-action="close-menu" aria-label="关闭游戏菜单" hidden></button>

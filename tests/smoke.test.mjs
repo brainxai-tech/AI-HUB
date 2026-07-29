@@ -237,6 +237,9 @@ test("Hub shell transfer stays below 1.5 MiB before lazy cover loading", async (
     "public/suite-shell.js",
     "public/project-themes/idol.css",
     "public/project-themes/qisheng.css",
+    "public/project-themes/tarot.css",
+    "public/project-themes/grassland.css",
+    "public/project-themes/elder.css",
     "public/capabilities.js",
     "public/projects.js",
     "public/cover-manifest.js",
@@ -561,15 +564,21 @@ test("shared project shell resolves nested Hub project API paths", async () => {
 });
 
 test("shared shell loads project-specific design corrections without changing games", async () => {
-  const [shell, idolTheme, qishengTheme] = await Promise.all([
+  const [shell, idolTheme, qishengTheme, tarotTheme, grasslandTheme, elderTheme] = await Promise.all([
     readProjectFile("public/suite-shell.js"),
     readProjectFile("public/project-themes/idol.css"),
     readProjectFile("public/project-themes/qisheng.css"),
+    readProjectFile("public/project-themes/tarot.css"),
+    readProjectFile("public/project-themes/grassland.css"),
+    readProjectFile("public/project-themes/elder.css"),
   ]);
 
   assert.match(shell, /function loadProjectStyles/);
-  assert.match(shell, /idol: "20260729-idol1"/);
-  assert.match(shell, /qisheng: "20260729-qisheng2"/);
+  assert.match(shell, /idol: "20260730-idol2"/);
+  assert.match(shell, /qisheng: "20260730-qisheng3"/);
+  assert.match(shell, /tarot: "20260730-tarot1"/);
+  assert.match(shell, /grassland: "20260730-grassland1"/);
+  assert.match(shell, /elder: "20260730-elder1"/);
   assert.match(shell, /project-themes\/\$\{encodeURIComponent\(projectId\)\}\.css/);
   assert.match(shell, /"匹配实验室"/);
   assert.match(shell, /"陪伴设置"/);
@@ -579,6 +588,16 @@ test("shared shell loads project-specific design corrections without changing ga
   assert.match(qishengTheme, /data-suite-kind="tool"\]\[data-suite-id="qisheng"/);
   assert.match(qishengTheme, /prefers-reduced-motion/);
   assert.doesNotMatch(qishengTheme, /data-suite-kind="game"/);
+  assert.match(tarotTheme, /data-suite-kind="tool"\]\[data-suite-id="tarot"/);
+  assert.match(tarotTheme, /--tarot-gold:/);
+  assert.match(grasslandTheme, /data-suite-kind="tool"\]\[data-suite-id="grassland"/);
+  assert.match(grasslandTheme, /--grassland-sun:/);
+  assert.match(elderTheme, /data-suite-kind="tool"\]\[data-suite-id="elder"/);
+  assert.match(elderTheme, /font-size:\s*18px/);
+  for (const theme of [tarotTheme, grasslandTheme, elderTheme]) {
+    assert.match(theme, /prefers-reduced-motion/);
+    assert.doesNotMatch(theme, /data-suite-kind="game"/);
+  }
 });
 
 test("board game browsers expose only their dedicated Hub GPT display", async () => {
@@ -594,6 +613,22 @@ test("board game browsers expose only their dedicated Hub GPT display", async ()
     assert.doesNotMatch(source, /<input[^>]+value=\{model\}/);
     assert.match(source, /\/api\/provider\/test/);
     assert.match(source, /Hub GPT/);
+  }
+});
+
+test("every game exposes a lightweight return to AI HUB without loading the tool shell", async () => {
+  const sources = await Promise.all([
+    readProjectFile("games/ai-xiangqi-duel/src/components/xiangqi-app.tsx"),
+    readProjectFile("games/ai-chess-duel/src/components/chess-app.tsx"),
+    readProjectFile("games/ai-go-duel/src/components/go-app.tsx"),
+    readProjectFile("games/fury-flock/index.html"),
+    readProjectFile("public/dice-estate/index.html"),
+  ]);
+
+  for (const source of sources) {
+    assert.match(source, /href=["']\/hub\/["']/);
+    assert.match(source, /(?:game-hub-link|hub-home-link|site-hub-link)/);
+    assert.doesNotMatch(source, /suite-tool-foundation\.css/);
   }
 });
 

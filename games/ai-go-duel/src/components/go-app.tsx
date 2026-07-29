@@ -173,15 +173,20 @@ export function GoApp() {
             <h1>AI 围棋 9路</h1>
             <p className="game-subtitle">合法落子、提子、禁自杀、禁立即打劫</p>
           </div>
-          <div className={`turn-pill ${thinking ? "thinking" : ""}`}>
-            <CircleDot size={18} />
-            {isGameOver
-              ? "双方停一手，对局结束"
-              : thinking
-                ? "AI 思考中"
-                : state.next === "black"
-                  ? "黑棋行棋"
-                  : "白棋行棋"}
+          <div className="game-header-actions">
+            <a className="hub-home-link" href="/hub/">
+              AI HUB
+            </a>
+            <div className={`turn-pill ${thinking ? "thinking" : ""}`}>
+              <CircleDot size={18} />
+              {isGameOver
+                ? "双方停一手，对局结束"
+                : thinking
+                  ? "AI 思考中"
+                  : state.next === "black"
+                    ? "黑棋行棋"
+                    : "白棋行棋"}
+            </div>
           </div>
         </header>
 

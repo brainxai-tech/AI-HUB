@@ -1,23 +1,23 @@
 :root {
-  --suite-bg: #f7f9fc;
-  --suite-bg-soft: #eef3f8;
+  --suite-bg: #f3f6fa;
+  --suite-bg-soft: #e9eff6;
   --suite-surface: #ffffff;
-  --suite-surface-soft: #f3f6fa;
-  --suite-text: #172033;
-  --suite-muted: #5b667a;
-  --suite-subtle: #7a8495;
-  --suite-border: #d9e2ee;
-  --suite-primary: #2563eb;
-  --suite-primary-strong: #1d4ed8;
-  --suite-accent: #f97316;
-  --suite-accent-soft: rgba(249, 115, 22, 0.1);
-  --suite-success: #0f766e;
+  --suite-surface-soft: #f7f9fc;
+  --suite-text: #111b2e;
+  --suite-muted: #526176;
+  --suite-subtle: #77859a;
+  --suite-border: #d6dfeb;
+  --suite-primary: #3457e8;
+  --suite-primary-strong: #2744c7;
+  --suite-accent: #ff6b3d;
+  --suite-accent-soft: rgba(255, 107, 61, 0.1);
+  --suite-success: #0b7a70;
   --suite-warning: #b45309;
   --suite-danger: #dc2626;
-  --suite-radius: 8px;
-  --suite-radius-sm: 6px;
-  --suite-shadow: 0 14px 34px rgba(18, 32, 54, 0.08);
-  --suite-shadow-sm: 0 6px 18px rgba(18, 32, 54, 0.055);
+  --suite-radius: 14px;
+  --suite-radius-sm: 10px;
+  --suite-shadow: 0 14px 34px rgba(17, 27, 46, 0.09);
+  --suite-shadow-sm: 0 6px 18px rgba(17, 27, 46, 0.055);
   --suite-focus: 0 0 0 3px color-mix(in srgb, var(--suite-primary) 22%, transparent);
   --suite-font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
@@ -138,10 +138,10 @@ body.suite-enhanced[data-suite-id="elder"] {
 }
 
 body.suite-enhanced[data-suite-id="hub"] {
-  --suite-primary: #2563eb;
-  --suite-primary-strong: #1d4ed8;
-  --suite-accent: #f97316;
-  --suite-bg-soft: #eef4ff;
+  --suite-primary: #3457e8;
+  --suite-primary-strong: #2744c7;
+  --suite-accent: #ff6b3d;
+  --suite-bg-soft: #e9eff6;
 }
 
 body.suite-enhanced button,
@@ -519,7 +519,7 @@ body.suite-enhanced :is(
 }
 
 body.suite-enhanced :is(
-  input,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
   textarea,
   select,
   .api-key-input,
@@ -743,8 +743,15 @@ body.suite-enhanced[data-suite-id="hub"] .project-card::before {
   content: "";
   position: absolute;
   inset: 0 0 auto;
-  height: 3px;
-  background: linear-gradient(90deg, var(--suite-primary), var(--suite-accent));
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--suite-primary) 0 68%,
+    transparent 68% 72%,
+    var(--suite-accent) 72% 84%,
+    var(--suite-success) 84% 94%,
+    transparent 94%
+  );
 }
 
 body.suite-enhanced[data-suite-id="hub"] .project-card::after {

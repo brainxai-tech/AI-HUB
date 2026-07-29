@@ -65,7 +65,8 @@ button.board-point:disabled {
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
-summary:focus-visible {
+summary:focus-visible,
+.hub-home-link:focus-visible {
   outline: 3px solid rgba(15, 111, 95, 0.28);
   outline-offset: 3px;
 }
@@ -103,6 +104,39 @@ summary:focus-visible {
   color: #f7f1e4;
   grid-area: intro;
   padding: clamp(22px, 4vw, 36px);
+}
+
+.hub-home-link {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  display: inline-flex;
+  font-size: 0.76rem;
+  font-weight: 800;
+  min-height: 34px;
+  padding: 0 11px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.setup-intro .hub-home-link {
+  float: right;
+  border-color: rgba(143, 208, 189, 0.38);
+  color: #bce1d6;
+}
+
+.hub-home-link:hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.game-header-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .setup-intro .eyebrow {
@@ -1129,6 +1163,11 @@ h2 {
   }
 
   .turn-pill {
+    flex: 1 1 auto;
+  }
+
+  .game-header-actions {
+    justify-content: space-between;
     width: 100%;
   }
 
