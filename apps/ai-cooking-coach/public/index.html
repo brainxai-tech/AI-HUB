@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="zh-CN" >
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>轻食备餐教练</title>
+    <link rel="icon" href="./assets/meal-prep-board.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="/hub/suite-theme.css?v=20260628-suite2" />
+  </head>
+  <body >
+    <div class="app-shell">
+      <aside class="side-rail">
+        <div class="brand-block">
+          <span class="brand-mark">LC</span>
+          <div>
+            <p class="eyebrow">Local AI Planner</p>
+            <h1>轻食备餐教练</h1>
+          </div>
+        </div>
+        <nav class="side-menu" aria-label="页面菜单">
+          <button class="side-menu-link active" type="button" data-screen="homeScreen" aria-controls="homeScreen" aria-current="page">
+            <span>01</span>
+            <strong>产品首页</strong>
+          </button>
+          <button class="side-menu-link" type="button" data-screen="plannerScreen" aria-controls="plannerScreen">
+            <span>02</span>
+            <strong>规划</strong>
+          </button>
+          <button class="side-menu-link" type="button" data-screen="commandCenterScreen" aria-controls="commandCenterScreen">
+            <span>03</span>
+            <strong>执行中心</strong>
+          </button>
+          <button class="side-menu-link" type="button" data-screen="historyReviewScreen" aria-controls="historyReviewScreen">
+            <span>04</span>
+            <strong>历史复盘</strong>
+          </button>
+          <button class="side-menu-link" type="button" data-screen="menuLibraryScreen" aria-controls="menuLibraryScreen">
+            <span>05</span>
+            <strong>菜单大全</strong>
+          </button>
+        </nav>
+        <img class="board-art" src="./assets/meal-prep-board.svg" alt="一周备餐看板">
+        <div class="metrics-strip" aria-label="默认规划指标">
+          <div>
+            <strong id="metricDays">7</strong>
+            <span>天计划</span>
+          </div>
+          <div>
+            <strong id="metricCalories">1500</strong>
+            <span>kcal</span>
+          </div>
+          <div>
+            <strong id="metricFamily">2</strong>
+            <span>人份</span>
+          </div>
+        </div>
+        <div class="privacy-note">
+          <span>本地草稿</span>
+          <span>自动生成</span>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <section class="app-screen home-screen active" id="homeScreen" aria-label="产品首页">
+          <div class="home-copy">
+            <p class="eyebrow">AI Cooking Coach</p>
+            <h2>把一周轻食备餐，压成一张能执行的清单。</h2>
+            <p class="home-lede">
+              轻食备餐教练面向想稳定减脂、又不想每天临时想菜的人。它把家庭人数、每日热量、口味偏好、现有食材和本地营养库放在一起，生成中式家常的一周菜单、采购清单和批量备餐节奏。
+            </p>
+
+            <ul class="home-feature-list" aria-label="产品能力">
+              <li>填写家庭人数、热量目标和口味偏好后，系统会自动生成一周备餐方案。</li>
+              <li>菜单大全给出可检索菜谱，食材营养库按每克数据估算采购营养。</li>
+              <li>输出覆盖周计划、采购、备餐三段流程，适合直接照着执行。</li>
+            </ul>
+
+            <div class="home-actions">
+              <button class="primary-button nav-button" type="button" data-screen="plannerScreen">开始规划</button>
+              <button class="secondary-button nav-button" type="button" data-screen="commandCenterScreen">打开执行中心</button>
+              <button class="secondary-button nav-button" type="button" data-screen="historyReviewScreen">查看复盘</button>
+              <button class="secondary-button nav-button" type="button" data-screen="menuLibraryScreen">浏览菜单</button>
+            </div>
+          </div>
+
+          <div class="home-proof" aria-label="产品数据亮点">
+            <div class="home-visual-card">
+              <img class="home-visual" src="./assets/meal-prep-board.svg" alt="一周备餐看板">
+              <small>从目标到饭盒，把模糊饮食计划变成可执行的家庭备餐清单。</small>
+            </div>
+            <div>
+              <span>Planning</span>
+              <strong>7 天</strong>
+              <small>固定一周节奏，兼顾午餐带饭、晚餐轻负担和周日批量处理。</small>
+            </div>
+            <div>
+              <span>Nutrition</span>
+              <strong>13,693</strong>
+              <small>本地营养库支撑采购项营养估算，减少凭感觉配菜。</small>
+            </div>
+            <div>
+              <span>Output</span>
+              <strong>3 段</strong>
+              <small>周计划、采购清单、备餐流程并排生成，方便复盘和调整。</small>
+            </div>
+          </div>
+        </section>
+
+        <section class="app-screen planner-screen" id="plannerScreen" aria-labelledby="plannerTitle" hidden>
+          <div class="planner-panel" id="plannerPanel">
+            <div class="section-heading">
+              <p class="eyebrow">Plan Workspace</p>
+              <h2 id="plannerTitle">规划</h2>
+            </div>
+
+            <form id="plannerForm" class="planner-form">
+              <div class="section-heading compact-heading">
+                <p class="eyebrow">Input</p>
+                <h3>目标与厨房约束</h3>
+              </div>
+
+              <div class="form-grid">
+                <label>
+                  <span>家庭人数</span>
+                  <input id="familySize" name="familySize" type="number" min="1" max="8" value="2">
+                </label>
+                <label>
+                  <span>每日热量</span>
+                  <input id="targetCalories" name="targetCalories" type="number" min="1000" max="3200" step="50" value="1500">
+                </label>
+                <label>
+                  <span>预算</span>
+                  <input id="budget" name="budget" value="每周 400-600 元">
+                </label>
+              </div>
+
+              <label>
+                <span>减脂目标</span>
+                <textarea id="goal" name="goal" rows="2">健康减脂，高蛋白，高纤维，午餐适合带饭，晚餐不太撑</textarea>
+              </label>
+              <label>
+                <span>口味偏好</span>
+                <input id="cuisine" name="cuisine" value="中式家常，少油少糖，偶尔日式">
+              </label>
+              <div class="form-grid two">
+                <label>
+                  <span>过敏/禁忌</span>
+                  <input id="allergies" name="allergies" placeholder="例如：花生、虾蟹">
+                </label>
+                <label>
+                  <span>不喜欢</span>
+                  <input id="dislikes" name="dislikes" value="肥肉，动物内脏，香菜">
+                </label>
+              </div>
+              <div class="form-grid two">
+                <label>
+                  <span>备餐时间</span>
+                  <input id="prepTime" name="prepTime" value="周日 2 小时，工作日 30 分钟">
+                </label>
+                <label>
+                  <span>厨房设备</span>
+                  <input id="equipment" name="equipment" value="电饭煲，炒锅，空气炸锅">
+                </label>
+              </div>
+              <label>
+                <span>现有食材</span>
+                <textarea id="pantry" name="pantry" rows="2" placeholder="例如：鸡胸肉、鸡蛋、糙米、西兰花"></textarea>
+              </label>
+
+              <div class="button-row">
+                <button class="primary-button" type="submit">生成备餐计划</button>
+              </div>
+            </form>
+
+            <section class="agent-panel" id="cookingAgentPanel" aria-labelledby="agentTitle">
+              <div class="agent-header">
+                <div>
+                  <p class="eyebrow">Agent</p>
+                  <h3 id="agentTitle">家庭备餐 Agent</h3>
+                </div>
+                <div class="agent-badges" aria-label="Agent 运行状态">
+                  <span id="agentProvider">智能规划</span>
+                  <span id="agentReadiness">执行清单已就绪</span>
+                  <span id="agentModelPolicy">周计划 / 采购 / 备餐</span>
+                </div>
+              </div>
+
+              <div class="agent-summary-grid">
+                <article>
+                  <span>01</span>
+                  <strong>个性化备餐计划</strong>
+                  <small>家庭人数、计划天数、热量目标、口味偏好</small>
+                </article>
+                <article>
+                  <span>02</span>
+                  <strong>采购与费用估算</strong>
+                  <small>食材合并、预算控制、每项预计花费</small>
+                </article>
+                <article>
+                  <span>03</span>
+                  <strong>备餐执行指南</strong>
+                  <small>周日批量处理、工作日复热、冷藏冷冻</small>
+                </article>
+              </div>
+            </section>
+
+            <section class="result-panel" id="resultPanel" aria-labelledby="planTitle">
+              <div class="row-heading">
+                <div>
+                  <p class="eyebrow">Output</p>
+                  <h3 id="planTitle">输出</h3>
+                </div>
+                <div class="output-actions">
+                  <button class="secondary-button" id="copyButton" type="button" disabled>复制 MD</button>
+                  <button class="primary-button" id="downloadButton" type="button" disabled>下载 SVG</button>
+                </div>
+              </div>
+
+              <div class="status-banner" id="statusBanner">
+                <strong>Ready</strong>
+                <span>等待生成。</span>
+              </div>
+
+              <div class="tabs" role="tablist" aria-label="输出视图">
+                <button class="tab active" type="button" data-view="week" role="tab" aria-selected="true">周计划</button>
+                <button class="tab" type="button" data-view="shopping" role="tab" aria-selected="false">采购</button>
+                <button class="tab" type="button" data-view="prep" role="tab" aria-selected="false">备餐</button>
+              </div>
+
+              <section class="view active" id="weekView" aria-label="周计划输出"></section>
+              <section class="view" id="shoppingView" aria-label="采购输出"></section>
+              <section class="view" id="prepView" aria-label="备餐输出"></section>
+            </section>
+
+          </div>
+        </section>
+
+        <section class="app-screen command-center-screen" id="commandCenterScreen" aria-labelledby="commandCenterTitle" hidden>
+          <div class="command-center-shell">
+            <header class="command-center-header">
+              <div>
+                <p class="eyebrow">Kitchen Command Center</p>
+                <h2 id="commandCenterTitle">执行中心</h2>
+              </div>
+              <div class="command-center-status" id="commandCenterStatus">等待一份已生成的周计划</div>
+            </header>
+
+            <section class="command-empty" id="commandCenterEmpty">
+              <strong>还没有可执行计划</strong>
+              <span>先在“规划”里生成一份周备餐计划，执行中心会自动接管采购、备餐、每日烹饪和临时替换。</span>
+              <button class="primary-button nav-button" type="button" data-screen="plannerScreen">去生成计划</button>
+            </section>
+
+            <section class="command-center-board" id="commandCenterBoard" hidden>
+              <div class="command-overview">
+                <div class="command-metric-grid" id="commandMetricGrid"></div>
+                <aside class="next-task-card" id="commandNextTask"></aside>
+              </div>
+
+              <div class="command-day-tabs" id="commandDayTabs" role="tablist" aria-label="执行日期"></div>
+
+              <div class="command-main-grid">
+                <section class="today-cooking-panel" aria-labelledby="todayCookingTitle">
+                  <div class="row-heading">
+                    <div>
+                      <p class="eyebrow">Today</p>
+                      <h3 id="todayCookingTitle">今日烹饪</h3>
+                    </div>
+                  </div>
+                  <div class="today-cooking-grid" id="todayCookingView"></div>
+                </section>
+
+                <aside class="replacement-history" id="replacementHistory" aria-label="调整记录"></aside>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="app-screen history-review-screen" id="historyReviewScreen" aria-labelledby="historyReviewTitle" hidden>
+          <div class="history-review-shell">
+            <header class="history-review-header">
+              <div>
+                <p class="eyebrow">Weekly Memory Loop</p>
+                <h2 id="historyReviewTitle">历史复盘</h2>
+              </div>
+              <div class="history-review-status" id="historyReviewStatus">本地保存生成过的计划和执行复盘</div>
+            </header>
+
+            <div class="history-review-layout">
+              <section class="plan-history-panel" aria-labelledby="planHistoryTitle">
+                <div class="row-heading">
+                  <div>
+                    <p class="eyebrow">History</p>
+                    <h3 id="planHistoryTitle">计划历史</h3>
+                  </div>
+                  <span class="history-count" id="planHistoryCount">0</span>
+                </div>
+                <div class="plan-history-list" id="planHistoryList"></div>
+              </section>
+
+              <section class="weekly-review-panel" id="weeklyReviewPanel" aria-labelledby="weeklyReviewTitle">
+                <div class="row-heading">
+                  <div>
+                    <p class="eyebrow">Review</p>
+                    <h3 id="weeklyReviewTitle">周复盘</h3>
+                  </div>
+                  <div class="review-actions">
+                    <button class="secondary-button slim-button" id="exportWeekReviewButton" type="button">导出 MD</button>
+                    <button class="primary-button slim-button" id="generateWeekReviewButton" type="button">生成建议</button>
+                  </div>
+                </div>
+                <div class="weekly-review-content" id="weeklyReviewContent"></div>
+                <label class="weekly-feedback-field">
+                  <span>主观反馈</span>
+                  <textarea id="weeklyFeedback" rows="4" placeholder="例如：午餐重复、采购太复杂、晚餐太晚、某道菜很适合继续保留"></textarea>
+                </label>
+                <div class="weekly-review-suggestion" id="weeklyReviewSuggestion"></div>
+              </section>
+            </div>
+          </div>
+        </section>
+
+        <section class="app-screen menu-library-screen" id="menuLibraryScreen" aria-labelledby="menuLibraryTitle" hidden>
+          <div class="menu-library-shell">
+            <header class="menu-library-header">
+              <div>
+                <p class="eyebrow">Local Recipe Library</p>
+                <h2 id="menuLibraryTitle">菜单大全</h2>
+              </div>
+              <div class="menu-library-stats" aria-label="菜单库统计">
+                <span><strong id="menuLibraryCount">0</strong> 道菜</span>
+                <span><strong id="menuLibraryShown">0</strong> 当前显示</span>
+                <span>源食材索引</span>
+              </div>
+            </header>
+
+            <section class="menu-library-controls" aria-label="菜单大全筛选">
+              <label class="menu-search">
+                <span>检索</span>
+                <input id="menuSearchInput" type="search" placeholder="菜名、食材、风味、FDC ID" autocomplete="off">
+              </label>
+              <label>
+                <span>技法</span>
+                <select id="menuTechniqueSelect">
+                  <option value="">全部技法</option>
+                </select>
+              </label>
+              <label>
+                <span>风味</span>
+                <select id="menuFlavorSelect">
+                  <option value="">全部风味</option>
+                </select>
+              </label>
+            </section>
+
+            <section class="ingredient-filter-band" aria-label="常用食材筛选">
+              <div class="ingredient-filter-head">
+                <strong>高频食材</strong>
+                <button class="secondary-button slim-button" id="menuClearFilters" type="button">清除</button>
+              </div>
+              <div class="ingredient-chip-grid" id="menuIngredientChips"></div>
+            </section>
+
+            <section class="menu-result-toolbar" aria-live="polite">
+              <span id="menuLibraryStatus">正在加载本地菜单库...</span>
+            </section>
+
+            <section class="recipe-grid" id="menuRecipeGrid" aria-label="菜单大全列表"></section>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+    <script defer src="/hub/suite-shell.js?v=20260628-suite2" data-suite-project="AI · 备餐教练" data-suite-hub="/hub/"></script>
+  </body>
+</html>
