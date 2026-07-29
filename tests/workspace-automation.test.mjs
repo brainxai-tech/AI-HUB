@@ -25,6 +25,9 @@ test("one-click suite owns every documented tool and game port", async () => {
   assert.match(launcher, /4194\/fury-flock\//);
   assert.match(launcher, /4194\/hub\/dice-estate\//);
   assert.match(supervisor, /provisionLocalAccess/);
+  assert.match(supervisor, /provisionPikafish/);
+  assert.match(supervisor, /PIKAFISH_PATH/);
+  assert.match(supervisor, /game\.id === "ai-xiangqi-duel"/);
   assert.match(supervisor, /AIHUB_SERVE_PROJECT_UI/);
   assert.match(supervisor, /HUB_PROJECT_TOKEN: token/);
   assert.doesNotMatch(supervisor, /console\.log\([^\n]*token/i);

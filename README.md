@@ -12,6 +12,15 @@ The one-click suite also starts the three dedicated board-game servers and serve
 | Fury Flock | `http://127.0.0.1:4194/fury-flock/` | Hub 4194 |
 | Dice Estate Duel | `http://127.0.0.1:4194/hub/dice-estate/` | Hub 4194 |
 
+象棋服务首次随完整套件启动时，会自动下载官方固定版本
+[`Pikafish-2026-01-02`](https://github.com/official-pikafish/Pikafish/releases/tag/Pikafish-2026-01-02)，
+并在解压前校验发布资产的固定 SHA-256。引擎只缓存到被 Git 忽略的
+`.local-runtime/engines/`，仓库不提交压缩包或可执行文件；后续启动会校验并复用缓存。
+当前自动选择支持 Windows x64（优先）、Linux x64 和 macOS Apple Silicon；Linux 需要
+`7zz`、`7z` 或 `bsdtar` 之一。高级用户可预先设置 `PIKAFISH_PATH` 跳过自动下载。
+Pikafish 按 [GNU GPL v3](https://github.com/official-pikafish/Pikafish/blob/master/Copying.txt)
+发布，固定版本源码见[官方仓库](https://github.com/official-pikafish/Pikafish/tree/Pikafish-2026-01-02)。
+
 AI-HUB 集中展示 AI 项目，并提供统一的 AI Routing Key 配置、GPT 型号目录、项目独立型号选择和项目级模型代理。
 
 ## 全新克隆与一键启动

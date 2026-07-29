@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { provisionLocalAccess } from "./provision-local-runtime.mjs";
+import { provisionPikafish } from "./provision-pikafish.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const runtimeDirectory = path.resolve(process.env.AIHUB_LOCAL_RUNTIME_DIR || path.join(root, ".local-runtime"));
@@ -23,6 +24,9 @@ await mkdir(runtimeDirectory, { recursive: true });
 await rm(stopSignalPath, { force: true });
 await provisionLocalAccess({ manifestPath, registryPath, sharedPath: sharedCredentialsPath });
 const credentials = JSON.parse(readFileSync(sharedCredentialsPath, "utf8"));
+const pikafishPath = process.env.PIKAFISH_PATH?.trim() || (
+  await provisionPikafish({ runtimeDirectory: path.join(runtimeDirectory, "engines") })
+).enginePath;
 
 const hubOrigin = "http://127.0.0.1:4194";
 const sharedOrigin = "http://127.0.0.1:4195";
@@ -85,6 +89,7 @@ for (const game of dedicatedGames) {
     HUB_PROJECT_ID: game.id,
     HUB_PROJECT_PATH: game.route.replace(/\/$/, ""),
     HUB_PROJECT_TOKEN: token,
+    ...(game.id === "ai-xiangqi-duel" ? { PIKAFISH_PATH: pikafishPath } : {}),
   });
 }
 
