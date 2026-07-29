@@ -132,7 +132,7 @@ describe("provider gateway", () => {
         model: "other-model",
         messages: [],
         fetchImpl
-      })).rejects.toMatchObject<Partial<HubModelError>>({ code: "INVALID_MODEL" });
+      })).rejects.toMatchObject({ code: "INVALID_MODEL" } satisfies Partial<HubModelError>);
       expect(calls).toHaveLength(1);
     } finally {
       if (originalToken === undefined) delete process.env.HUB_PROJECT_TOKEN;
