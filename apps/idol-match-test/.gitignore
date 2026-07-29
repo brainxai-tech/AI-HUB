@@ -1,0 +1,10 @@
+node_modules/
+.next/
+out/
+dist/
+build/
+*.log
+dev-server.pid
+dev-server.port
+tsconfig.tsbuildinfo
+.env*
