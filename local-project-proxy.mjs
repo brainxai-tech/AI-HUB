@@ -18,7 +18,11 @@ export function createLocalProjectProxy(options = {}) {
   const manifestPath = path.resolve(options.manifestPath || "deploy/project-manifest.json");
   const sharedOrigin = normalizeLoopbackOrigin(options.sharedOrigin || "http://127.0.0.1:4195");
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-  const routes = manifest.projects
+  const proxiedEntries = [
+    ...manifest.projects,
+    ...(manifest.games || []).filter(({ api }) => api === "dedicated"),
+  ];
+  const routes = proxiedEntries
     .map((project) => ({
       id: project.id,
       route: normalizeRoute(project.route),

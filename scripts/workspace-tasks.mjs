@@ -15,13 +15,19 @@ const packages = [
     ...project,
     directory: path.join(root, project.source),
   })),
+  ...manifest.games
+    .filter((game) => existsSync(path.join(root, game.source, "package.json")))
+    .map((game) => ({
+      ...game,
+      directory: path.join(root, game.source),
+    })),
 ];
 
 if (command === "install") {
   installPackage(root, "root");
   for (const item of packages) installPackage(item.directory, item.id);
 } else if (command === "build") {
-  for (const item of packages.filter(({ stack }) => stack === "next" || stack === "vite")) {
+  for (const item of packages.filter(({ stack }) => ["next", "vite", "vite-static"].includes(stack))) {
     runNpm(item, "build");
   }
   checkBuilds();
@@ -98,12 +104,12 @@ function checkBuilds() {
     if (!existsSync(expected)) missing.push(`${item.id}: ${path.relative(root, expected)}`);
     if (item.stack === "next" && existsSync(expected)) checkNextRoute(item, missing);
   }
-  for (const item of packages.filter(({ api }) => api === "dedicated")) {
+  for (const item of packages.filter(({ api, stack }) => api === "dedicated" && stack !== "next")) {
     const server = path.join(item.directory, "dist-server", "server", "index.js");
     if (!existsSync(server)) missing.push(`${item.id}: ${path.relative(root, server)}`);
   }
   if (missing.length) throw new Error(`Missing workspace runtime artifacts:\n${missing.join("\n")}`);
-  console.log(`\nWorkspace runtime artifacts ready: ${manifest.projects.length} non-game projects.`);
+  console.log(`\nWorkspace runtime artifacts ready: ${manifest.projects.length} tools and ${manifest.games.length} games.`);
 }
 
 function checkNextRoute(item, missing) {

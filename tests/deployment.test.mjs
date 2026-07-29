@@ -39,6 +39,31 @@ test("Nginx caches fingerprinted cover variants immutably while HTML stays uncac
   assert.match(config, /no-cache, must-revalidate/);
 });
 
+test("Nginx exposes all unified game routes with safe cache and API boundaries", async () => {
+  const config = await readFile(new URL("../deploy/nginx/idol-match-test.conf", import.meta.url), "utf8");
+
+  for (const [route, port] of [
+    ["xiangqi", 13542],
+    ["chess", 13543],
+    ["go", 13544],
+  ]) {
+    assert.match(config, new RegExp(`location = \\/${route} \\{\\s*return 301 \\/${route}\\/;`));
+    assert.match(
+      config,
+      new RegExp(`location \\/${route}\\/ \\{[\\s\\S]*?proxy_pass http:\\/\\/127\\.0\\.0\\.1:${port}`),
+    );
+  }
+
+  assert.match(config, /location = \/fury-flock \{\s*return 301 \/fury-flock\/;/);
+  assert.match(config, /location = \/fury-flock\/ \{[\s\S]*?try_files \/index\.html =404;[\s\S]*?no-cache, no-store, must-revalidate/);
+  assert.match(config, /location ~\* "\^\/fury-flock\/\(assets\/.+" \{[\s\S]*?max-age=31536000, immutable/);
+  assert.match(config, /location \/fury-flock\/ \{[\s\S]*?try_files \$uri \$uri\/ \/fury-flock\/index\.html;/);
+
+  assert.match(config, /location = \/hub\/dice-estate\/ \{[\s\S]*?try_files \/dice-estate\/index\.html =404;[\s\S]*?no-cache, no-store, must-revalidate/);
+  assert.match(config, /location = \/hub\/dice-estate\/index\.html \{[\s\S]*?no-cache, no-store, must-revalidate/);
+  assert.match(config, /location = \/api\/agent\/decision \{[\s\S]*?proxy_pass http:\/\/127\.0\.0\.1:4194;/);
+});
+
 test("Nginx exposes centralized administration while application token auth protects writes", async () => {
   const config = await readFile(new URL("../deploy/nginx/idol-match-test.conf", import.meta.url), "utf8");
   const modelConfigStart = config.indexOf("location = /hub/api/model-config {");

@@ -37,7 +37,7 @@
   let aiTimer = null;
   let agentInFlight = false;
   let agentRequestController = null;
-  let agentGatewayStatus = "规则策略";
+  let agentGatewayStatus = "Hub GPT · 准备连接";
   let didInitialCenter = false;
   let feedbackTimer = null;
   let activeFeedbackKey = "";
@@ -1003,7 +1003,7 @@
     return {
       ruleset: Engine.STANDARD_RULESET,
       agentDifficulty: Difficulty.DEFAULT_DIFFICULTY,
-      agentMode: "deterministic",
+      agentMode: "hub",
       animationSpeed: "normal",
       reduceMotion: false,
       muted: false
@@ -1014,7 +1014,7 @@
     try {
       const parsed = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null");
       const next = Object.assign(defaultSettings(), parsed || {});
-      next.agentMode = "deterministic";
+      next.agentMode = "hub";
       return next;
     } catch (error) {
       console.warn("Settings load failed", error);
@@ -1063,7 +1063,7 @@
   function updateSetting(key, value) {
     if (key === "ruleset") settings.ruleset = value === Engine.SHORT_RULESET ? Engine.SHORT_RULESET : Engine.STANDARD_RULESET;
     if (key === "agentDifficulty") settings.agentDifficulty = Difficulty.normalizeDifficulty(value);
-    if (key === "agentMode") settings.agentMode = "deterministic";
+    if (key === "agentMode") settings.agentMode = "hub";
     if (key === "animationSpeed") settings.animationSpeed = value;
     if (key === "reduceMotion") settings.reduceMotion = Boolean(value);
     if (key === "muted") settings.muted = Boolean(value);
@@ -3039,12 +3039,10 @@
             <option value="hard" ${settings.agentDifficulty === "hard" ? "selected" : ""}>挑战 · 更积极</option>
           </select>
         </label>
-        <label class="setting-row" for="agentMode">
-          <span><strong>Agent 决策源</strong><small>HUB 在线版当前使用离线人格规则；模型 Agent 将在自动路由阶段接入。</small></span>
-          <select id="agentMode" data-setting="agentMode">
-            <option value="deterministic" ${settings.agentMode === "deterministic" ? "selected" : ""}>离线 · 仅规则策略</option>
-          </select>
-        </label>
+        <div class="setting-row">
+          <span><strong>Agent 决策源</strong><small>由 AI HUB 统一调用 Hub GPT；路由不可用或返回非法动作时自动切回本地人格规则。</small></span>
+          <output aria-label="当前 Agent 决策源">Hub GPT</output>
+        </div>
       </section>
       <section class="settings-group">
         <div class="settings-group-heading"><h3>表现与辅助</h3><span>即时生效</span></div>
@@ -3280,7 +3278,7 @@
   }
 
   async function requestRemoteDecision(context) {
-    if (settings.agentMode === "deterministic" || !/^https?:$/.test(window.location.protocol)) return null;
+    if (settings.agentMode !== "hub" || !/^https?:$/.test(window.location.protocol)) return null;
     agentRequestController = new AbortController();
     const timeout = window.setTimeout(() => agentRequestController && agentRequestController.abort(), 3500);
     try {
@@ -3294,14 +3292,14 @@
         })
       });
       if (!response.ok) {
-        agentGatewayStatus = "规则策略（网关不可用）";
+        agentGatewayStatus = "本地规则（Hub GPT 不可用）";
         return null;
       }
       const payload = await response.json();
-      agentGatewayStatus = "本地 LLM 网关";
+      agentGatewayStatus = "Hub GPT";
       return payload.decision || null;
     } catch (error) {
-      agentGatewayStatus = "规则策略（已安全降级）";
+      agentGatewayStatus = "本地规则（已安全降级）";
       return null;
     } finally {
       window.clearTimeout(timeout);

@@ -22,7 +22,7 @@ const forbiddenPaths = [
 ];
 
 for (const file of tracked) {
-  if (file === ".env.example") continue;
+  if (/(^|\/)\.env\.example$/.test(file)) continue;
   if (forbiddenPaths.some((pattern) => pattern.test(file))) failures.push(`forbidden tracked path: ${file}`);
 }
 
@@ -44,12 +44,12 @@ for (const file of tracked) {
 
 const manifest = JSON.parse(readFileSync(path.join(root, "deploy/project-manifest.json"), "utf8"));
 if (manifest.projects.length !== 29) failures.push(`manifest project count is ${manifest.projects.length}, expected 29`);
-const projectIds = new Set(manifest.projects.map(({ id }) => id));
-for (const game of manifest.excludedGames || []) {
-  if (projectIds.has(game)) failures.push(`excluded game appears in non-game manifest: ${game}`);
-}
+if (manifest.games.length !== 5) failures.push(`manifest game count is ${manifest.games.length}, expected 5`);
+const entries = [...manifest.projects, ...manifest.games];
+if (new Set(entries.map(({ id }) => id)).size !== entries.length) failures.push("manifest contains duplicate ids");
+if (new Set(entries.map(({ route }) => route)).size !== entries.length) failures.push("manifest contains duplicate routes");
 
-for (const project of manifest.projects.filter(({ api }) => api === "dedicated")) {
+for (const project of entries.filter(({ api }) => api === "dedicated")) {
   const browserRoot = `${project.source}/dist/`;
   const serverRoot = `${project.source}/dist-server/`;
   const browserFiles = tracked.filter((file) => file.startsWith(browserRoot) && /\.(?:html|js)$/i.test(file));
@@ -73,5 +73,5 @@ if (failures.length) {
   for (const failure of failures) console.error(`- ${failure}`);
   process.exitCode = 1;
 } else {
-  console.log(`Security scan passed: ${tracked.length} tracked files, ${manifest.projects.length} non-game projects, no committed secrets or dedicated direct-provider paths.`);
+  console.log(`Security scan passed: ${tracked.length} tracked files, ${manifest.projects.length} tools, ${manifest.games.length} games, no committed secrets or dedicated direct-provider paths.`);
 }

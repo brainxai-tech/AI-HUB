@@ -14,13 +14,17 @@ async function listen(server) {
   });
 }
 
-test("local proxy covers only manifest projects and preserves dedicated ports", async () => {
+test("local proxy covers tools and dedicated games while preserving ports", async () => {
   const proxy = createLocalProjectProxy({ manifestPath: "deploy/project-manifest.json" });
-  assert.equal(proxy.routes.length, 29);
+  assert.equal(proxy.routes.length, 32);
   assert.equal(proxy.match("/legal/")?.targetOrigin, "http://127.0.0.1:4195");
   assert.equal(proxy.match("/ppt-report-coach/")?.targetOrigin, "http://127.0.0.1:4201");
   assert.equal(proxy.match("/work-report/api/generate")?.targetOrigin, "http://127.0.0.1:4202");
-  assert.equal(proxy.match("/xiangqi"), null);
+  assert.equal(proxy.match("/xiangqi")?.targetOrigin, "http://127.0.0.1:4211");
+  assert.equal(proxy.match("/chess/api/coach")?.targetOrigin, "http://127.0.0.1:4212");
+  assert.equal(proxy.match("/go/")?.targetOrigin, "http://127.0.0.1:4213");
+  assert.equal(proxy.match("/fury-flock/"), null);
+  assert.equal(proxy.match("/hub/dice-estate/"), null);
   assert.equal(proxy.match("/hub/"), null);
 });
 

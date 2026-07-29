@@ -99,8 +99,11 @@ test("dice estate game runtime is packaged for the Hub", async () => {
   const html = await readProjectFile("public/dice-estate/index.html");
   const app = await readProjectFile("public/dice-estate/app.js");
   assert.match(html, /href="\/hub\/">返回 AI HUB<\/a>/);
-  assert.match(app, /agentMode:\s*"deterministic"/);
-  assert.doesNotMatch(app, /<option value="auto"/);
+  assert.match(app, /agentMode:\s*"hub"/);
+  assert.match(app, /fetch\("\/api\/agent\/decision"/);
+  assert.match(app, /Hub GPT/);
+  assert.doesNotMatch(app, /agentMode\s*=\s*"deterministic"/);
+  assert.doesNotMatch(app, /<select id="agentMode"/);
 });
 
 test("all project covers have fingerprinted responsive AVIF and WebP variants", async () => {
@@ -578,6 +581,22 @@ test("shared shell loads project-specific design corrections without changing ga
   assert.doesNotMatch(qishengTheme, /data-suite-kind="game"/);
 });
 
+test("board game browsers expose only their dedicated Hub GPT display", async () => {
+  const sources = await Promise.all([
+    readProjectFile("games/ai-xiangqi-duel/src/components/xiangqi-app.tsx"),
+    readProjectFile("games/ai-chess-duel/src/components/chess-app.tsx"),
+    readProjectFile("games/ai-go-duel/src/components/go-app.tsx"),
+  ]);
+
+  for (const source of sources) {
+    assert.doesNotMatch(source, /type=["']password["']/i);
+    assert.doesNotMatch(source, /label:\s*["'](?:DeepSeek|Claude|Gemini)["']/);
+    assert.doesNotMatch(source, /<input[^>]+value=\{model\}/);
+    assert.match(source, /\/api\/provider\/test/);
+    assert.match(source, /Hub GPT/);
+  }
+});
+
 test("sensitive projects disclose data handling and professional boundaries", async () => {
   const html = await readProjectFile("public/index.html");
   const app = await readProjectFile("public/app.js");
@@ -615,6 +634,19 @@ test("hub exposes shared model gateway routes without exposing keys in public co
   assert.doesNotMatch(server, /__hub_browser_managed_admin__/);
   assert.doesNotMatch(app, /__hub_browser_managed_admin__/);
   assert.doesNotMatch(app, /x-hub-project-token/);
+});
+
+test("Dice Estate uses the Hub decision route without browser credentials", async () => {
+  const [server, dice] = await Promise.all([
+    readProjectFile("server.mjs"),
+    readProjectFile("public/dice-estate/app.js"),
+  ]);
+
+  assert.match(server, /\/api\/agent\/decision/);
+  assert.match(server, /dice-estate-duel/);
+  assert.match(dice, /fetch\("\/api\/agent\/decision"/);
+  assert.match(dice, /chooseDeterministicAction/);
+  assert.doesNotMatch(dice, /x-hub-project-token/i);
 });
 
 test("hub model catalog exposes only the AI Routing provider and dynamic models", async () => {

@@ -12,7 +12,12 @@ $readyUrls = @(
   "http://127.0.0.1:4194/hub/api/health",
   "http://127.0.0.1:4195/health",
   "http://127.0.0.1:4201/ppt-report-coach/api/providers",
-  "http://127.0.0.1:4202/work-report/api/providers"
+  "http://127.0.0.1:4202/work-report/api/providers",
+  "http://127.0.0.1:4211/xiangqi/",
+  "http://127.0.0.1:4212/chess/",
+  "http://127.0.0.1:4213/go/",
+  "http://127.0.0.1:4194/fury-flock/",
+  "http://127.0.0.1:4194/hub/dice-estate/"
 )
 
 function Test-SuiteReady {

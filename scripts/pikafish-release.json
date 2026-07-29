@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "upstream": {
+    "project": "official-pikafish/Pikafish",
+    "homepage": "https://github.com/official-pikafish/Pikafish",
+    "sourceUrl": "https://github.com/official-pikafish/Pikafish/tree/Pikafish-2026-01-02",
+    "license": "GPL-3.0-only",
+    "licenseUrl": "https://github.com/official-pikafish/Pikafish/blob/master/Copying.txt"
+  },
+  "release": {
+    "tag": "Pikafish-2026-01-02",
+    "pageUrl": "https://github.com/official-pikafish/Pikafish/releases/tag/Pikafish-2026-01-02",
+    "asset": {
+      "name": "Pikafish.2026-01-02.7z",
+      "url": "https://github.com/official-pikafish/Pikafish/releases/download/Pikafish-2026-01-02/Pikafish.2026-01-02.7z",
+      "sha256": "84257063905615919fb4ee6a70273a94843bb6ec04c45e3ac706098838bc1a49"
+    },
+    "targets": {
+      "win32-x64": {
+        "executable": "Windows/pikafish-avx2.exe"
+      },
+      "linux-x64": {
+        "executable": "Linux/pikafish-avx2"
+      },
+      "darwin-arm64": {
+        "executable": "MacOS/pikafish-apple-silicon"
+      }
+    }
+  }
+}

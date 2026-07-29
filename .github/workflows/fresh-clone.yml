@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - codex/unify-hub-routing
+      - codex/unify-game-routing
 
 concurrency:
   group: fresh-clone-${{ github.ref }}
@@ -33,6 +34,7 @@ jobs:
           cache-dependency-path: |
             packages/shared-project-runtime/package-lock.json
             apps/*/package-lock.json
+            games/*/package-lock.json
 
       - name: Scan the fresh checkout
         run: npm run security:scan
@@ -51,5 +53,5 @@ jobs:
       - name: Re-scan tracked source and routing boundaries
         run: npm run security:scan
 
-      - name: Run the four-service browser E2E
+      - name: Run the complete local-suite browser E2E
         run: npm run e2e

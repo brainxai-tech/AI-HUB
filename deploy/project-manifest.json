@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "hub": {
     "route": "/hub/",
     "package": ".",
@@ -40,11 +40,11 @@
     { "id": "ai-work-report-generator", "route": "/work-report/", "source": "apps/ai-work-report-generator", "stack": "vite", "api": "dedicated", "port": 4202 },
     { "id": "elder-fraud-assistant", "route": "/elder/", "source": "apps/elder-fraud-assistant", "stack": "node-static", "api": "shared" }
   ],
-  "excludedGames": [
-    "ai-xiangqi-duel",
-    "ai-chess-duel",
-    "ai-go-duel",
-    "fury-flock",
-    "dice-estate-duel"
+  "games": [
+    { "id": "ai-xiangqi-duel", "route": "/xiangqi/", "source": "games/ai-xiangqi-duel", "stack": "next", "api": "dedicated", "port": 4211 },
+    { "id": "ai-chess-duel", "route": "/chess/", "source": "games/ai-chess-duel", "stack": "next", "api": "dedicated", "port": 4212 },
+    { "id": "ai-go-duel", "route": "/go/", "source": "games/ai-go-duel", "stack": "next", "api": "dedicated", "port": 4213 },
+    { "id": "fury-flock", "route": "/fury-flock/", "source": "games/fury-flock", "stack": "vite-static", "api": "none" },
+    { "id": "dice-estate-duel", "route": "/hub/dice-estate/", "source": "public/dice-estate", "stack": "hub-static", "api": "hub" }
   ]
 }
