@@ -19,6 +19,10 @@ dist-server/
 !apps/ai-tone-dressing-room/dist/**
 !apps/ai-tone-dressing-room/dist-server/
 !apps/ai-tone-dressing-room/dist-server/**
+!apps/ai-ppt-report-coach/dist/
+!apps/ai-ppt-report-coach/dist/**
+!apps/ai-ppt-report-coach/dist-server/
+!apps/ai-ppt-report-coach/dist-server/**
 coverage/
 apps/ai-bedtime-story-factory/codex-preview.manifest.json
 apps/ai-paper-reading-coach/paper-coach-dev.manifest.json
