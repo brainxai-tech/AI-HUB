@@ -23,6 +23,10 @@ dist-server/
 !apps/ai-ppt-report-coach/dist/**
 !apps/ai-ppt-report-coach/dist-server/
 !apps/ai-ppt-report-coach/dist-server/**
+!apps/ai-work-report-generator/dist/
+!apps/ai-work-report-generator/dist/**
+!apps/ai-work-report-generator/dist-server/
+!apps/ai-work-report-generator/dist-server/**
 coverage/
 apps/ai-bedtime-story-factory/codex-preview.manifest.json
 apps/ai-paper-reading-coach/paper-coach-dev.manifest.json
