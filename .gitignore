@@ -9,6 +9,8 @@ dist/
 dist-server/
 coverage/
 data/
+!apps/*/data/
+!apps/*/data/**
 backups/
 .env
 .env.*
