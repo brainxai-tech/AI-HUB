@@ -1,6 +1,6 @@
 // Keep every project on the same origin as the Hub. Local clones, Docker and
 // production therefore share the same URLs and no server address is baked in.
-const SERVER = window.location.origin;
+const SERVER = window.location?.origin || "";
 
 const MODEL_RECOMMENDATIONS = {
   "idol-match-test": {

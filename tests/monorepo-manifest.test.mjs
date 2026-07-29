@@ -21,6 +21,6 @@ test("deployment manifest covers every non-game project exactly once", async () 
 
 test("project catalog uses same-origin routes instead of the production server", async () => {
   const projects = await read("public/projects.js");
-  assert.match(projects, /const SERVER = window\.location\.origin/);
+  assert.match(projects, /const SERVER = window\.location\?\.origin \|\| ""/);
   assert.doesNotMatch(projects, /47\.84\.108\.192|sslip\.io/);
 });

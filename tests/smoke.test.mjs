@@ -11,7 +11,7 @@ async function readProjectFile(pathname) {
 
 async function loadProjects() {
   const projectsSource = await readProjectFile("public/projects.js");
-  const sandbox = { window: {} };
+  const sandbox = { window: { location: { origin: "https://hub.example" } } };
 
   vm.runInNewContext(projectsSource, sandbox);
 
@@ -61,21 +61,21 @@ test("project data contains the requested project entries", async () => {
   assert.ok(projects.every((project) => !Object.hasOwn(project, "tags")));
 });
 
-test("project data points to the real server links", async () => {
+test("project data keeps every project on the current Hub origin", async () => {
   const projects = await loadProjects();
   const expectedUrls = new Map([
-    ["idol-match-test", "https://47-84-108-192.sslip.io/idol-match/"],
-    ["ai-xiangqi-duel", "https://47-84-108-192.sslip.io/xiangqi"],
-    ["ai-chess-duel", "https://47-84-108-192.sslip.io/chess"],
-    ["ai-go-duel", "https://47-84-108-192.sslip.io/go"],
-    ["fury-flock", "https://47-84-108-192.sslip.io/fury-flock/"],
-    ["dice-estate-duel", "https://47-84-108-192.sslip.io/hub/dice-estate/"],
-    ["ai-ppt-report-coach", "https://47-84-108-192.sslip.io/ppt-report-coach/"],
-    ["ai-work-report-generator", "https://47-84-108-192.sslip.io/work-report/"],
+    ["idol-match-test", "https://hub.example/idol-match/"],
+    ["ai-xiangqi-duel", "https://hub.example/xiangqi"],
+    ["ai-chess-duel", "https://hub.example/chess"],
+    ["ai-go-duel", "https://hub.example/go"],
+    ["fury-flock", "https://hub.example/fury-flock/"],
+    ["dice-estate-duel", "https://hub.example/hub/dice-estate/"],
+    ["ai-ppt-report-coach", "https://hub.example/ppt-report-coach/"],
+    ["ai-work-report-generator", "https://hub.example/work-report/"],
   ]);
 
   for (const project of projects) {
-    assert.doesNotMatch(project.url, /localhost|127\.0\.0\.1|vercel\.app/);
+    assert.equal(new URL(project.url).origin, "https://hub.example");
     assert.equal(new URL(project.url).protocol, "https:", `${project.id} must use HTTPS`);
   }
 
