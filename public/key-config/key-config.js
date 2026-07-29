@@ -150,6 +150,15 @@
       const config = await requestJson("/api/model-config");
       state.publicConfig = config;
       renderProviderState(config);
+      if (config.localMode) {
+        state.adminVerified = true;
+        elements.adminToken.closest("fieldset").style.display = "none";
+        elements.stepAuth.hidden = true;
+        elements.credentialStage.disabled = false;
+        elements.clearSession.disabled = true;
+        setStep(elements.stepKey, elements.stepKeyStatus, "current", "等待检测 Routing Key");
+        setNotice("neutral", "本地模式已就绪", "粘贴自己的 AI Routing API Key，然后检测并保存即可。");
+      }
       elements.connectionBadge.dataset.state = "online";
       elements.connectionText.textContent = "网关在线";
     } catch (error) {
@@ -309,6 +318,7 @@
   }
 
   function clearSession() {
+    if (state.publicConfig?.localMode) return;
     elements.adminToken.value = "";
     resetAuthorization();
     elements.verifyAdmin.disabled = false;

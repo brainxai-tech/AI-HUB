@@ -29,6 +29,7 @@ const observabilityLogPath =
   process.env.HUB_OBSERVABILITY_LOG_PATH || "/var/log/ai-project-hub/observability-events.jsonl";
 const port = Number.parseInt(process.env.PORT || "4194", 10);
 const adminToken = process.env.HUB_ADMIN_TOKEN || "";
+const localMode = process.env.HUB_LOCAL_MODE === "true";
 const remoteGatewayOrigin = normalizeRemoteGatewayOrigin(process.env.HUB_REMOTE_GATEWAY_ORIGIN || "");
 const projectToken = process.env.HUB_PROJECT_TOKEN || "";
 const projectTokensPath =
@@ -266,6 +267,16 @@ function getBearerToken(request) {
 }
 
 function hasAdminAccess(request) {
+  const remoteAddress = request.socket?.remoteAddress || "";
+  if (
+    localMode &&
+    (remoteAddress === "127.0.0.1" ||
+      remoteAddress === "::1" ||
+      remoteAddress === "::ffff:127.0.0.1")
+  ) {
+    return true;
+  }
+
   const token = request.headers["x-hub-admin-token"] || getBearerToken(request);
   if (!adminToken || typeof token !== "string") {
     return false;
@@ -492,6 +503,7 @@ function publicConfig(config) {
   return {
     defaultProvider: config.defaultProvider,
     adminAuthConfigured: Boolean(adminToken),
+    localMode,
     projectAuthRequired,
     scopedProjectCount,
     legacyProjectAuthEnabled: Boolean(projectToken && allowLegacyProjectToken),

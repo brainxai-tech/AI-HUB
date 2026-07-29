@@ -65,6 +65,13 @@ test("public Hub links to the dedicated API Key page in the header and routing h
   assert.match(hubStyles, /\.status-strip \.hub-config-entry/);
 });
 
+test("local API Key setup skips the production administrator step", async () => {
+  const source = await readProjectFile("public/key-config/key-config.js");
+  assert.match(source, /if \(config\.localMode\)/);
+  assert.match(source, /state\.adminVerified = true/);
+  assert.match(source, /credentialStage\.disabled = false/);
+});
+
 test("nginx serves the key page with private administration headers", async () => {
   const nginx = await readProjectFile("deploy/nginx/idol-match-test.conf");
 

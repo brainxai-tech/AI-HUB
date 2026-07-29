@@ -78,6 +78,44 @@ test("local runtime serves index files for nested Hub pages", async (t) => {
   assert.match(await response.text(), /id="configForm"/);
 });
 
+test("local mode stores configuration locally without an admin token", async (t) => {
+  const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), "ai-hub-local-mode-"));
+  const port = await freePort();
+  const child = spawn(process.execPath, ["server.mjs"], {
+    cwd: root,
+    stdio: ["ignore", "pipe", "pipe"],
+    env: {
+      ...process.env,
+      PORT: String(port),
+      HUB_LOCAL_MODE: "true",
+      HUB_ADMIN_TOKEN: "",
+      HUB_REMOTE_GATEWAY_ORIGIN: "",
+      HUB_CONFIG_PATH: path.join(temporaryDirectory, "model-config.json"),
+      HUB_PROJECT_TOKENS_PATH: path.join(temporaryDirectory, "project-tokens.json"),
+      HUB_OBSERVABILITY_LOG_PATH: path.join(temporaryDirectory, "observability.jsonl"),
+    },
+  });
+  t.after(async () => {
+    if (child.exitCode === null) {
+      child.kill();
+      await new Promise((resolve) => child.once("exit", resolve));
+    }
+    await rm(temporaryDirectory, { recursive: true, force: true });
+  });
+
+  const baseUrl = `http://127.0.0.1:${port}`;
+  await waitUntilReady(baseUrl);
+
+  const configResponse = await fetch(`${baseUrl}/hub/api/model-config`);
+  assert.equal(configResponse.status, 200);
+  const config = await configResponse.json();
+  assert.equal(config.localMode, true);
+  assert.equal(config.adminAuthConfigured, false);
+
+  const verifyResponse = await fetch(`${baseUrl}/hub/api/admin/verify`, { method: "POST" });
+  assert.equal(verifyResponse.status, 200);
+});
+
 test("local runtime proxies Hub APIs to the central gateway", async (t) => {
   const received = [];
   const upstream = createServer(async (request, response) => {

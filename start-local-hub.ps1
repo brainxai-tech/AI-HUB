@@ -12,11 +12,12 @@ function Test-LocalHubReady {
     $homeResponse = Invoke-WebRequest -UseBasicParsing -Uri $localUrl -TimeoutSec 2
     $keyConfigResponse = Invoke-WebRequest -UseBasicParsing -Uri $keyConfigUrl -TimeoutSec 2
     $modelConfigResponse = Invoke-WebRequest -UseBasicParsing -Uri $modelConfigUrl -TimeoutSec 5
+    $modelConfig = $modelConfigResponse.Content | ConvertFrom-Json
     return (
       $homeResponse.StatusCode -eq 200 -and
       $keyConfigResponse.StatusCode -eq 200 -and
       $modelConfigResponse.StatusCode -eq 200 -and
-      $modelConfigResponse.Headers["X-AI-Hub-Local-Proxy"] -eq "remote"
+      $modelConfig.localMode -eq $true
     )
   } catch {
     return $false
@@ -45,7 +46,8 @@ if (Test-Path $pidPath) {
 }
 
 $env:PORT = "4310"
-$env:HUB_REMOTE_GATEWAY_ORIGIN = "https://47-84-108-192.sslip.io"
+$env:HUB_LOCAL_MODE = "true"
+Remove-Item Env:HUB_REMOTE_GATEWAY_ORIGIN -ErrorAction SilentlyContinue
 $env:HUB_CONFIG_PATH = Join-Path $runtimeDir "model-config.json"
 $env:HUB_PROJECT_MODELS_PATH = Join-Path $runtimeDir "project-model-selections.json"
 $env:HUB_OBSERVABILITY_LOG_PATH = Join-Path $runtimeDir "observability-events.jsonl"
