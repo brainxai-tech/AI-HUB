@@ -4,6 +4,9 @@
 .playwright-cli/
 output/
 node_modules/
+.next/
+dist/
+dist-server/
 coverage/
 data/
 backups/
@@ -17,3 +20,13 @@ project-client.env
 *.bak.*
 *.backup-*
 work-*.log
+*.log
+*.pid
+*.pfx
+*.p12
+*.crt
+*.cer
+*.der
+*.jks
+id_rsa*
+id_ed25519*
