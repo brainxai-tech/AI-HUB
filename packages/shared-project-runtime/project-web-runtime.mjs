@@ -35,8 +35,11 @@ export async function createProjectWebRuntime(options = {}) {
       const requireFromProject = createRequire(path.join(projectRoot, "package.json"));
       const imported = requireFromProject("next");
       const nextFactory = imported.default || imported;
-      const app = nextFactory({ dev: false, dir: projectRoot, quiet: true });
-      await app.prepare();
+      const app = await withNextBasePath(route, async () => {
+        const nextApp = nextFactory({ dev: false, dir: projectRoot, quiet: true });
+        await nextApp.prepare();
+        return nextApp;
+      });
       projects.push({ id: spec.id, route, kind: "next", app, handler: app.getRequestHandler() });
       continue;
     }
@@ -76,6 +79,25 @@ function normalizeRoute(value) {
   const route = String(value || "").trim();
   if (!/^\/[a-z0-9][a-z0-9/-]*\/$/.test(route)) throw new Error(`Invalid project web route: ${route}`);
   return route;
+}
+
+export async function withNextBasePath(route, callback, environment = process.env) {
+  const basePath = normalizeRoute(route).slice(0, -1);
+  const keys = ["BASE_PATH", "NEXT_PUBLIC_BASE_PATH"];
+  const previous = keys.map((key) => ({
+    key,
+    present: Object.hasOwn(environment, key),
+    value: environment[key],
+  }));
+  for (const key of keys) environment[key] = basePath;
+  try {
+    return await callback(basePath);
+  } finally {
+    for (const { key, present, value } of previous) {
+      if (present) environment[key] = value;
+      else delete environment[key];
+    }
+  }
 }
 
 function missingBuild(spec, expected) {

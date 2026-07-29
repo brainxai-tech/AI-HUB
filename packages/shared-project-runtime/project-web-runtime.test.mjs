@@ -5,7 +5,22 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { createProjectWebRuntime } from "./project-web-runtime.mjs";
+import {
+  createProjectWebRuntime,
+  withNextBasePath,
+} from "./project-web-runtime.mjs";
+
+test("Next startup receives the manifest base path without leaking project environment", async () => {
+  const environment = { BASE_PATH: "/before" };
+  const result = await withNextBasePath("/idol-match/", async (basePath) => {
+    assert.equal(basePath, "/idol-match");
+    assert.equal(environment.BASE_PATH, "/idol-match");
+    assert.equal(environment.NEXT_PUBLIC_BASE_PATH, "/idol-match");
+    return "ready";
+  }, environment);
+  assert.equal(result, "ready");
+  assert.deepEqual(environment, { BASE_PATH: "/before" });
+});
 
 async function listen(server) {
   return new Promise((resolve, reject) => {

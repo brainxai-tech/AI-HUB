@@ -5,6 +5,7 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? (process.env.NODE_ENV === 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   basePath,
+  trailingSlash: Boolean(basePath),
 };
 
 export default nextConfig;

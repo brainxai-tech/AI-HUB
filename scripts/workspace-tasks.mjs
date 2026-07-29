@@ -96,6 +96,7 @@ function checkBuilds() {
         ? path.join(item.directory, "public", "index.html")
         : path.join(item.directory, "dist", "index.html");
     if (!existsSync(expected)) missing.push(`${item.id}: ${path.relative(root, expected)}`);
+    if (item.stack === "next" && existsSync(expected)) checkNextRoute(item, missing);
   }
   for (const item of packages.filter(({ api }) => api === "dedicated")) {
     const server = path.join(item.directory, "dist-server", "server", "index.js");
@@ -103,4 +104,22 @@ function checkBuilds() {
   }
   if (missing.length) throw new Error(`Missing workspace runtime artifacts:\n${missing.join("\n")}`);
   console.log(`\nWorkspace runtime artifacts ready: ${manifest.projects.length} non-game projects.`);
+}
+
+function checkNextRoute(item, missing) {
+  const routesManifestPath = path.join(item.directory, ".next", "routes-manifest.json");
+  if (!existsSync(routesManifestPath)) {
+    missing.push(`${item.id}: ${path.relative(root, routesManifestPath)}`);
+    return;
+  }
+  const routes = JSON.parse(readFileSync(routesManifestPath, "utf8"));
+  const basePath = item.route.replace(/\/$/, "");
+  if (routes.basePath !== basePath) {
+    missing.push(`${item.id}: Next basePath ${JSON.stringify(routes.basePath)} does not match ${basePath}`);
+  }
+  const redirectsAwayFromSuiteRoute = routes.redirects?.some(({ source, destination }) =>
+    source === item.route && destination === basePath);
+  if (redirectsAwayFromSuiteRoute) {
+    missing.push(`${item.id}: Next build redirects the suite route ${item.route} away from its manifest path`);
+  }
 }
