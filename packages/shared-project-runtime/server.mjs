@@ -103,7 +103,6 @@ async function loadProjects(appsRoot) {
     villainHub,
     villainSafety,
     parallelContracts,
-    parallelDemo,
     parallelGateway,
     parallelHub,
     toneContracts,
@@ -135,7 +134,6 @@ async function loadProjects(appsRoot) {
     import(moduleUrl(appsRoot, villain.id, "server/hubModels.js")),
     import(moduleUrl(appsRoot, villain.id, "server/safety.js")),
     import(moduleUrl(appsRoot, parallel.id, "src/shared/contracts.js")),
-    import(moduleUrl(appsRoot, parallel.id, "server/localDemo.js")),
     import(moduleUrl(appsRoot, parallel.id, "server/providerGateway.js")),
     import(moduleUrl(appsRoot, parallel.id, "server/hubModels.js")),
     import(moduleUrl(appsRoot, tone.id, "src/shared/contracts.js")),
@@ -174,7 +172,6 @@ async function loadProjects(appsRoot) {
     parallel: {
       ...parallel,
       contracts: parallelContracts,
-      demo: parallelDemo,
       gateway: parallelGateway,
       hub: parallelHub,
     },
@@ -612,7 +609,7 @@ async function handleParallel(request, response, project, credential, pathname, 
     return true;
   }
   if (pathname === "/parallel-daily/api/providers" && request.method === "GET") {
-    sendJson(response, 200, await providerPayload(project, credential, chatUrl, "label"));
+    sendJson(response, 200, await providerPayload(project, credential, chatUrl, "label", false));
     return true;
   }
   if (pathname === "/parallel-daily/api/reports" && request.method === "POST") {
@@ -622,15 +619,12 @@ async function handleParallel(request, response, project, credential, pathname, 
       return true;
     }
     const input = parsed.data;
-    const isDemo = input.provider === "demo";
-    const data = isDemo
-      ? project.demo.demoParallelDaily(input)
-      : await project.gateway.generateWithProvider(input, {
-          callModel: createHubCaller(project, credential, chatUrl),
-        });
+    const data = await project.gateway.generateWithProvider(input, {
+      callModel: createHubCaller(project, credential, chatUrl),
+    });
     sendJson(response, 200, {
       data,
-      meta: generationMeta(input, isDemo ? "local_preview" : "model"),
+      meta: generationMeta(input, "model"),
     });
     return true;
   }
