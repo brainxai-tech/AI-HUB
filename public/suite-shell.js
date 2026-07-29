@@ -284,7 +284,7 @@
   function loadProjectStyles() {
     const projectStyleVersions = {
       idol: "20260729-idol1",
-      qisheng: "20260729-qisheng1",
+      qisheng: "20260729-qisheng2",
     };
     const version = projectStyleVersions[projectId];
     if (!version || document.querySelector("link[data-suite-project-styles]")) return;

@@ -170,10 +170,6 @@ html[data-suite-kind="tool"][data-suite-id="qisheng"] body.suite-enhanced .chat-
 
 html[data-suite-kind="tool"][data-suite-id="qisheng"] body.suite-enhanced .messages {
   padding: 22px 20px;
-  background-image:
-    linear-gradient(90deg, rgba(247, 250, 249, 0.76) 0%, rgba(247, 250, 249, 0.28) 52%, rgba(247, 250, 249, 0.12) 100%),
-    radial-gradient(circle at 80% 18%, rgba(212, 95, 121, 0.08), transparent 40%),
-    var(--chat-bg-image);
 }
 
 html[data-suite-kind="tool"][data-suite-id="qisheng"] body.suite-enhanced .empty-state {

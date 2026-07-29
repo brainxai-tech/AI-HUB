@@ -566,7 +566,7 @@ test("shared shell loads project-specific design corrections without changing ga
 
   assert.match(shell, /function loadProjectStyles/);
   assert.match(shell, /idol: "20260729-idol1"/);
-  assert.match(shell, /qisheng: "20260729-qisheng1"/);
+  assert.match(shell, /qisheng: "20260729-qisheng2"/);
   assert.match(shell, /project-themes\/\$\{encodeURIComponent\(projectId\)\}\.css/);
   assert.match(shell, /"匹配实验室"/);
   assert.match(shell, /"陪伴设置"/);
