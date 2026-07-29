@@ -2,23 +2,23 @@ const SERVER = "https://47-84-108-192.sslip.io";
 
 const MODEL_RECOMMENDATIONS = {
   "idol-match-test": {
-    provider: "Gemini",
-    model: "gemini-3.5-flash",
+    provider: "GPT",
+    model: "gpt-5.6-luna",
     reason: "需要快速归纳 15 至 40 道问卷并稳定输出结构化匹配结果；该型号响应快、成本适合高频测试，也能保留轻松自然的娱乐表达。",
   },
   "qisheng-emotional-companion": {
-    provider: "Anthropic",
-    model: "claude-sonnet-4-6",
+    provider: "GPT",
+    model: "gpt-5.4-mini",
     reason: "恋爱陪伴依赖细腻语气、长对话一致性和边界感；该型号擅长自然共情与角色连续性，质量和响应速度也更适合持续聊天。",
   },
   "ai-tarot-sanctum": {
-    provider: "Anthropic",
-    model: "claude-sonnet-4-6",
+    provider: "GPT",
+    model: "gpt-5.5",
     reason: "塔罗解读既要串联多张牌的象征关系，也要避免绝对化断言；该型号适合生成温和、有层次且强调自我反思的中文解读。",
   },
   "qingqing-grassland-personality": {
-    provider: "Gemini",
-    model: "gemini-3.5-flash",
+    provider: "GPT",
+    model: "gpt-5.6-luna",
     reason: "核心任务是把五维分数迅速映射为一致的人格意象和短文案；该型号结构遵循稳定、生成速度快，适合轻量测试的高并发体验。",
   },
   "ai-cooking-coach": {
@@ -27,23 +27,23 @@ const MODEL_RECOMMENDATIONS = {
     reason: "备餐计划需要同时遵守天数、营养偏好、食材复用和购物清单格式；该型号指令遵循稳定，能以较低成本产出清楚可执行的计划。",
   },
   "ai-legal-clause-translator": {
-    provider: "Anthropic",
-    model: "claude-opus-4-8",
+    provider: "GPT",
+    model: "gpt-5.5",
     reason: "合同条款涉及长文本、条件关系和高风险遗漏；该型号适合审慎拆解义务、权利与例外，并用大白话解释，同时保留必要的不确定性提示。",
   },
   "xhs-copywriting-master": {
-    provider: "Gemini",
-    model: "gemini-3.5-flash",
+    provider: "GPT",
+    model: "gpt-5.6-luna",
     reason: "小红书文案通常要一次生成多组标题、正文与标签并快速迭代；该型号生成速度快、中文风格灵活，适合高频改稿和批量候选。",
   },
   "ai-book-decomposer": {
-    provider: "Anthropic",
-    model: "claude-sonnet-4-6",
+    provider: "GPT",
+    model: "gpt-5.5",
     reason: "读书拆解需要处理较长目录与笔记，并维持章节、观点和行动项之间的对应；该型号长文本归纳清楚，能避免只做表面摘要。",
   },
   "ai-bedtime-story-factory": {
-    provider: "Anthropic",
-    model: "claude-sonnet-4-6",
+    provider: "GPT",
+    model: "gpt-5.4-mini",
     reason: "儿童故事要兼顾年龄适配、情节连贯、朗读节奏和温和安全的内容；该型号叙事自然，能较稳定地维持角色与续集线索。",
   },
   "ai-data-analyst": {
@@ -52,13 +52,13 @@ const MODEL_RECOMMENDATIONS = {
     reason: "数据分析需要理解字段、发现异常、解释图表并把结论组织成业务报告；该型号综合推理和结构化输出能力强，适合把数字转成可行动洞察。",
   },
   "ai-english-theater": {
-    provider: "Gemini",
-    model: "gemini-3.5-flash",
+    provider: "GPT",
+    model: "gpt-5.6-luna",
     reason: "口语陪练最看重低延迟、连续追问和多场景表达；该型号响应迅速、语言切换自然，适合实时对话与每轮简短纠错。",
   },
   "ai-course-teaching-assistant": {
-    provider: "Gemini",
-    model: "gemini-3.1-pro-preview",
+    provider: "GPT",
+    model: "gpt-5.6-terra",
     reason: "课程包要把目标、讲义、测验、错题解析与课堂活动保持一致；该型号能处理较长教学材料，并生成层次清楚、相互对齐的内容。",
   },
   "ai-dream-director": {
@@ -67,8 +67,8 @@ const MODEL_RECOMMENDATIONS = {
     reason: "梦境改编同时需要创意扩写和三幕剧情、镜头表、旁白等严格格式；该型号能在想象力与结构控制之间取得较好平衡。",
   },
   "ai-paper-reading-coach": {
-    provider: "Anthropic",
-    model: "claude-opus-4-8",
+    provider: "GPT",
+    model: "gpt-5.5",
     reason: "论文阅读要求长上下文理解、证据定位和对方法限制的谨慎判断；该型号适合深度研读并保持结论与原文依据的对应关系。",
   },
   "ai-counterfactual-life-simulator": {
@@ -77,28 +77,28 @@ const MODEL_RECOMMENDATIONS = {
     reason: "反事实模拟需要沿多条人生分支推演短期结果、长期代价和隐藏机会；该型号多步推理能力强，也能把假设与现实建议清楚分开。",
   },
   "ai-zhougong-dream": {
-    provider: "Anthropic",
-    model: "claude-sonnet-4-6",
+    provider: "GPT",
+    model: "gpt-5.5",
     reason: "项目要综合本地 RAG 条目、传统象征与现代心理视角；该型号长文本整合自然，适合给出多视角解读而不把民俗内容包装成确定事实。",
   },
   "ai-one-person-board": {
     provider: "GPT",
-    model: "gpt-5.5-pro",
+    model: "gpt-5.5",
     reason: "五个虚拟董事需要从财务、用户、工程和设计角度独立质询后再综合投票；该型号更适合复杂多角色推演和高质量决策权衡。",
   },
   "ai-anti-motivation-coach": {
-    provider: "Anthropic",
-    model: "claude-sonnet-4-6",
+    provider: "GPT",
+    model: "gpt-5.4-mini",
     reason: "反鸡汤既要直接指出借口，也不能变成攻击或空泛鼓励；该型号擅长控制语气和共情边界，能把问题落到具体可验证的行动。",
   },
   "ai-aesthetic-fingerprint": {
-    provider: "Gemini",
-    model: "gemini-3.1-pro-preview",
+    provider: "GPT",
+    model: "gpt-5.6-terra",
     reason: "审美指纹需要理解网页、海报和截图中的色彩、排版与布局关系；该型号的多模态视觉分析适合从图像提取设计规律并转成 UI Prompt。",
   },
   "ai-misunderstanding-simulator": {
-    provider: "Anthropic",
-    model: "claude-sonnet-4-6",
+    provider: "GPT",
+    model: "gpt-5.4-mini",
     reason: "误解模拟依赖语用、身份关系和潜台词判断；该型号对细微语气与人际边界较敏感，适合生成清楚、温和和职场化的差异改写。",
   },
   "ai-life-villain-generator": {
@@ -112,8 +112,8 @@ const MODEL_RECOMMENDATIONS = {
     reason: "三份宇宙日报需要围绕同一事件生成清晰差异，又要落回明日行动；该型号适合快速完成受控创意写作和固定版式输出。",
   },
   "ai-tone-dressing-room": {
-    provider: "Anthropic",
-    model: "claude-haiku-4-5",
+    provider: "GPT",
+    model: "gpt-5.4-mini",
     reason: "语气改写是短文本、高频、低延迟任务，重点是保留原意并准确调整边界感；该型号速度快、语言感细腻，适合即时多版本生成。",
   },
   "ai-life-version-controller": {
@@ -122,8 +122,8 @@ const MODEL_RECOMMENDATIONS = {
     reason: "项目需要把真实人生问题稳定映射到分支、冲突、回滚点和 commit 等 Git 概念；该型号指令遵循和结构推理可靠，能避免比喻失控。",
   },
   "ai-reality-filter-translator": {
-    provider: "Gemini",
-    model: "gemini-3.1-pro-preview",
+    provider: "GPT",
+    model: "gpt-5.6-terra",
     reason: "现实滤镜从照片出发，需要识别画面主体、构图和必须锁定的视觉元素；该型号多模态理解能力强，适合进一步生成故事与镜头 Prompt。",
   },
   "ai-cold-start-brand-lab": {
@@ -152,23 +152,23 @@ const MODEL_RECOMMENDATIONS = {
     reason: "棋规与走子由 chess.js 保证，模型重点是解释关键回合、失误原因和改进路线；该型号能把多步变化组织成清楚的教学语言。",
   },
   "ai-go-duel": {
-    provider: "Anthropic",
-    model: "claude-sonnet-4-6",
+    provider: "GPT",
+    model: "gpt-5.4",
     reason: "围棋讲解需要从局部落子延伸到厚薄、势力和全局方向，而不是只报坐标；该型号擅长连贯长解释，适合把棋理说得自然易懂。",
   },
   "fury-flock": {
-    provider: "Gemini",
-    model: "gemini-3.5-flash",
+    provider: "GPT",
+    model: "gpt-5.6-luna",
     reason: "当前游戏本身不依赖大模型；若增加 AI 关卡提示或战术教练，该型号低延迟、成本可控，适合根据即时局面快速给出简短建议。",
   },
   "dice-estate-duel": {
     provider: "GPT",
-    model: "gpt-5.4-mini",
-    reason: "三名 Agent 每回合都要在合法动作、现金安全线、竞拍和交易之间快速决策；规则引擎负责校验结果，该型号适合以较低延迟和 Token 成本持续生成结构化行动与符合角色性格的简短理由。",
+    model: "gpt-5.5",
+    reason: "陈锋、周岩、苏晴三名 Agent 通过 AI Hub 的项目级网关统一调用 GPT-5.5；规则引擎只提供合法动作白名单并校验结果，模型负责结合公开局势、现金安全线、竞拍、建造和交易做出符合各自人格的结构化决策。",
   },
   "elder-fraud-assistant": {
-    provider: "Anthropic",
-    model: "claude-opus-4-8",
+    provider: "GPT",
+    model: "gpt-5.5",
     reason: "防诈判断涉及高风险信息、话术拆解和谨慎表达；该型号适合识别多层诱导与矛盾点，并明确给出核验步骤、风险边界和求助建议。",
   },
 };
@@ -469,7 +469,7 @@ window.AI_PROJECTS = [
     category: "办公效率",
     stage: "live",
     updatedAt: "2026-07-27",
-    requiredCapabilities: [],
+    requiredCapabilities: ["model:chat"],
   },
   {
     id: "ai-work-report-generator",
@@ -480,12 +480,12 @@ window.AI_PROJECTS = [
     category: "办公效率",
     stage: "live",
     updatedAt: "2026-07-27",
-    requiredCapabilities: [],
+    requiredCapabilities: ["model:chat"],
   },
   {
     id: "ai-xiangqi-duel",
     name: "AI · 中国象棋",
-    description: "Pikafish 中国象棋对弈工作台，支持提示、赛后复盘，并可用 DeepSeek、GPT、Claude 或 Gemini 解释关键走法。",
+    description: "Pikafish 中国象棋对弈工作台，支持提示、赛后复盘，并通过 AI Hub 当前项目模型解释关键走法。",
     url: `${SERVER}/xiangqi`,
     image: "/hub/assets/project-covers/ai-xiangqi-duel.png?v=20260709-cover-sync",
     category: "游戏原型",
@@ -518,24 +518,24 @@ window.AI_PROJECTS = [
   {
     id: "fury-flock",
     name: "怒羽突击 · Fury Flock",
-    description: "原创物理弹射浏览器游戏，指挥四只怒羽挑战 27 座机关堡垒，体验编队、连锁破坏与战术契约。",
+    description: "原创物理弹射战役现已扩展至 40 关：为四只现役怒羽逐发编队，破解铁盔与火铳哨兵把守的多层堡垒，并利用分裂、爆破、穿透和精准破点制造连锁坍塌。",
     url: `${SERVER}/fury-flock/`,
     image: "/hub/assets/project-covers/fury-flock.png?v=20260726-image2",
     category: "游戏原型",
     stage: "live",
-    updatedAt: "2026-07-20",
+    updatedAt: "2026-07-28",
     requiredCapabilities: [],
   },
   {
     id: "dice-estate-duel",
     name: "骰子地产战",
-    description: "你与三名独立人格 Agent 同场竞拍、收租、建造和交易，在 70 格城市地产棋盘上经营资产并争夺最终胜利。",
-    url: `${SERVER}/hub/dice-estate/index.html`,
+    description: "70 格城市地产棋盘现已支持三档 Agent 难度、双边资产与通行证交易、破产生存制和完整经济反馈；陈锋、周岩、苏晴三名独立人格 Agent 均通过 AI Hub 调用 GPT-5.5 决策。",
+    url: `${SERVER}/hub/dice-estate/`,
     image: "/hub/assets/project-covers/dice-estate-duel.png?v=20260726-image2",
     category: "游戏原型",
     stage: "live",
-    updatedAt: "2026-07-24",
-    requiredCapabilities: [],
+    updatedAt: "2026-07-28",
+    requiredCapabilities: ["model:chat"],
   },
   {
     id: "elder-fraud-assistant",

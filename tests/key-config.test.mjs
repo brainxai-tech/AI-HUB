@@ -18,7 +18,7 @@ test("dedicated key configuration page exposes the complete three-step flow", as
     "verifyAdminButton",
     "routingKeyInput",
     "fetchModelsButton",
-    "modelSelect",
+    "modelCatalog",
     "saveConfigButton",
     "clearSessionButton",
   ]) {
@@ -28,11 +28,12 @@ test("dedicated key configuration page exposes the complete three-step flow", as
   assert.match(html, /API Key 配置 · AI 项目汇集库/);
   assert.match(html, /\/hub\/styles\.css\?v=20260724-routing-promo1/);
   assert.match(html, /\/hub\/suite-theme\.css\?v=20260717-frontend5/);
-  assert.match(html, /\/hub\/suite-shell\.js\?v=20260723-ux1/);
+  assert.match(html, /\/hub\/suite-shell\.js\?v=20260728-gpt-only1/);
   assert.match(html, /autocomplete="current-password"/);
   assert.match(html, /autocomplete="new-password"/);
   assert.match(html, /noindex,nofollow/);
-  assert.match(html, /key-config\.js\?v=20260727-key-config2/);
+  assert.match(html, /rel="icon"/);
+  assert.match(html, /key-config\.js\?v=20260728-gpt-only1/);
   assert.match(html, /key-config\.css\?v=20260727-key-config2/);
   assert.doesNotMatch(html, /id="adminTokenInput"[^>]+value=/);
   assert.doesNotMatch(html, /<script(?![^>]+src=)/);

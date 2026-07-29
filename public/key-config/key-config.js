@@ -21,7 +21,7 @@
     fetchModels: document.querySelector("#fetchModelsButton"),
     keyGuidance: document.querySelector("#keyGuidance"),
     modelStage: document.querySelector("#modelStage"),
-    modelSelect: document.querySelector("#modelSelect"),
+    modelCatalog: document.querySelector("#modelCatalog"),
     modelCount: document.querySelector("#modelCount"),
     saveConfig: document.querySelector("#saveConfigButton"),
     clearSession: document.querySelector("#clearSessionButton"),
@@ -61,7 +61,7 @@
   function resetModels() {
     state.models = [];
     state.modelsVerified = false;
-    elements.modelSelect.replaceChildren(new Option("请先获取模型列表", ""));
+    elements.modelCatalog.textContent = "请先获取模型列表";
     elements.modelCount.textContent = "尚未获取模型";
     elements.modelStage.disabled = true;
     elements.saveConfig.disabled = true;
@@ -86,7 +86,7 @@
     const statusBox = elements.providerState.closest(".provider-state");
 
     if (provider?.enabled && provider?.configured) {
-      elements.providerState.textContent = provider.model ? `已接通 · ${provider.model}` : "已接通";
+      elements.providerState.textContent = `已接通 · ${provider.models.length} 个可选模型`;
       statusBox.dataset.state = "online";
       elements.keyGuidance.textContent = "已保存 Routing Key。输入新 Key 可替换，留空可使用已保存 Key 刷新模型。";
       return;
@@ -194,14 +194,12 @@
   }
 
   function renderModels(models) {
-    elements.modelSelect.replaceChildren();
+    elements.modelCatalog.replaceChildren();
     for (const model of models) {
-      elements.modelSelect.append(new Option(model, model));
-    }
-
-    const currentProvider = providerFromConfig(state.publicConfig);
-    if (currentProvider?.model && models.includes(currentProvider.model)) {
-      elements.modelSelect.value = currentProvider.model;
+      const item = document.createElement("span");
+      item.className = "model-choice";
+      item.textContent = model;
+      elements.modelCatalog.append(item);
     }
 
     elements.modelCount.textContent = `已验证并载入 ${models.length} 个模型`;
@@ -233,7 +231,9 @@
         body: apiKey ? { apiKey } : {},
       });
       const models = Array.isArray(result.models)
-        ? Array.from(new Set(result.models.filter((model) => typeof model === "string" && model.trim())))
+        ? Array.from(new Set(result.models.filter((model) =>
+            typeof model === "string" && /^gpt-/i.test(model.trim()),
+          )))
         : [];
 
       if (models.length === 0) {
@@ -245,10 +245,14 @@
       renderModels(models);
       elements.modelStage.disabled = false;
       elements.saveConfig.disabled = false;
-      setStep(elements.stepKey, elements.stepKeyStatus, "done", `密钥有效 · ${models.length} 个模型`);
-      setStep(elements.stepModel, elements.stepModelStatus, "current", "请选择默认模型");
-      setNotice("success", "密钥有效", `已获取 ${models.length} 个模型。选择默认模型后保存并启用。`);
-      elements.modelSelect.focus();
+      setStep(elements.stepKey, elements.stepKeyStatus, "done", `密钥有效 · ${models.length} 个可调用模型`);
+      setStep(elements.stepModel, elements.stepModelStatus, "current", "等待保存模型目录");
+      setNotice(
+        "success",
+        "密钥有效",
+        `已真实验证 ${models.length} 个当前 Key 可调用的具体 GPT 文本模型。保存后，各项目会立即获得可用型号，也可在项目顶部单独调整。`,
+      );
+      elements.saveConfig.focus();
     } catch (error) {
       setStep(elements.stepKey, elements.stepKeyStatus, "error", "Routing Key 检测失败");
       setNotice("error", "无法获取模型", error.status === 401 ? "管理员口令已失效，请清空后重新验证。" : error.message);
@@ -258,9 +262,8 @@
   }
 
   async function saveConfig() {
-    const model = elements.modelSelect.value.trim();
-    if (!state.adminVerified || !state.modelsVerified || !model || !state.models.includes(model)) {
-      setNotice("error", "配置尚未就绪", "重新检测 Key，并从返回的列表中选择默认模型。 ");
+    if (!state.adminVerified || !state.modelsVerified || state.models.length === 0) {
+      setNotice("error", "配置尚未就绪", "重新检测 Key，确认已读取可调用模型列表。 ");
       return;
     }
 
@@ -278,9 +281,8 @@
             routing: {
               enabled: true,
               apiKey,
-              model,
               models: state.models,
-              enabledModels: [model],
+              enabledModels: state.models,
             },
           },
         },
@@ -296,8 +298,8 @@
       elements.toggleKey.textContent = "显示";
       elements.toggleKey.setAttribute("aria-pressed", "false");
       renderProviderState(config);
-      setStep(elements.stepModel, elements.stepModelStatus, "done", `已启用 ${model}`);
-      setNotice("success", "配置已保存，模型入口已启用", "密钥输入框已清空。返回 AI HUB 刷新后，项目会恢复为可使用。 ");
+      setStep(elements.stepModel, elements.stepModelStatus, "done", `已保存 ${state.models.length} 个可选模型`);
+        setNotice("success", "Key 与模型目录已保存", "密钥输入框已清空。所有 AI 项目已可使用；进入具体项目后，可在顶部自由切换要调用的模型。 ");
     } catch (error) {
       setStep(elements.stepModel, elements.stepModelStatus, "error", "配置保存失败");
       setNotice("error", "无法保存配置", error.status === 401 ? "管理员口令已失效，请重新验证。" : error.message);

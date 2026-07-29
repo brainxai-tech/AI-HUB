@@ -103,3 +103,11 @@ test("service and Hub static files resolve through the current release", async (
   assert.match(unit, /^ReadOnlyPaths=\/opt\/ai-project-hub$/m);
   assert.match(nginx, /\/opt\/ai-project-hub\/current\/public/);
 });
+
+test("local Hub server sends modern project covers with image MIME types", async () => {
+  const server = await readFile(new URL("../server.mjs", import.meta.url), "utf8");
+
+  assert.match(server, /\["\.webp", "image\/webp"\]/);
+  assert.match(server, /\["\.avif", "image\/avif"\]/);
+  assert.match(server, /"x-content-type-options": "nosniff"/);
+});

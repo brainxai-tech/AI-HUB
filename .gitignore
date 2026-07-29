@@ -1,4 +1,6 @@
 .worktrees/
+.local-runtime/
+.release-commit
 node_modules/
 coverage/
 data/

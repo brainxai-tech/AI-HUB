@@ -1,4 +1,4 @@
-import { createReadStream } from "node:fs";
+import { createReadStream, realpathSync } from "node:fs";
 import { stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { timingSafeEqual } from "node:crypto";
@@ -23,10 +23,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, "public");
 const dataDir = path.join(__dirname, "data");
 const configPath = process.env.HUB_CONFIG_PATH || "/var/lib/ai-project-hub/model-config.json";
+const projectModelsPath =
+  process.env.HUB_PROJECT_MODELS_PATH || "/var/lib/ai-project-hub/project-model-selections.json";
 const observabilityLogPath =
   process.env.HUB_OBSERVABILITY_LOG_PATH || "/var/log/ai-project-hub/observability-events.jsonl";
 const port = Number.parseInt(process.env.PORT || "4194", 10);
 const adminToken = process.env.HUB_ADMIN_TOKEN || "";
+const remoteGatewayOrigin = normalizeRemoteGatewayOrigin(process.env.HUB_REMOTE_GATEWAY_ORIGIN || "");
 const projectToken = process.env.HUB_PROJECT_TOKEN || "";
 const projectTokensPath =
   process.env.HUB_PROJECT_TOKENS_PATH || path.join(dataDir, "project-tokens.json");
@@ -35,6 +38,20 @@ const allowLegacyCozeConfig = process.env.HUB_ALLOW_LEGACY_COZE_CONFIG === "true
 const upstreamTimeoutMs = Math.min(
   Math.max(Number.parseInt(process.env.HUB_UPSTREAM_TIMEOUT_MS || "60000", 10) || 60000, 1000),
   300000,
+);
+const pptUpstreamTimeoutMs = Math.min(
+  Math.max(
+    Number.parseInt(process.env.HUB_PPT_UPSTREAM_TIMEOUT_MS || "180000", 10) || 180000,
+    upstreamTimeoutMs,
+  ),
+  300000,
+);
+const modelProbeTimeoutMs = Math.min(
+  Math.max(
+    Number.parseInt(process.env.HUB_MODEL_PROBE_TIMEOUT_MS || "30000", 10) || 30000,
+    1000,
+  ),
+  upstreamTimeoutMs,
 );
 const maxOutputTokens = Math.min(
   Math.max(Number.parseInt(process.env.HUB_MAX_OUTPUT_TOKENS || "32768", 10) || 32768, 128),
@@ -68,6 +85,11 @@ const configStore = createConfigStore({
   defaultConfig: createDefaultConfig,
   normalize: mergeWithCatalog,
 });
+const projectModelStore = createConfigStore({
+  configPath: projectModelsPath,
+  defaultConfig: () => ({ version: 1, projects: {} }),
+  normalize: normalizeProjectModelSelections,
+});
 
 const contentTypes = new Map([
   [".html", "text/html; charset=utf-8"],
@@ -77,6 +99,8 @@ const contentTypes = new Map([
   [".png", "image/png"],
   [".jpg", "image/jpeg"],
   [".jpeg", "image/jpeg"],
+  [".webp", "image/webp"],
+  [".avif", "image/avif"],
   [".json", "application/json; charset=utf-8"],
 ]);
 
@@ -118,6 +142,22 @@ function normalizeModelList(value) {
   }
 
   return Array.from(new Set(value.map(normalizeModelName).filter(Boolean))).slice(0, 500);
+}
+
+function normalizeProjectModelSelections(value) {
+  const projects = {};
+  const rawProjects =
+    value?.projects && typeof value.projects === "object" && !Array.isArray(value.projects)
+      ? value.projects
+      : {};
+
+  for (const [projectId, rawModel] of Object.entries(rawProjects)) {
+    if (!/^[a-z0-9][a-z0-9-]{1,79}$/.test(projectId)) continue;
+    const model = normalizeModelName(rawModel);
+    if (model && isSelectableRoutingModel(model)) projects[projectId] = model;
+  }
+
+  return { version: 1, projects };
 }
 
 function createDefaultConfig() {
@@ -207,7 +247,10 @@ function getProviderApiKey(config, providerId) {
 }
 
 function isProviderConfigured(config, providerId) {
-  return Boolean(getProviderApiKey(config, providerId) && config.providers[providerId]?.model);
+  return Boolean(
+    getProviderApiKey(config, providerId) &&
+      normalizeModelList(config.providers[providerId]?.models).length > 0,
+  );
 }
 
 function countConfiguredProviders(config) {
@@ -244,8 +287,32 @@ function normalizePath(requestUrl, host) {
   return { url, pathname };
 }
 
+function normalizeRemoteGatewayOrigin(value) {
+  if (!value) return "";
+
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error("HUB_REMOTE_GATEWAY_ORIGIN must be a valid HTTP(S) origin.");
+  }
+
+  if (
+    !["http:", "https:"].includes(url.protocol) ||
+    url.username ||
+    url.password ||
+    url.pathname !== "/" ||
+    url.search ||
+    url.hash
+  ) {
+    throw new Error("HUB_REMOTE_GATEWAY_ORIGIN must contain only an HTTP(S) origin.");
+  }
+
+  return url.origin;
+}
+
 function resolvePublicPath(pathname) {
-  const safePathname = pathname === "/" ? "/index.html" : pathname;
+  const safePathname = pathname.endsWith("/") ? `${pathname}index.html` : pathname;
   const requestedPath = path.normalize(path.join(publicDir, safePathname));
   const relativePath = path.relative(publicDir, requestedPath);
 
@@ -254,6 +321,75 @@ function resolvePublicPath(pathname) {
   }
 
   return requestedPath;
+}
+
+async function readProxyBody(request, maxBytes = 10 * 1024 * 1024) {
+  if (request.method === "GET" || request.method === "HEAD") return undefined;
+
+  const chunks = [];
+  let totalBytes = 0;
+  for await (const chunk of request) {
+    totalBytes += chunk.length;
+    if (totalBytes > maxBytes) {
+      const error = new Error("Request body is too large");
+      error.statusCode = 413;
+      throw error;
+    }
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
+async function proxyApiRequest(request, response, pathname) {
+  const target = new URL(`/hub${pathname}`, remoteGatewayOrigin);
+  const headers = {};
+  const forwardedHeaders = [
+    "accept",
+    "authorization",
+    "content-type",
+    "idempotency-key",
+    "x-hub-admin-token",
+    "x-hub-project-id",
+    "x-hub-project-path",
+    "x-hub-project-token",
+  ];
+
+  for (const name of forwardedHeaders) {
+    const value = request.headers[name];
+    if (typeof value === "string") headers[name] = value;
+  }
+
+  let upstreamResponse;
+  try {
+    upstreamResponse = await fetch(target, {
+      method: request.method,
+      headers,
+      body: await readProxyBody(request),
+      redirect: "manual",
+      signal: AbortSignal.timeout(pptUpstreamTimeoutMs),
+    });
+  } catch (cause) {
+    const error = new Error("The central AI Hub gateway is unavailable.", { cause });
+    error.statusCode = 502;
+    throw error;
+  }
+
+  const body = Buffer.from(await upstreamResponse.arrayBuffer());
+  const responseHeaders = {
+    ...securityHeaders,
+    "cache-control": "no-store",
+    "content-type": upstreamResponse.headers.get("content-type") || "application/octet-stream",
+    "x-ai-hub-local-proxy": "remote",
+  };
+  const retryAfter = upstreamResponse.headers.get("retry-after");
+  if (retryAfter) responseHeaders["retry-after"] = retryAfter;
+
+  response.writeHead(upstreamResponse.status, responseHeaders);
+  if (request.method === "HEAD") {
+    response.end();
+    return;
+  }
+  response.end(body);
 }
 
 async function readJsonBody(request, maxBytes = 1024 * 1024) {
@@ -300,23 +436,17 @@ function mergeWithCatalog(rawConfig) {
   for (const [id, provider] of Object.entries(providerCatalog)) {
     const rawProvider = rawConfig?.providers?.[id] || {};
     const rawApiKey = typeof rawProvider.apiKey === "string" ? rawProvider.apiKey : "";
-    const models = rawApiKey ? normalizeModelList(rawProvider.models) : [];
-    const rawModel = rawApiKey ? normalizeModelName(rawProvider.model) : "";
-    if (rawModel && !models.includes(rawModel)) {
-      models.unshift(rawModel);
-    }
-    const model = rawModel || models[0] || "";
-    const enabledModels = rawApiKey
-      ? normalizeModelList(rawProvider.enabledModels).filter((modelName) => models.includes(modelName))
+    const models = rawApiKey
+      ? normalizeModelList(rawProvider.models).filter(isSelectableRoutingModel)
       : [];
 
     merged.providers[id] = {
       enabled: Boolean(rawProvider.enabled),
       apiKey: rawApiKey,
       baseUrl: provider.baseUrl,
-      model,
+      model: "",
       models,
-      enabledModels: enabledModels.length > 0 ? enabledModels : model ? [model] : [],
+      enabledModels: models,
     };
   }
 
@@ -396,6 +526,95 @@ function publicConfig(config) {
   };
 }
 
+function defaultProjectModel(models) {
+  const preferences = [
+    "gpt-5.6-luna",
+    "gpt-5.6-terra",
+    "gpt-5.6-sol",
+    "gpt-5.4-mini",
+    "gpt-5.5",
+    "gpt-5.4",
+    "gpt-5.3-codex-spark",
+  ];
+  return (
+    preferences.find((model) => models.includes(model)) ||
+    models.find((model) => /^gpt-/i.test(model)) ||
+    ""
+  );
+}
+
+export function resolveProjectModelSelection(config, selections, projectId) {
+  const providerId = config.defaultProvider;
+  const provider = config.providers[providerId];
+  const models = provider?.enabled && isProviderConfigured(config, providerId)
+    ? normalizeModelList(provider.enabledModels).filter(isSelectableRoutingModel)
+    : [];
+  const storedModel = normalizeModelName(selections?.projects?.[projectId]);
+  const hasStoredModel = models.includes(storedModel);
+  const model = hasStoredModel ? storedModel : defaultProjectModel(models);
+
+  return {
+    projectId,
+    provider: providerId,
+    model,
+    models,
+    inherited: Boolean(model && !hasStoredModel),
+    configured: Boolean(model),
+    selectionRequired: false,
+  };
+}
+
+function isProjectChatModel(model) {
+  return !(
+    /^gpt-image(?:-|$)/i.test(model) ||
+    /(?:^|[-_.])(?:embedding|tts|whisper)(?:[-_.]|$)/i.test(model)
+  );
+}
+
+export function isSelectableRoutingModel(model) {
+  return /^gpt-/i.test(String(model || "")) && isProjectChatModel(model);
+}
+
+export function getProjectProviderSelection(config, selections, projectId, payload = {}) {
+  const projectSelection = resolveProjectModelSelection(config, selections, projectId);
+  if (!projectSelection.configured) {
+    const error = new Error("Select a model inside this AI Hub project before generating.");
+    error.statusCode = 409;
+    error.body = {
+      error: {
+        code: "PROJECT_MODEL_SELECTION_REQUIRED",
+        message: "请先在当前项目中选择要调用的大模型。API Key 配置页不再设置默认模型。",
+      },
+    };
+    throw error;
+  }
+  return getProviderSelection(config, {
+    ...payload,
+    provider: projectSelection.provider,
+    model: projectSelection.model,
+  });
+}
+
+export function projectCompatibleConfig(config, projectSelection) {
+  const basePublicValue = publicConfig(config);
+  const effectiveModel = projectSelection?.model || "";
+  const routing = basePublicValue.providers.find(
+    (provider) => provider.id === basePublicValue.defaultProvider && provider.enabled && provider.configured,
+  );
+  if (!routing || !effectiveModel) return basePublicValue;
+
+  const alias = {
+    ...routing,
+    id: "openai",
+    label: "GPT · AI Routing",
+    adapter: "ai-routing-compatibility-alias",
+    model: effectiveModel,
+    models: [effectiveModel],
+    enabledModels: [effectiveModel],
+  };
+  return { ...basePublicValue, defaultProvider: "openai", providers: [alias] };
+}
+
 function applyConfigUpdate(currentConfig, payload) {
   const nextConfig = mergeWithCatalog(currentConfig);
 
@@ -426,25 +645,10 @@ function applyConfigUpdate(currentConfig, payload) {
     }
 
     if (Array.isArray(patch.models)) {
-      nextProvider.models = normalizeModelList(patch.models);
+      nextProvider.models = normalizeModelList(patch.models).filter(isSelectableRoutingModel);
     }
-
-    const requestedModel = normalizeModelName(patch.model);
-    if (requestedModel && nextProvider.models.includes(requestedModel)) {
-      nextProvider.model = requestedModel;
-    } else if (!nextProvider.models.includes(nextProvider.model)) {
-      nextProvider.model = nextProvider.models[0] || "";
-    }
-
-    if (Array.isArray(patch.enabledModels)) {
-      nextProvider.enabledModels = normalizeModelList(patch.enabledModels).filter((modelName) =>
-        nextProvider.models.includes(modelName),
-      );
-    }
-
-    if (nextProvider.model && !nextProvider.enabledModels.includes(nextProvider.model)) {
-      nextProvider.enabledModels.unshift(nextProvider.model);
-    }
+    nextProvider.model = "";
+    nextProvider.enabledModels = [...nextProvider.models];
   }
 
   const cozePatch = payload?.integrations?.coze;
@@ -513,8 +717,20 @@ function getProviderSelection(config, payload) {
   const requestedModel =
     typeof payload.model === "string" && payload.model.trim()
       ? payload.model.trim()
-      : providerConfig.model;
-  const enabledModels = Array.isArray(providerConfig.enabledModels) ? providerConfig.enabledModels : [];
+      : "";
+  const enabledModels = normalizeModelList(providerConfig.models);
+
+  if (!requestedModel) {
+    const error = new Error(`A model must be selected for ${providerMeta.label}.`);
+    error.statusCode = 409;
+    error.body = {
+      error: {
+        code: "MODEL_SELECTION_REQUIRED",
+        message: "请在当前 AI Hub 项目中选择要调用的大模型。",
+      },
+    };
+    throw error;
+  }
 
   if (enabledModels.length > 0 && !enabledModels.includes(requestedModel)) {
     const error = new Error(`${requestedModel} has not been enabled for ${providerMeta.label} in AI Project Hub.`);
@@ -615,11 +831,13 @@ async function parseUpstreamResponse(upstreamResponse) {
   }
 }
 
-async function fetchUpstream(url, init) {
+async function fetchUpstream(url, init, options = {}) {
+  const timeoutMs = options.timeoutMs || upstreamTimeoutMs;
+  const fetcher = options.fetcher || fetch;
   try {
-    return await fetch(url, {
+    return await fetcher(url, {
       ...init,
-      signal: AbortSignal.timeout(upstreamTimeoutMs),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (cause) {
     const timedOut = cause?.name === "TimeoutError" || cause?.name === "AbortError";
@@ -637,13 +855,103 @@ async function fetchUpstream(url, init) {
   }
 }
 
-async function discoverRoutingModels(apiKey) {
+function modelVerificationError(message) {
+  const error = new Error(message);
+  error.statusCode = 502;
+  error.body = {
+    error: {
+      code: "UPSTREAM_MODEL_VERIFICATION_INCONCLUSIVE",
+      message:
+        "模型可用性验证遇到临时上游故障，尚未保存配置。请稍后重试，以免误删实际可用的模型。",
+    },
+  };
+  return error;
+}
+
+function apiKeyRejectedError() {
+  const error = new Error("AI Routing rejected this API Key during model verification.");
+  error.statusCode = 401;
+  error.body = {
+    error: {
+      code: "UPSTREAM_API_KEY_REJECTED",
+      message: "AI Routing 拒绝了这枚 API Key，请检查后重试。",
+    },
+  };
+  return error;
+}
+
+async function verifyRoutingModel(apiKey, model, options = {}) {
+  let upstreamResponse;
+  try {
+    upstreamResponse = await fetchUpstream(
+      `${providerCatalog.routing.baseUrl}/chat/completions`,
+      {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          authorization: `Bearer ${apiKey}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: "user", content: "Reply with OK." }],
+          max_tokens: 32,
+          temperature: 0,
+          stream: false,
+        }),
+      },
+      {
+        fetcher: options.fetcher,
+        timeoutMs: options.timeoutMs || modelProbeTimeoutMs,
+      },
+    );
+  } catch (error) {
+    throw modelVerificationError(error?.message || "Model verification request failed.");
+  }
+
+  if (upstreamResponse.ok) return true;
+  await upstreamResponse.body?.cancel?.().catch(() => {});
+
+  if (upstreamResponse.status === 400 || upstreamResponse.status === 404) return false;
+  if (upstreamResponse.status === 401 || upstreamResponse.status === 403) {
+    throw apiKeyRejectedError();
+  }
+  throw modelVerificationError(`Model verification returned HTTP ${upstreamResponse.status}.`);
+}
+
+async function verifyRoutingModels(apiKey, models, options = {}) {
+  const results = new Array(models.length);
+  const concurrency = Math.min(Math.max(Number(options.concurrency) || 4, 1), 8);
+  let cursor = 0;
+  let fatalError = null;
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, models.length) }, async () => {
+      while (!fatalError) {
+        const index = cursor;
+        cursor += 1;
+        if (index >= models.length) return;
+        try {
+          results[index] = await verifyRoutingModel(apiKey, models[index], options);
+        } catch (error) {
+          fatalError ||= error;
+          return;
+        }
+      }
+    }),
+  );
+
+  if (fatalError) throw fatalError;
+  return models.filter((_model, index) => results[index]);
+}
+
+export async function discoverRoutingModels(apiKey, options = {}) {
   const upstreamResponse = await fetchUpstream(`${providerCatalog.routing.baseUrl}/models`, {
     headers: {
       accept: "application/json",
       authorization: `Bearer ${apiKey}`,
     },
-  });
+  }, options);
   const body = await parseUpstreamResponse(upstreamResponse);
 
   if (!upstreamResponse.ok) {
@@ -661,7 +969,9 @@ async function discoverRoutingModels(apiKey) {
     throw error;
   }
 
-  const models = normalizeModelList(Array.isArray(body?.data) ? body.data.map((item) => item?.id) : []);
+  const models = normalizeModelList(
+    Array.isArray(body?.data) ? body.data.map((item) => item?.id) : [],
+  ).filter(isSelectableRoutingModel);
   if (models.length === 0) {
     const error = new Error("AI Routing returned no usable models.");
     error.statusCode = 502;
@@ -674,7 +984,20 @@ async function discoverRoutingModels(apiKey) {
     throw error;
   }
 
-  return models.sort((left, right) => left.localeCompare(right));
+  const verifiedModels = await verifyRoutingModels(apiKey, models, options);
+  if (verifiedModels.length === 0) {
+    const error = new Error("AI Routing returned no callable chat models for this Key.");
+    error.statusCode = 400;
+    error.body = {
+      error: {
+        code: "UPSTREAM_NO_CALLABLE_MODELS",
+        message: "这枚 AI Routing API Key 没有可实际调用的文本模型。",
+      },
+    };
+    throw error;
+  }
+
+  return verifiedModels.sort((left, right) => left.localeCompare(right));
 }
 
 function normalizeUpstreamError(providerId, upstreamStatus, body) {
@@ -694,7 +1017,7 @@ function normalizeUpstreamError(providerId, upstreamStatus, body) {
   };
 }
 
-async function callOpenAiCompatible(selection, payload) {
+async function callOpenAiCompatible(selection, payload, options = {}) {
   const upstreamResponse = await fetchUpstream(`${selection.config.baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
@@ -702,7 +1025,7 @@ async function callOpenAiCompatible(selection, payload) {
       authorization: `Bearer ${selection.config.apiKey}`,
     },
     body: JSON.stringify(buildOpenAiPayload(selection, payload)),
-  });
+  }, options);
   const body = await parseUpstreamResponse(upstreamResponse);
 
   if (!upstreamResponse.ok) {
@@ -715,8 +1038,14 @@ async function callOpenAiCompatible(selection, payload) {
   return body;
 }
 
-async function callModel(selection, payload) {
-  return callOpenAiCompatible(selection, payload);
+async function callModel(selection, payload, options = {}) {
+  return callOpenAiCompatible(selection, payload, options);
+}
+
+export function resolveUpstreamTimeoutForProject(projectId, options = {}) {
+  const defaultTimeoutMs = options.defaultTimeoutMs || upstreamTimeoutMs;
+  const dedicatedPptTimeoutMs = options.pptTimeoutMs || pptUpstreamTimeoutMs;
+  return projectId === "ai-ppt-report-coach" ? dedicatedPptTimeoutMs : defaultTimeoutMs;
 }
 
 async function recordHubEvent(payload, defaults = {}) {
@@ -837,7 +1166,64 @@ async function handleApi(request, response, pathname) {
   }
 
   if (pathname === "/api/model-config" && request.method === "GET") {
-    sendJson(response, 200, publicConfig(await readConfig()));
+    const config = await readConfig();
+    const hasProjectCredential = Boolean(request.headers["x-hub-project-token"]);
+    if (!hasProjectCredential) {
+      sendJson(response, 200, publicConfig(config));
+      return;
+    }
+    const access = authorizeProject(request, "model:chat");
+    if (!access.ok) {
+      sendJson(response, access.statusCode, access.error);
+      return;
+    }
+    const projectSelection = resolveProjectModelSelection(
+      config,
+      await projectModelStore.read(),
+      access.projectId,
+    );
+    sendJson(response, 200, projectCompatibleConfig(config, projectSelection));
+    return;
+  }
+
+  if (pathname === "/api/project-model-selection" && request.method === "GET") {
+    const access = authorizeProject(request, "model:chat");
+    if (!access.ok) {
+      sendJson(response, access.statusCode, access.error);
+      return;
+    }
+    const config = await readConfig();
+    sendJson(
+      response,
+      200,
+      resolveProjectModelSelection(config, await projectModelStore.read(), access.projectId),
+    );
+    return;
+  }
+
+  if (pathname === "/api/project-model-selection" && request.method === "PUT") {
+    const access = authorizeProject(request, "model:chat");
+    if (!access.ok) {
+      sendJson(response, access.statusCode, access.error);
+      return;
+    }
+    const payload = await readJsonBody(request, 16 * 1024);
+    const model = normalizeModelName(payload.model);
+    const config = await readConfig();
+    const selections = await projectModelStore.read();
+    const current = resolveProjectModelSelection(config, selections, access.projectId);
+    if (!model || !current.models.includes(model)) {
+      sendJson(response, 400, {
+        error: {
+          code: "PROJECT_MODEL_NOT_AVAILABLE",
+          message: "The selected model is not available to this AI Hub API Key.",
+        },
+      });
+      return;
+    }
+    selections.projects[access.projectId] = model;
+    const saved = await projectModelStore.write(selections);
+    sendJson(response, 200, resolveProjectModelSelection(config, saved, access.projectId));
     return;
   }
 
@@ -942,8 +1328,15 @@ async function handleApi(request, response, pathname) {
         throw policyError;
       }
       const config = await readConfig();
-      const selection = getProviderSelection(config, payload);
-      const body = await callModel(selection, payload);
+      const selection = getProjectProviderSelection(
+        config,
+        await projectModelStore.read(),
+        access.projectId,
+        payload,
+      );
+      const body = await callModel(selection, payload, {
+        timeoutMs: resolveUpstreamTimeoutForProject(access.projectId),
+      });
       await recordHubEvent(
         {
           eventType: "generate",
@@ -981,7 +1374,11 @@ const server = createServer(async (request, response) => {
     const { pathname } = normalizePath(request.url || "/", request.headers.host);
 
     if (pathname.startsWith("/api/")) {
-      await handleApi(request, response, pathname);
+      if (remoteGatewayOrigin) {
+        await proxyApiRequest(request, response, pathname);
+      } else {
+        await handleApi(request, response, pathname);
+      }
       return;
     }
 
@@ -1032,6 +1429,11 @@ const server = createServer(async (request, response) => {
   }
 });
 
-server.listen(port, "127.0.0.1", () => {
-  console.log(`AI Project Hub is running at http://127.0.0.1:${port}/`);
-});
+if (
+  process.argv[1] &&
+  realpathSync(path.resolve(process.argv[1])) === realpathSync(fileURLToPath(import.meta.url))
+) {
+  server.listen(port, "127.0.0.1", () => {
+    console.log(`AI Project Hub is running at http://127.0.0.1:${port}/`);
+  });
+}

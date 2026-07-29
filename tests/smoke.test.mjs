@@ -69,7 +69,7 @@ test("project data points to the real server links", async () => {
     ["ai-chess-duel", "https://47-84-108-192.sslip.io/chess"],
     ["ai-go-duel", "https://47-84-108-192.sslip.io/go"],
     ["fury-flock", "https://47-84-108-192.sslip.io/fury-flock/"],
-    ["dice-estate-duel", "https://47-84-108-192.sslip.io/hub/dice-estate/index.html"],
+    ["dice-estate-duel", "https://47-84-108-192.sslip.io/hub/dice-estate/"],
     ["ai-ppt-report-coach", "https://47-84-108-192.sslip.io/ppt-report-coach/"],
     ["ai-work-report-generator", "https://47-84-108-192.sslip.io/work-report/"],
   ]);
@@ -152,7 +152,7 @@ test("AI projects declare capability-specific gates", async () => {
   );
   for (const project of projects) {
     assert.equal(Object.hasOwn(project, "requiresModelConfig"), false);
-    if (["fury-flock", "dice-estate-duel", "ai-ppt-report-coach", "ai-work-report-generator"].includes(project.id)) {
+    if (project.id === "fury-flock") {
       assert.deepEqual(Array.from(project.requiredCapabilities || []), []);
     } else {
       assert.deepEqual(Array.from(project.requiredCapabilities), ["model:chat"]);
@@ -160,23 +160,18 @@ test("AI projects declare capability-specific gates", async () => {
   }
 });
 
-test("every project has a supported GPT, Gemini, or Anthropic recommendation", async () => {
+test("every project recommendation stays within the GPT routing family", async () => {
   const projects = await loadProjects();
   const supportedModels = new Map([
-    ["GPT", new Set(["gpt-5.5", "gpt-5.5-pro", "gpt-5.4", "gpt-5.4-mini"])],
-    [
-      "Gemini",
-      new Set([
-        "gemini-3.5-flash",
-        "gemini-3.1-pro-preview",
-        "gemini-3-flash-preview",
-        "gemini-3.1-flash-lite",
-      ]),
-    ],
-    [
-      "Anthropic",
-      new Set(["claude-opus-4-8", "claude-sonnet-4-6", "claude-haiku-4-5"]),
-    ],
+    ["GPT", new Set([
+      "gpt-5.3-codex-spark",
+      "gpt-5.4",
+      "gpt-5.4-mini",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+    ])],
   ]);
 
   for (const project of projects) {
@@ -223,10 +218,10 @@ test("html loads project data before the app", async () => {
   assert.ok(projectsIndex < appIndex, "project data must load before app.js");
   assert.ok(coversIndex > projectsIndex && coversIndex < appIndex, "cover manifest must load before app.js");
   assert.match(html, /\/hub\/capabilities\.js\?v=20260710-capabilities/);
-  assert.match(html, /\/hub\/projects\.js\?v=20260726-image2/);
+  assert.match(html, /\/hub\/projects\.js\?v=20260728-gpt-only1/);
   assert.match(html, /\/hub\/cover-manifest\.js\?v=20260727-image2-office-hub-style-v2/);
-  assert.match(html, /\/hub\/styles\.css\?v=20260724-routing-promo1/);
-  assert.match(html, /\/hub\/app\.js\?v=20260724-dice-estate1/);
+  assert.match(html, /\/hub\/styles\.css\?v=20260728-audit1/);
+  assert.match(html, /\/hub\/app\.js\?v=20260728-audit1/);
   assert.match(html, /rel="icon" href="data:image\/svg\+xml/);
 });
 
@@ -235,6 +230,7 @@ test("Hub shell transfer stays below 1.5 MiB before lazy cover loading", async (
     "public/index.html",
     "public/styles.css",
     "public/suite-theme.css",
+    "public/suite-tool-foundation.css",
     "public/suite-shell.js",
     "public/capabilities.js",
     "public/projects.js",
@@ -352,8 +348,9 @@ test("public Hub promotes the planned auto-routing value without claiming it is 
   assert.match(html, /自动路由能力建设中/);
   assert.match(html, /一个 API Key/);
   assert.match(html, /GPT/);
-  assert.match(html, /Gemini/);
-  assert.match(html, /Anthropic/);
+  assert.match(html, /gpt-5\.6-sol/);
+  assert.match(html, /gpt-5\.3-codex-spark/);
+  assert.doesNotMatch(html, /Anthropic|Claude|DeepSeek|Gemini/i);
   assert.match(html, /智能平衡/);
   assert.match(html, /质量优先/);
   assert.match(html, /省钱优先/);
@@ -365,7 +362,7 @@ test("public Hub promotes the planned auto-routing value without claiming it is 
   assert.match(styles, /\.routing-flow/);
 });
 
-test("model guide compares seven providers with transparent scoring and pricing", async () => {
+test("model guide compares only GPT models with transparent scoring and pricing", async () => {
   const hubHtml = await readProjectFile("public/index.html");
   const guideHtml = await readProjectFile("public/models.html");
   const guideData = await readProjectFile("public/model-guide-data.js");
@@ -392,14 +389,10 @@ test("model guide compares seven providers with transparent scoring and pricing"
     assert.match(guideHtml, new RegExp(`id="${id}"`));
   }
 
-  for (const provider of ["OpenAI", "Gemini", "Anthropic", "Kimi", "GLM", "DeepSeek", "Grok"]) {
-    assert.match(guideData, new RegExp(`provider: "${provider}"`));
-  }
-
-  assert.equal((guideData.match(/provider: "(?:OpenAI|Gemini|Anthropic|Kimi|GLM|DeepSeek|Grok)"/g) || []).length, 26);
-  assert.equal(modelGuide.providers.length, 7);
-  assert.equal(modelGuide.models.length, 26);
-  for (const id of ["gpt-5.5-pro", "gpt-5.5", "gpt-5.4-pro", "gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano"]) {
+  assert.match(guideData, /providers: providers\.filter\(\(provider\) => provider\.id === "OpenAI"\)/);
+  assert.equal(modelGuide.providers.length, 1);
+  assert.equal(modelGuide.models.length, 9);
+  for (const id of ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", "gpt-5.5-pro", "gpt-5.5", "gpt-5.4-pro", "gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano"]) {
     assert.ok(modelGuide.models.some((model) => model.id === id), `${id} is missing from the guide`);
   }
   for (const profile of modelGuide.providers) {
@@ -427,7 +420,7 @@ test("model guide compares seven providers with transparent scoring and pricing"
     assert.equal(model.sourcesVerifiedAt, "2026-07-27", `${model.id} needs a source verification date`);
   }
   const liveBenchModels = modelGuide.models.filter((model) => model.benchmarks.liveBench);
-  assert.equal(liveBenchModels.length, 20, "twenty models should have exact LiveBench release matches");
+  assert.equal(liveBenchModels.length, 7, "seven GPT models should have exact LiveBench release matches");
   for (const model of liveBenchModels) {
     assert.match(model.benchmarks.liveBench.variant, /\S/, `${model.id} needs the exact evaluated variant`);
     for (const metric of ["overall", "reasoning", "coding", "agentic", "math", "data", "language", "instruction"]) {
@@ -445,7 +438,7 @@ test("model guide compares seven providers with transparent scoring and pricing"
   assert.match(guideHtml, /每 100 万输入\/输出 Token/);
   assert.match(guideHtml, /80 万输入 \+ 20 万输出/);
   assert.match(guideHtml, /能力分数来自 LiveBench 与 Artificial Analysis 国际第三方测评/);
-  assert.match(guideHtml, /不代表这些模型已经接入或启用/);
+  assert.match(guideHtml, /真实可用型号仍以当前 AI Routing API Key 的检测结果为准/);
   assert.match(guideHtml, /每组数据都有对应来源/);
   assert.match(guideHtml, /型号名称、上下文、输入输出模态、工具与 Token 单价/);
   assert.match(guideHtml, /未收录型号显示“暂无第三方测评”/);
@@ -554,6 +547,14 @@ test("Hub and shared project shell maintain a local recent-use trail", async () 
   assert.match(shell, /recordRecentVisit/);
 });
 
+test("shared project shell resolves nested Hub project API paths", async () => {
+  const shell = await readProjectFile("public/suite-shell.js");
+
+  assert.match(shell, /firstSegment !== "hub"/);
+  assert.match(shell, /projectId !== "hub" && segments\[1\]/);
+  assert.match(shell, /`\/hub\/\$\{segments\[1\]\}`/);
+});
+
 test("sensitive projects disclose data handling and professional boundaries", async () => {
   const html = await readProjectFile("public/index.html");
   const app = await readProjectFile("public/app.js");
@@ -603,7 +604,8 @@ test("hub model catalog exposes only the AI Routing provider and dynamic models"
   assert.match(server, /discoverRoutingModels/);
   assert.match(server, /normalizeModelList/);
   assert.match(server, /enabledModels/);
-  assert.match(app, /data-provider-enabled-model/);
+  assert.match(app, /data-provider-model-catalog/);
+  assert.match(app, /data-provider-model-name/);
   assert.match(app, /data-provider-refresh-models/);
   assert.match(app, /refreshProviderModels/);
   assert.match(app, /models,/);

@@ -6,11 +6,11 @@
     <title>AI 项目汇集库</title>
     <meta
       name="description"
-      content="集中发现 AI 项目，了解 GPT、Gemini 与 Anthropic 的能力差异，以及 AI HUB 的自动路由产品方向。"
+      content="集中发现 AI 项目，通过同一枚 AI Routing API Key 在具体 GPT 型号中按项目选择。"
     />
     <meta name="theme-color" content="#f7f9fc" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='Arial' font-size='30' font-weight='700' fill='white'%3EAI%3C/text%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="/hub/styles.css?v=20260724-routing-promo1" />
+    <link rel="stylesheet" href="/hub/styles.css?v=20260728-audit1" />
     <link rel="stylesheet" href="/hub/suite-theme.css?v=20260717-frontend5" />
   </head>
   <body >
@@ -26,7 +26,7 @@
             <span class="brand-description">集中发现、筛选并打开全部 AI 项目</span>
           </span>
         </a>
-        <div class="status-strip" aria-label="项目统计">
+        <div class="status-strip" role="group" aria-label="项目统计">
           <a class="hub-config-entry" href="/hub/key-config/">配置 API Key</a>
           <span id="projectCount">0 个项目</span>
           <span id="lastUpdated">等待收录</span>
@@ -45,7 +45,7 @@
             <h2 id="routingHeroTitle">一个 API Key，让每个任务用上更合适的模型</h2>
             <p class="routing-hero__lead">
               AI HUB 正在向统一模型入口演进：未来将根据任务难度、内容类型、响应速度和成本要求，
-              在 GPT、Gemini 与 Anthropic 之间选择更合适的具体型号。
+              在这枚 API Key 实际可调用的具体 GPT 型号之间选择更合适的模型。
             </p>
             <ul class="routing-outcomes" aria-label="自动路由的目标价值">
               <li><strong>选得准</strong><span>复杂任务匹配更强的推理与理解能力</span></li>
@@ -78,12 +78,12 @@
               </li>
               <li data-state="selected">
                 <span>03</span>
-                <div><small>主要候选</small><strong>Anthropic · claude-opus-4-8</strong></div>
+                <div><small>主要候选</small><strong>GPT · gpt-5.5</strong></div>
               </li>
             </ol>
             <div class="routing-key-promise">
               <span aria-hidden="true">KEY</span>
-              <p><strong>目标体验：一个 API Key</strong><small>一个统一入口 · 三类模型候选</small></p>
+              <p><strong>目标体验：一个 API Key</strong><small>一个统一入口 · 具体 GPT 型号</small></p>
             </div>
           </aside>
         </section>
@@ -101,25 +101,19 @@
               <div class="model-strength__head"><span aria-hidden="true">G</span><div><small>GPT</small><h3>推理与结构</h3></div></div>
               <p>更适合复杂推理、数据分析、结构化输出和多步骤决策。</p>
               <ul><li>业务数据分析</li><li>品牌策略</li><li>决策模拟</li></ul>
-              <small class="model-strength__models">候选：gpt-5.5 · gpt-5.4-mini</small>
+              <small class="model-strength__models">候选：gpt-5.6-sol · gpt-5.6-terra · gpt-5.6-luna</small>
             </article>
-            <article data-provider="gemini">
-              <div class="model-strength__head"><span aria-hidden="true">Ge</span><div><small>Gemini</small><h3>多模态与速度</h3></div></div>
-              <p>更适合图像理解、多模态内容、实时交互和高频快速生成。</p>
-              <ul><li>图片与设计分析</li><li>口语陪练</li><li>批量内容生成</li></ul>
-              <small class="model-strength__models">候选：gemini-3.1-pro-preview · gemini-3.5-flash</small>
-            </article>
-            <article data-provider="anthropic">
-              <div class="model-strength__head"><span aria-hidden="true">A</span><div><small>Anthropic</small><h3>长文与表达</h3></div></div>
-              <p>更适合长文理解、自然写作、细腻语气和审慎表达。</p>
-              <ul><li>论文与合同阅读</li><li>情绪陪伴</li><li>语气改写</li></ul>
-              <small class="model-strength__models">候选：claude-opus-4-8 · claude-sonnet-4-6</small>
+            <article data-provider="gpt-programming">
+              <div class="model-strength__head"><span aria-hidden="true">G</span><div><small>GPT 5.3 编程型号</small><h3>编程与自动审查</h3></div></div>
+              <p>更适合代码生成、工程分析、快速审查和结构化自动化任务。</p>
+              <ul><li>代码与工程任务</li><li>自动审查</li><li>快速结构化生成</li></ul>
+              <small class="model-strength__models">候选：gpt-5.3-codex-spark · gpt-5.4 · gpt-5.4-mini</small>
             </article>
           </div>
         </section>
 
         <section class="routing-plan" aria-label="自动路由产品规划">
-          <div id="routingFlow" class="routing-flow" aria-labelledby="routingFlowTitle">
+          <div id="routingFlow" class="routing-flow" role="region" aria-labelledby="routingFlowTitle">
             <span class="eyebrow">未来如何工作</span>
             <h2 id="routingFlowTitle">从任务到模型，选择过程保持透明</h2>
             <ol>
@@ -208,7 +202,7 @@
           <summary>
             <span>
               <span class="eyebrow">完整项目库</span>
-              <strong>浏览全部 32 个项目</strong>
+              <strong id="catalogCount">浏览全部项目</strong>
             </span>
             <span class="catalog-disclosure__hint">展开搜索与筛选</span>
           </summary>
@@ -280,9 +274,9 @@
     </main>
 
     <script src="/hub/capabilities.js?v=20260710-capabilities"></script>
-    <script src="/hub/projects.js?v=20260726-image2"></script>
+    <script src="/hub/projects.js?v=20260728-gpt-only1"></script>
     <script src="/hub/cover-manifest.js?v=20260727-image2-office-hub-style-v2"></script>
-    <script src="/hub/app.js?v=20260724-dice-estate1"></script>
-    <script defer src="/hub/suite-shell.js?v=20260723-ux1" data-suite-project="AI 项目汇集库" data-suite-hub="/hub/"></script>
+    <script src="/hub/app.js?v=20260728-audit1"></script>
+    <script defer src="/hub/suite-shell.js?v=20260728-gpt-only1" data-suite-project="AI 项目汇集库" data-suite-hub="/hub/"></script>
   </body>
 </html>
