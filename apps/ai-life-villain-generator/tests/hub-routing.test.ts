@@ -65,7 +65,7 @@ describe("recovered Hub routing artifacts", () => {
       expect(new Headers(calls[0].headers).get("x-hub-project-token")).toBe("test-project-token");
 
       await expect(callHubChat({ provider: "openai", model: "other-model", messages: [] }))
-        .rejects.toMatchObject<Partial<HubModelError>>({ code: "INVALID_MODEL" });
+        .rejects.toMatchObject({ code: "INVALID_MODEL" } satisfies Partial<HubModelError>);
       expect(calls).toHaveLength(1);
     } finally {
       globalThis.fetch = originalFetch;
