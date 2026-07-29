@@ -637,7 +637,7 @@ async function handleTone(request, response, project, credential, pathname, chat
     return true;
   }
   if (pathname === "/tone/api/providers" && request.method === "GET") {
-    sendJson(response, 200, await providerPayload(project, credential, chatUrl));
+    sendJson(response, 200, await providerPayload(project, credential, chatUrl, "name", false));
     return true;
   }
   if (pathname === "/tone/api/rewrite" && request.method === "POST") {
@@ -653,8 +653,7 @@ async function handleTone(request, response, project, credential, pathname, chat
     sendJson(response, 200, {
       data: generated.result,
       meta: {
-        ...generationMeta(input, input.provider === "demo" ? "demo" : "model", generated.model),
-        keyMode: input.provider === "demo" ? "none" : input.apiKeyMode,
+        ...generationMeta(input, "model", generated.model),
       },
     });
     return true;
