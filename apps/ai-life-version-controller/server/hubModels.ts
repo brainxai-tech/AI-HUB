@@ -48,8 +48,7 @@ export async function getHubProviderCatalog(fetchImpl: typeof fetch = fetch): Pr
   try {
     const response = await fetchImpl(configUrl, {
       headers: hubProjectHeaders({ accept: "application/json" }),
-      signal: AbortSignal.timeout(CONFIG_TIMEOUT_MS),
-      cache: "no-store"
+      signal: AbortSignal.timeout(CONFIG_TIMEOUT_MS)
     });
     const payload = await readJson(response);
     if (!response.ok) {
@@ -108,8 +107,7 @@ export async function callHubChat({
       response_format: { type: "json_object" },
       stream: false
     }),
-    signal: AbortSignal.timeout(CHAT_TIMEOUT_MS),
-    cache: "no-store"
+    signal: AbortSignal.timeout(CHAT_TIMEOUT_MS)
   }).catch(() => {
     throw new HubModelError(502, "HUB_NETWORK_ERROR", "连接 Hub 项目级代理失败，请稍后再试。");
   });
