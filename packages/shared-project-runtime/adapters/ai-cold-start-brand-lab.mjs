@@ -30,7 +30,7 @@ apiRouter.get("/providers", async (_req, res) => {
     try {
         const config = await fetchHubModelConfig();
         const selected = selectHubProvider(config);
-        const uiProvider = legacyProviderIdForModel(selected.model);
+        const uiProvider = "openai";
         const configured = Object.fromEntries(realProviderSchema.options.map((provider) => [
             provider,
             provider === uiProvider
@@ -64,7 +64,7 @@ apiRouter.post("/generate-brand-pack", generationRateLimit, async (req, res) => 
         else {
             const config = await fetchHubModelConfig();
             const selected = selectHubProvider(config, input.provider);
-            effectiveInput = { ...input, provider: selected.id, model: selected.model, apiKey: "", useServerKey: true };
+            effectiveInput = { ...input, provider: "openai", model: selected.model };
             data = await generateValidBrandPack(() => callHubChat({
                 provider: selected,
                 messages: [
@@ -171,15 +171,4 @@ function normalizeBasePath(value) {
     if (!trimmed || trimmed === "/")
         return "";
     return `/${trimmed.replace(/^\/+|\/+$/g, "")}`;
-}
-
-function legacyProviderIdForModel(model) {
-    const name = String(model || "").toLowerCase();
-    if (/claude|anthropic/.test(name))
-        return "anthropic";
-    if (/gemini/.test(name))
-        return "gemini";
-    if (/deepseek/.test(name))
-        return "deepseek";
-    return "openai";
 }
