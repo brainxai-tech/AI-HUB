@@ -12,7 +12,8 @@
     "start": "next start -H 127.0.0.1",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "verify": "npm test && npm run check && npm run build"
   },
   "dependencies": {
     "@sabaki/go-board": "^1.4.3",
