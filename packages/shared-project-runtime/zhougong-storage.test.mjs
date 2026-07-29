@@ -11,16 +11,16 @@ test("zhougong storage keeps history and usage in the configured persistent dire
     const storage = await import(`./zhougong-storage.mjs?test=${Date.now()}`);
     assert.deepEqual(await storage.listHistoryEntries(), []);
     await storage.saveHistoryEntry(
-      { dreamText: "migration smoke", provider: "deepseek" },
+      { dreamText: "migration smoke", provider: "openai", model: "gpt-5.4" },
       { summary: "visual result" },
-      { provider: "deepseek", usedPreview: true },
+      { provider: "openai", model: "gpt-5.4", mode: "model" },
     );
-    await storage.logUsage({ provider: "deepseek", success: true });
+    await storage.logUsage({ provider: "openai", success: true });
 
     const entries = await storage.listHistoryEntries();
     assert.equal(entries.length, 1);
     assert.equal((await storage.getUsageStats()).totalInterpretations, 1);
-    assert.match(await readFile(path.join(directory, "usage.jsonl"), "utf8"), /deepseek/);
+    assert.match(await readFile(path.join(directory, "usage.jsonl"), "utf8"), /openai/);
   } finally {
     delete process.env.ZHOUGONG_DATA_DIR;
     await rm(directory, { recursive: true, force: true });

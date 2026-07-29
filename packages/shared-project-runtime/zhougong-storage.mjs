@@ -33,13 +33,12 @@ export async function listHistoryEntries() {
 
 export async function getUsageStats() {
   const entries = await listHistoryEntries();
-  const providerCounts = { openai: 0, deepseek: 0, anthropic: 0, gemini: 0 };
+  const providerCounts = { openai: 0 };
   for (const entry of entries) {
-    if (entry?.meta?.provider in providerCounts) providerCounts[entry.meta.provider] += 1;
+    if (entry?.meta?.provider === "openai") providerCounts.openai += 1;
   }
   return {
     totalInterpretations: entries.length,
-    previewInterpretations: entries.filter((entry) => entry?.meta?.usedPreview).length,
     providerCounts,
   };
 }

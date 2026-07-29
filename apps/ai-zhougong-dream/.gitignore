@@ -1,0 +1,10 @@
+node_modules/
+dist/
+data/
+outputs/codex-smoke-check/
+.env
+.env.local
+.env.*.local
+*.log
+*.key
+*.pem
