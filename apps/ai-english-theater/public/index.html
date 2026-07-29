@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI 英语陪练剧场</title>
+    <link rel="icon" href="assets/theater-mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/hub/suite-theme.css" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="/hub/suite-shell.js" data-suite-project="AI · 英语陪练剧场" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="scene-rail" aria-labelledby="scene-title">
+        <div class="brand-row">
+          <img src="assets/theater-mark.svg" alt="" width="88" height="44" />
+          <div>
+            <h1>AI 英语陪练剧场</h1>
+            <p>情景口语 · 即时反馈 · 结构化测评</p>
+          </div>
+        </div>
+
+        <h2 id="scene-title">场景</h2>
+        <div id="sceneList" class="scene-list" role="list"></div>
+      </section>
+
+      <section class="practice-stage" aria-labelledby="stage-title">
+        <div class="stage-header">
+          <div>
+            <p id="sceneMeta" class="eyebrow">正在载入场景</p>
+            <h2 id="stage-title">选择一个场景开始</h2>
+          </div>
+          <div id="statusPill" class="status-pill" role="status">读取 Hub 模型配置</div>
+        </div>
+
+        <div id="conversation" class="conversation" aria-live="polite"></div>
+
+        <form id="replyForm" class="composer">
+          <label class="composer-label" for="replyInput">你的回复</label>
+          <textarea id="replyInput" name="reply" rows="3" maxlength="2000"></textarea>
+          <div class="composer-actions">
+            <button type="button" id="startButton" class="button secondary">开始</button>
+            <button type="button" id="hintButton" class="button ghost">提示</button>
+            <button type="submit" id="sendButton" class="button primary">发送</button>
+          </div>
+        </form>
+      </section>
+
+      <aside class="control-panel" aria-labelledby="settings-title">
+        <section class="panel-section">
+          <h2 id="settings-title">统一模型</h2>
+          <p id="configState" class="config-state">正在读取 Hub 模型配置...</p>
+
+          <label for="providerSelect">供应商</label>
+          <select id="providerSelect"></select>
+
+          <label for="modelSelect">模型</label>
+          <select id="modelSelect"></select>
+
+          <a id="configLink" class="button secondary full config-link" href="/hub/#models">打开 Hub 模型配置</a>
+        </section>
+
+        <section class="panel-section">
+          <h2>练习</h2>
+          <fieldset>
+            <legend>等级</legend>
+            <div class="segmented" id="levelGroup">
+              <button type="button" data-level="A2">A2</button>
+              <button type="button" data-level="B1" class="active">B1</button>
+              <button type="button" data-level="B2">B2</button>
+              <button type="button" data-level="C1">C1</button>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>陪练风格</legend>
+            <div class="segmented tone" id="toneGroup">
+              <button type="button" data-tone="supportive" class="active">鼓励</button>
+              <button type="button" data-tone="realistic">真实</button>
+              <button type="button" data-tone="challenging">挑战</button>
+            </div>
+          </fieldset>
+
+          <label for="objectiveInput">目标</label>
+          <textarea id="objectiveInput" rows="3" maxlength="600"></textarea>
+        </section>
+
+        <section class="panel-section report-section">
+          <div class="report-head">
+            <h2>测评</h2>
+            <button type="button" id="evaluateButton" class="button secondary">生成报告</button>
+          </div>
+          <div id="reportPanel" class="report-empty">还没有测评报告。</div>
+        </section>
+      </aside>
+    </main>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

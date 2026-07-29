@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" role="img" aria-labelledby="title desc">
+  <title id="title">AI English Theater stage mark</title>
+  <desc id="desc">A simple stage with dialogue panels and score lights.</desc>
+  <rect width="320" height="160" fill="#f5f7f2"/>
+  <path d="M16 28h288v104H16z" fill="#1f3532"/>
+  <path d="M34 44h116v58H34z" fill="#fffdf7"/>
+  <path d="M170 44h116v58H170z" fill="#fffdf7"/>
+  <path d="M52 62h72M52 78h56M188 62h72M188 78h44" stroke="#126d6d" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="80" cy="124" r="9" fill="#e7b84b"/>
+  <circle cx="116" cy="124" r="9" fill="#d55c3d"/>
+  <circle cx="152" cy="124" r="9" fill="#5f8f7a"/>
+  <circle cx="188" cy="124" r="9" fill="#e7b84b"/>
+  <circle cx="224" cy="124" r="9" fill="#d55c3d"/>
+  <path d="M16 28 44 8h232l28 20" fill="#d55c3d"/>
+</svg>
