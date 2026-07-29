@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dist-server/
+.env
+*.log
+*.pid
+*.port
+outputs/codex-smoke-check/
