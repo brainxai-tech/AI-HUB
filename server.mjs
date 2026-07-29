@@ -12,6 +12,7 @@ import {
   validateCozeRunPayload,
 } from "./integrations/coze.mjs";
 import { RequestGovernor, requestedTokenLimit, validateChatPayload } from "./request-policy.mjs";
+import { createLocalGameStatic } from "./local-game-static.mjs";
 import { createLocalProjectProxy } from "./local-project-proxy.mjs";
 import {
   buildObservabilitySummary,
@@ -31,11 +32,16 @@ const observabilityLogPath =
 const port = Number.parseInt(process.env.PORT || "4194", 10);
 const adminToken = process.env.HUB_ADMIN_TOKEN || "";
 const localMode = process.env.HUB_LOCAL_MODE === "true";
+const localManifestPath =
+  process.env.HUB_LOCAL_PROJECT_MANIFEST_PATH || path.join(__dirname, "deploy/project-manifest.json");
 const localProjectProxy = localMode && process.env.HUB_LOCAL_PROJECT_PROXY !== "false"
   ? createLocalProjectProxy({
-      manifestPath: process.env.HUB_LOCAL_PROJECT_MANIFEST_PATH || path.join(__dirname, "deploy/project-manifest.json"),
+      manifestPath: localManifestPath,
       sharedOrigin: process.env.HUB_LOCAL_SHARED_ORIGIN || "http://127.0.0.1:4195",
     })
+  : null;
+const localGameStatic = localMode
+  ? createLocalGameStatic({ root: __dirname, manifestPath: localManifestPath })
   : null;
 const remoteGatewayOrigin = normalizeRemoteGatewayOrigin(process.env.HUB_REMOTE_GATEWAY_ORIGIN || "");
 const projectToken = process.env.HUB_PROJECT_TOKEN || "";
@@ -1401,6 +1407,9 @@ const server = createServer(async (request, response) => {
   try {
     const rawUrl = new URL(request.url || "/", `http://${request.headers.host || "127.0.0.1"}`);
     if (localProjectProxy && !rawUrl.pathname.startsWith("/hub") && await localProjectProxy.handle(request, response, rawUrl)) {
+      return;
+    }
+    if (localGameStatic && await localGameStatic.handle(request, response, rawUrl)) {
       return;
     }
     const { pathname } = normalizePath(request.url || "/", request.headers.host);

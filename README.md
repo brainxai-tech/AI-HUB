@@ -1,5 +1,17 @@
 # AI Project Hub
 
+## Local game services
+
+The one-click suite also starts the three dedicated board-game servers and serves both static games from the Hub:
+
+| Game | Local URL | Runtime |
+|---|---|---:|
+| AI Xiangqi Duel | `http://127.0.0.1:4211/xiangqi/` | 4211 |
+| AI Chess Duel | `http://127.0.0.1:4212/chess/` | 4212 |
+| AI Go Duel | `http://127.0.0.1:4213/go/` | 4213 |
+| Fury Flock | `http://127.0.0.1:4194/fury-flock/` | Hub 4194 |
+| Dice Estate Duel | `http://127.0.0.1:4194/hub/dice-estate/` | Hub 4194 |
+
 AI-HUB 集中展示 AI 项目，并提供统一的 AI Routing Key 配置、GPT 型号目录、项目独立型号选择和项目级模型代理。
 
 ## 全新克隆与一键启动

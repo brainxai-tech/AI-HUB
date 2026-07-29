@@ -6,7 +6,10 @@ import { fileURLToPath } from "node:url";
 import { hashProjectToken, normalizeProjectTokenRegistry } from "../auth.mjs";
 
 function runtimeProjectIds(manifest) {
-  return manifest.projects.map((project) => project.runtimeId || project.id);
+  return [
+    ...manifest.projects,
+    ...(manifest.games || []).filter(({ api }) => api !== "none"),
+  ].map((project) => project.runtimeId || project.id);
 }
 
 function credentialsAreValid(registry, shared, projectIds) {
@@ -45,8 +48,9 @@ async function atomicWriteJson(filePath, value) {
 export async function provisionLocalAccess({ manifestPath, registryPath, sharedPath }) {
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   const projectIds = runtimeProjectIds(manifest);
-  if (projectIds.length !== 29 || new Set(projectIds).size !== projectIds.length) {
-    throw new Error("The local runtime requires 29 unique non-game project IDs.");
+  const expectedCount = manifest.projects.length + manifest.games.filter(({ api }) => api !== "none").length;
+  if (projectIds.length !== expectedCount || new Set(projectIds).size !== projectIds.length) {
+    throw new Error(`The local runtime requires ${expectedCount} unique project IDs.`);
   }
 
   const [existingRegistry, existingShared] = await Promise.all([
