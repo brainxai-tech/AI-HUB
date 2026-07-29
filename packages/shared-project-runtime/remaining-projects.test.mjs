@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createRequire } from "node:module";
 import test from "node:test";
 
 import {
@@ -8,6 +9,13 @@ import {
   scopeHubRequest,
   stripProjectBasePath,
 } from "./remaining-projects.mjs";
+
+const require = createRequire(import.meta.url);
+
+test("portable legacy adapters use their Express 4 runtime contract", () => {
+  const { version } = require("express/package.json");
+  assert.match(version, /^4\./);
+});
 
 test("legacy server imports resolve through the portable apps root", () => {
   const appsRoot = "C:\\workspace\\AI-HUB\\apps";
