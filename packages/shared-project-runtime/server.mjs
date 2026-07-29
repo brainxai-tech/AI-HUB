@@ -123,7 +123,6 @@ async function loadProjects(appsRoot) {
     antiHub,
     antiSafety,
     misunderstandingContracts,
-    misunderstandingDemo,
     misunderstandingGateway,
     misunderstandingHub,
     cookingPlan,
@@ -157,7 +156,6 @@ async function loadProjects(appsRoot) {
     import(moduleUrl(appsRoot, anti.id, "server/hubModels.js")),
     import(moduleUrl(appsRoot, anti.id, "server/safety.js")),
     import(moduleUrl(appsRoot, misunderstanding.id, "src/shared/contracts.js")),
-    import(moduleUrl(appsRoot, misunderstanding.id, "server/analysis.js")),
     import(moduleUrl(appsRoot, misunderstanding.id, "server/providerGateway.js")),
     import(moduleUrl(appsRoot, misunderstanding.id, "server/hubModels.js")),
     import(appModuleUrl(appsRoot, cooking.id, "src/server/plan-response.mjs")),
@@ -221,13 +219,11 @@ async function loadProjects(appsRoot) {
     misunderstanding: {
       ...misunderstanding,
       contracts: misunderstandingContracts,
-      demo: misunderstandingDemo,
       gateway: misunderstandingGateway,
       hub: misunderstandingHub,
       requestSchema: misunderstandingContracts.analyzeRequestSchema,
-      buildDemo: misunderstandingDemo.buildDemoAnalysis,
       requestPaths: ["/misunderstanding/api/analyze", "/misunderstanding/api/generate"],
-      demoMode: "demo",
+      hubOnly: true,
     },
     cooking: {
       ...cooking,
@@ -698,7 +694,7 @@ async function handleStandardGenerator(request, response, project, credential, p
     return true;
   }
   if (pathname === `${project.basePath}/api/providers` && request.method === "GET") {
-    sendJson(response, 200, await providerPayload(project, credential, chatUrl));
+    sendJson(response, 200, await providerPayload(project, credential, chatUrl, "name", !project.hubOnly));
     return true;
   }
   if (project.requestPaths.includes(pathname) && request.method === "POST") {
@@ -708,6 +704,16 @@ async function handleStandardGenerator(request, response, project, credential, p
       return true;
     }
     const input = parsed.data;
+    if (project.hubOnly) {
+      const data = await project.gateway.generateWithProvider(input, {
+        callModel: createHubCaller(project, credential, chatUrl),
+      });
+      sendJson(response, 200, {
+        data,
+        meta: generationMeta(input, "model"),
+      });
+      return true;
+    }
     const isDemo = input.provider === "demo";
     let mode = isDemo ? project.demoMode : "model";
     let warning;
