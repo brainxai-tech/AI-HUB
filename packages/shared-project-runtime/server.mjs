@@ -545,13 +545,13 @@ function demoProvider(contracts, labelKey = "name") {
   };
 }
 
-async function providerPayload(project, credential, chatUrl, labelKey = "name") {
+async function providerPayload(project, credential, chatUrl, labelKey = "name", includeDemo = true) {
   const hubProviders = await runWithHubScope(
     { project, credential, chatUrl },
     () => project.hub.getProviderCatalog(),
   );
   const providers = [
-    demoProvider(project.contracts, labelKey),
+    ...(includeDemo ? [demoProvider(project.contracts, labelKey)] : []),
     ...hubProviders.map((provider) => ({
       ...provider,
       ...(labelKey === "label" ? { label: provider.name } : {}),
@@ -579,7 +579,7 @@ async function handleVillain(request, response, project, credential, pathname, c
     return true;
   }
   if (pathname === "/villain/api/providers" && request.method === "GET") {
-    sendJson(response, 200, await providerPayload(project, credential, chatUrl));
+    sendJson(response, 200, await providerPayload(project, credential, chatUrl, "name", false));
     return true;
   }
   if (pathname === "/villain/api/generate" && request.method === "POST") {
@@ -590,19 +590,16 @@ async function handleVillain(request, response, project, credential, pathname, c
     }
     const input = parsed.data;
     const isSafety = project.safety.needsSafetyMode(input);
-    const isDemo = input.provider === "demo";
     const generated =
-      isSafety || isDemo
+      isSafety
         ? null
         : await project.gateway.generateWithProvider(input, {
             callModel: createHubCaller(project, credential, chatUrl),
           });
     const data = isSafety
       ? project.safety.buildSafetyResult(input)
-      : isDemo
-        ? project.demo.buildDemoResult(input)
-        : generated.data;
-    const meta = generationMeta(input, isSafety ? "safety" : isDemo ? "demo" : "model");
+      : generated.data;
+    const meta = generationMeta(input, isSafety ? "safety" : "model");
     if (generated) {
       meta.quality = {
         score: generated.quality.score,
