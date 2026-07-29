@@ -45,7 +45,7 @@ export class ProviderError extends Error {
   }
 }
 
-export function buildDeepSeekChatBody(input: {
+export function buildHubChatBody(input: {
   model: string;
   messages: ChatMessage[];
 }) {
@@ -56,12 +56,10 @@ export function buildDeepSeekChatBody(input: {
     max_tokens: 1200,
     stream: false,
     response_format: { type: "json_object" },
-    thinking: { type: "enabled" },
-    reasoning_effort: "high",
   };
 }
 
-export function extractDeepSeekChatContent(payload: unknown): string {
+export function extractHubChatContent(payload: unknown): string {
   const parsed = ChatCompletionResponseSchema.safeParse(payload);
   if (!parsed.success) {
     throw createBadProviderResponseError("AI Hub");
@@ -76,7 +74,7 @@ export function extractDeepSeekChatContent(payload: unknown): string {
   return text;
 }
 
-export function getDeepSeekExplanationErrorMessage(error: ProviderError): string {
+export function getHubExplanationErrorMessage(error: ProviderError): string {
   if (error.code === "PROVIDER_AUTH_FAILED") {
     return "AI Hub 模型授权失败，请检查 Hub 项目令牌和供应商配置后再试。";
   }
@@ -88,7 +86,7 @@ export function getDeepSeekExplanationErrorMessage(error: ProviderError): string
   return "模型暂时无法完成讲解，本次先显示引擎事实。";
 }
 
-export async function callDeepSeekChat(input: {
+export async function callHubChat(input: {
   provider?: Provider;
   model: string;
   messages: ChatMessage[];
@@ -106,11 +104,12 @@ export async function callDeepSeekChat(input: {
     headers: {
       "content-type": "application/json",
       "x-hub-project-token": token,
+      "x-hub-project-id": resolveHubProjectId(),
       "x-hub-project-path": resolveHubProjectPath(),
     },
     body: JSON.stringify(
-      buildHubChatBody({
-        provider: input.provider ?? "deepseek",
+      buildProjectChatBody({
+        provider: input.provider ?? "openai",
         model: input.model,
         messages: input.messages,
       }),
@@ -123,16 +122,22 @@ export async function callDeepSeekChat(input: {
   await throwForProviderError(response);
 
   try {
-    return extractDeepSeekChatContent(await response.json());
+    return extractHubChatContent(await response.json());
   } catch (error) {
     if (error instanceof ProviderError) throw error;
     throw createBadProviderResponseError("AI Hub");
   }
 }
 
-export async function listDeepSeekModels(provider: Provider = "deepseek"): Promise<string[]> {
+export async function listHubModels(provider: Provider = "openai"): Promise<string[]> {
+  const token = requireProjectToken();
   const response = await fetch(resolveHubModelConfigUrl(), {
     method: "GET",
+    headers: {
+      "x-hub-project-token": token,
+      "x-hub-project-id": resolveHubProjectId(),
+      "x-hub-project-path": resolveHubProjectPath(),
+    },
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   }).catch(() => {
     throw new ProviderError("PROVIDER_UNAVAILABLE", "AI Hub model config did not respond in time.");
@@ -148,25 +153,32 @@ export async function listDeepSeekModels(provider: Provider = "deepseek"): Promi
   const hubProvider = parsed.data.providers.find((item) => item.id === provider);
   if (!hubProvider) return [];
   const enabled = hubProvider.enabledModels.length ? hubProvider.enabledModels : hubProvider.models;
-  return Array.from(new Set([hubProvider.model, ...enabled].filter(Boolean) as string[]));
+  return Array.from(
+    new Set(
+      ([hubProvider.model, ...enabled].filter(Boolean) as string[]).filter((model) =>
+        /^gpt-[a-z0-9][a-z0-9._-]*$/i.test(model),
+      ),
+    ),
+  );
 }
 
-function buildHubChatBody(input: {
+function buildProjectChatBody(input: {
   provider: Provider;
   model: string;
   messages: ChatMessage[];
 }) {
-  return input.provider === "deepseek"
-    ? { provider: input.provider, ...buildDeepSeekChatBody(input) }
-    : {
-        provider: input.provider,
-        model: input.model,
-        messages: input.messages,
-        temperature: 0.2,
-        max_tokens: 1200,
-        stream: false,
-        response_format: { type: "json_object" },
-      };
+  return { provider: input.provider, ...buildHubChatBody(input) };
+}
+
+function requireProjectToken(): string {
+  const token = process.env.HUB_PROJECT_TOKEN?.trim();
+  if (!token) {
+    throw new ProviderError(
+      "PROVIDER_AUTH_FAILED",
+      "AI Hub project token is not configured for this game.",
+    );
+  }
+  return token;
 }
 
 async function throwForProviderError(response: Response) {
@@ -268,5 +280,9 @@ function resolveHubModelConfigUrl(): string {
 }
 
 function resolveHubProjectPath(): string {
-  return process.env.NEXT_PUBLIC_BASE_PATH?.trim() || "/xiangqi";
+  return process.env.HUB_PROJECT_PATH?.trim() || process.env.NEXT_PUBLIC_BASE_PATH?.trim() || "/xiangqi";
+}
+
+function resolveHubProjectId(): string {
+  return process.env.HUB_PROJECT_ID?.trim() || "ai-xiangqi-duel";
 }

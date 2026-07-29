@@ -154,45 +154,15 @@ type BoardThemeId = "ink" | "classic";
 
 const LEGACY_STORAGE_KEY = "ai-xiangqi-duel-api-key";
 const LEGACY_REMEMBER_KEY = "ai-xiangqi-duel-remember-key";
-const DEFAULT_MODEL = "deepseek-v4-flash";
-const DEFAULT_PROVIDER: Provider = "deepseek";
+const DEFAULT_MODEL = "gpt-5.4-mini";
+const DEFAULT_PROVIDER: Provider = "openai";
+const HUB_MODEL_LABEL = "Hub GPT";
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 function apiPath(path: string) {
   return `${BASE_PATH}${path}`;
 }
 
-const PROVIDER_OPTIONS: Array<{
-  id: Provider;
-  label: string;
-  defaultModel: string;
-  models: string[];
-}> = [
-  {
-    id: "deepseek",
-    label: "DeepSeek",
-    defaultModel: "deepseek-v4-flash",
-    models: ["deepseek-v4-flash", "deepseek-v4-pro"],
-  },
-  {
-    id: "openai",
-    label: "GPT",
-    defaultModel: "gpt-5.5",
-    models: ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano"],
-  },
-  {
-    id: "anthropic",
-    label: "Claude",
-    defaultModel: "claude-sonnet-5",
-    models: ["claude-sonnet-5", "claude-opus-4-8", "claude-fable-5", "claude-haiku-4-5"],
-  },
-  {
-    id: "gemini",
-    label: "Gemini",
-    defaultModel: "gemini-3.1-flash-lite",
-    models: ["gemini-3.1-flash-lite", "gemini-3.1-pro-preview", "gemini-3-flash-preview"],
-  },
-];
 const MAX_ENGINE_PV_MOVES = 20;
 
 const BOARD_THEME_OPTIONS: Array<{
@@ -259,7 +229,7 @@ const PIECE_LABELS: Record<XiangqiSide, Record<string, string>> = {
 
 export function XiangqiApp() {
   const [appView, setAppView] = useState<AppView>("setup");
-  const [provider, setProvider] = useState<Provider>(DEFAULT_PROVIDER);
+  const provider: Provider = DEFAULT_PROVIDER;
   const [model, setModel] = useState(DEFAULT_MODEL);
   const [playerColor, setPlayerColor] = useState<XiangqiSide>("r");
   const [boardTheme, setBoardTheme] = useState<BoardThemeId>("ink");
@@ -303,8 +273,7 @@ export function XiangqiApp() {
   const selectedTheme =
     BOARD_THEME_OPTIONS.find((item) => item.id === boardTheme) ??
     BOARD_THEME_OPTIONS[0];
-  const selectedProvider =
-    PROVIDER_OPTIONS.find((item) => item.id === provider) ?? PROVIDER_OPTIONS[0];
+  const selectedProvider = { label: HUB_MODEL_LABEL };
   const boardSquares = useMemo(() => getBoardSquares(playerColor), [playerColor]);
   const legalMoves = useMemo(() => getLegalUciMoves(fen), [fen]);
   const selectedMoves = useMemo(
@@ -358,6 +327,7 @@ export function XiangqiApp() {
     localStorage.removeItem(LEGACY_STORAGE_KEY);
     localStorage.removeItem(LEGACY_REMEMBER_KEY);
     sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+    void testProvider();
   }, []);
 
   async function testProvider() {
@@ -371,12 +341,15 @@ export function XiangqiApp() {
         body: JSON.stringify({ provider, model }),
       });
       const data = (await response.json()) as
-        | { ok: true; selectedModelAvailable: boolean | null }
+        | { ok: true; models: string[]; selectedModelAvailable: boolean | null }
         | ApiErrorBody;
 
       if (!response.ok || !("ok" in data)) {
         throw new Error(getApiErrorMessage(data, `${selectedProvider.label} 连接测试失败。`));
       }
+
+      if (!data.models[0]) throw new Error("AI Hub 尚未给本游戏分配 GPT 模型。");
+      setModel(data.models[0]);
 
       setMessage({
         tone: data.selectedModelAvailable === false ? "info" : "success",
@@ -519,7 +492,7 @@ export function XiangqiApp() {
           provider,
           moveSource: "xiangqi-engine",
           model,
-          explainWithDeepSeek: false,
+          explainWithModel: false,
           engineDifficulty: difficulty,
           fen: currentFen,
           moveHistory: currentHistory,
@@ -853,39 +826,10 @@ export function XiangqiApp() {
                 <strong>可选</strong>
               </summary>
               <div className="advanced-content">
-                <label className="field">
-                  <span>供应商</span>
-                  <select
-                    onChange={(event) => {
-                      const nextProvider = event.target.value as Provider;
-                      const option =
-                        PROVIDER_OPTIONS.find((item) => item.id === nextProvider) ??
-                        PROVIDER_OPTIONS[0];
-                      setProvider(nextProvider);
-                      setModel(option.defaultModel);
-                    }}
-                    value={provider}
-                  >
-                    {PROVIDER_OPTIONS.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="field">
-                  <span>模型</span>
-                  <select
-                    onChange={(event) => setModel(event.target.value)}
-                    value={model}
-                  >
-                    {selectedProvider.models.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <div className="field model-readout">
+                  <span>Hub GPT</span>
+                  <output aria-label="当前 Hub GPT 模型">{model}</output>
+                </div>
                 <p className="muted">
                   模型密钥由 AI Hub 统一托管，本页面不会读取、保存或发送浏览器 API Key。
                 </p>

@@ -10,12 +10,29 @@ import {
   parseXiangqiExplanationContent,
   PlayerColorSchema,
   PostGameMoveAnalysisRequestSchema,
+  ProviderSchema,
+  ProviderTestRequestSchema,
   XiangqiExplanationRequestSchema,
   XiangqiHintRequestSchema,
 } from "./ai";
 import { createInitialFen } from "./xiangqi";
 
 describe("AI Xiangqi contract", () => {
+  it("accepts only Hub GPT provider and model settings", () => {
+    expect(ProviderSchema.safeParse("openai").success).toBe(true);
+    expect(ProviderSchema.safeParse("deepseek").success).toBe(false);
+    expect(ProviderSchema.safeParse("anthropic").success).toBe(false);
+    expect(ProviderSchema.safeParse("gemini").success).toBe(false);
+    expect(
+      ProviderTestRequestSchema.safeParse({ provider: "openai", model: "gpt-5.4-mini" })
+        .success,
+    ).toBe(true);
+    expect(
+      ProviderTestRequestSchema.safeParse({ provider: "openai", model: "claude-opus-4-8" })
+        .success,
+    ).toBe(false);
+  });
+
   it("builds grounded Xiangqi explanation prompts", () => {
     const messages = buildXiangqiExplanationMessages({
       fenBefore: createInitialFen(),
@@ -37,7 +54,7 @@ describe("AI Xiangqi contract", () => {
     expect(messages.at(-1)?.content).toContain("Principal variation UCI");
   });
 
-  it("parses a DeepSeek Xiangqi explanation from JSON", () => {
+  it("parses a Hub GPT Xiangqi explanation from JSON", () => {
     const explanation = parseXiangqiExplanationContent(
       '{"explanation":"黑马跳出，打开线路，并争夺中心空间。"}',
     );
@@ -51,7 +68,7 @@ describe("AI Xiangqi contract", () => {
       playerColor: "r",
     });
 
-    expect(request.explainWithDeepSeek).toBe(false);
+    expect(request.explainWithModel).toBe(false);
     expect(request.engineDifficulty).toBe("casual");
   });
 
@@ -76,7 +93,7 @@ describe("AI Xiangqi contract", () => {
       engineReason: "引擎认为这步稳健。",
     });
 
-    expect(request.provider).toBe("deepseek");
+    expect(request.provider).toBe("openai");
     expect(request.moveUci).toBe("b0c2");
   });
 
@@ -202,6 +219,6 @@ describe("AI Xiangqi contract", () => {
   it("maps old move source labels to the Xiangqi engine", () => {
     expect(MoveSourceSchema.parse("engine")).toBe("xiangqi-engine");
     expect(MoveSourceSchema.parse("pikafish")).toBe("xiangqi-engine");
-    expect(MoveSourceSchema.parse("deepseek")).toBe("xiangqi-engine");
+    expect(MoveSourceSchema.safeParse("deepseek").success).toBe(false);
   });
 });

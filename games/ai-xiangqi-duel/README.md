@@ -2,7 +2,7 @@
 
 A HUB-ready web MVP for playing Chinese chess against an AI opponent. The app requires a local Pikafish-compatible Xiangqi engine for moves and hints, so it will not silently use the weaker heuristic engine in normal play.
 
-The app follows the AI HUB tool pattern: the rules layer validates every move, Pikafish chooses moves and hints, and an optional model coach can explain engine facts in Chinese. The coach supports DeepSeek, GPT, Claude, and Gemini through the shared AI Project Hub gateway.
+The app follows the AI HUB game pattern: the rules layer validates every move, Pikafish chooses moves and hints, and the optional Hub GPT coach explains engine facts in Chinese. The browser never receives provider credentials or accepts a user API key.
 
 ## Commands
 

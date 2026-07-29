@@ -8,8 +8,8 @@ import {
 import { jsonError, pikafishRequiredError } from "@/lib/api-response";
 import { applyUciMove, getGameStatus } from "@/lib/xiangqi";
 import {
-  callDeepSeekChat,
-  getDeepSeekExplanationErrorMessage,
+  callHubChat,
+  getHubExplanationErrorMessage,
   ProviderError,
 } from "@/lib/deepseek";
 import {
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
     let explanationError: string | undefined;
 
     try {
-      const content = await callDeepSeekChat({
+      const content = await callHubChat({
         provider: input.provider,
         model: input.model,
         messages: buildPostGameMoveAnalysisMessages({
@@ -115,7 +115,7 @@ export async function POST(request: Request) {
     } catch (error) {
       explanationError =
         error instanceof ProviderError
-          ? getDeepSeekExplanationErrorMessage(error)
+          ? getHubExplanationErrorMessage(error)
           : "The model did not finish explaining this improvement.";
     }
 

@@ -5,7 +5,7 @@ import {
   XiangqiExplanationRequestSchema,
 } from "@/lib/ai";
 import { jsonError } from "@/lib/api-response";
-import { callDeepSeekChat, ProviderError } from "@/lib/deepseek";
+import { callHubChat, ProviderError } from "@/lib/deepseek";
 
 export const runtime = "nodejs";
 
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   const input = parsed.data;
 
   try {
-    const content = await callDeepSeekChat({
+    const content = await callHubChat({
       provider: input.provider,
       model: input.model,
       messages: buildXiangqiExplanationMessages({

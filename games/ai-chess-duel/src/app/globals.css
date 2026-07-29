@@ -280,7 +280,8 @@ h2 {
 }
 
 .field input,
-.field select {
+.field select,
+.field output {
   background: #fffdf7;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -288,6 +289,12 @@ h2 {
   min-height: 42px;
   padding: 0 10px;
   width: 100%;
+}
+
+.field output {
+  align-items: center;
+  display: flex;
+  font-weight: 700;
 }
 
 .coach-box {

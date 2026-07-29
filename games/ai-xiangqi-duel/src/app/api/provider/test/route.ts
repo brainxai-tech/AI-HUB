@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { ProviderTestRequestSchema } from "@/lib/ai";
 import { jsonError } from "@/lib/api-response";
-import { listDeepSeekModels, ProviderError } from "@/lib/deepseek";
+import { listHubModels, ProviderError } from "@/lib/deepseek";
 
 export const runtime = "nodejs";
 
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const models = await listDeepSeekModels(parsed.data.provider);
+    const models = await listHubModels(parsed.data.provider);
     return NextResponse.json({
       ok: true,
       models,

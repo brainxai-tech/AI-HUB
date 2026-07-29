@@ -5,10 +5,11 @@ import {
   getServerMoveContext,
   parseXiangqiExplanationContent,
   toEngineDifficulty,
+  type Provider,
 } from "@/lib/ai";
 import { jsonError, pikafishRequiredError } from "@/lib/api-response";
 import { applyUciMove } from "@/lib/xiangqi";
-import { callDeepSeekChat, ProviderError } from "@/lib/deepseek";
+import { callHubChat, ProviderError } from "@/lib/deepseek";
 import {
   chooseXiangqiMove,
   XiangqiEngineUnavailableError,
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
     const explanation = await explainEngineMove({
       provider: input.provider,
       model: input.model,
-      enabled: input.explainWithDeepSeek,
+      enabled: input.explainWithModel,
       fenBefore: input.fen,
       moveHistoryBefore: input.moveHistory,
       aiColor: context.aiColor,
@@ -122,7 +123,7 @@ export async function POST(request: Request) {
 }
 
 async function explainEngineMove(input: {
-  provider: "deepseek" | "openai" | "anthropic" | "gemini";
+  provider: Provider;
   model: string;
   enabled: boolean;
   fenBefore: string;
@@ -142,7 +143,7 @@ async function explainEngineMove(input: {
   }
 
   try {
-    const content = await callDeepSeekChat({
+    const content = await callHubChat({
       provider: input.provider,
       model: input.model,
       messages: buildXiangqiExplanationMessages({

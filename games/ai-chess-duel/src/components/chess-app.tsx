@@ -1,7 +1,7 @@
 "use client";
 
 import { Brain, RefreshCw, Swords, Wand2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Square } from "chess.js";
 import {
   applyChessMove,
@@ -38,12 +38,7 @@ function apiPath(path: string) {
   return `${BASE_PATH}${path}`;
 }
 
-const PROVIDERS: Array<{ id: Provider; label: string; model: string }> = [
-  { id: "deepseek", label: "DeepSeek", model: "deepseek-v4-flash" },
-  { id: "openai", label: "GPT", model: "gpt-5.5" },
-  { id: "anthropic", label: "Claude", model: "claude-opus-4-8" },
-  { id: "gemini", label: "Gemini", model: "gemini-3.5-flash" },
-];
+const DEFAULT_MODEL = "gpt-5.4-mini";
 
 export function ChessApp() {
   const [fen, setFen] = useState(CHESS_START_FEN);
@@ -51,8 +46,8 @@ export function ChessApp() {
   const [moves, setMoves] = useState<ChessMoveRecord[]>([]);
   const [humanSide, setHumanSide] = useState<ChessSide>("w");
   const [difficulty, setDifficulty] = useState<ChessDifficulty>("club");
-  const [provider, setProvider] = useState<Provider>("deepseek");
-  const [model, setModel] = useState("deepseek-v4-flash");
+  const provider: Provider = "openai";
+  const [model, setModel] = useState(DEFAULT_MODEL);
   const [thinking, setThinking] = useState(false);
   const [coachText, setCoachText] = useState("AI Hub 模型密钥由 Hub 统一管理，本项目不接收用户 API Key。");
   const [coachLoading, setCoachLoading] = useState(false);
@@ -77,11 +72,25 @@ export function ChessApp() {
     }
   }
 
-  function handleProviderChange(nextProvider: Provider) {
-    setProvider(nextProvider);
-    const preset = PROVIDERS.find((item) => item.id === nextProvider);
-    if (preset) setModel(preset.model);
-  }
+  useEffect(() => {
+    let active = true;
+    void fetch(apiPath("/api/provider/test"), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ provider }),
+    })
+      .then(async (response) => {
+        const data = (await response.json()) as { models?: string[] };
+        if (!response.ok || !data.models?.[0]) throw new Error("Hub GPT 配置暂不可用。");
+        if (active) setModel(data.models[0]);
+      })
+      .catch(() => {
+        if (active) setCoachText("Hub GPT 配置暂不可用，棋局仍可继续。请稍后刷新页面重试。");
+      });
+    return () => {
+      active = false;
+    };
+  }, [provider]);
 
   function handleSquareClick(square: string) {
     if (!isHumanTurn) return;
@@ -272,23 +281,10 @@ export function ChessApp() {
             <Wand2 size={18} />
             <h2>Hub 教练</h2>
           </div>
-          <label className="field">
-            <span>模型供应商</span>
-            <select
-              value={provider}
-              onChange={(event) => handleProviderChange(event.target.value as Provider)}
-            >
-              {PROVIDERS.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            <span>模型</span>
-            <input value={model} onChange={(event) => setModel(event.target.value)} />
-          </label>
+          <div className="field model-readout">
+            <span>Hub GPT</span>
+            <output aria-label="当前 Hub GPT 模型">{model}</output>
+          </div>
           <button
             type="button"
             className="primary-button"

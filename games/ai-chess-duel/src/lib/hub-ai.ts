@@ -50,7 +50,7 @@ export function buildHubChatBody(input: {
   model: string;
   messages: ChatMessage[];
 }) {
-  const base = {
+  return {
     provider: input.provider,
     model: input.model,
     messages: input.messages,
@@ -60,13 +60,6 @@ export function buildHubChatBody(input: {
     response_format: { type: "json_object" },
   };
 
-  return input.provider === "deepseek"
-    ? {
-        ...base,
-        thinking: { type: "enabled" },
-        reasoning_effort: "high",
-      }
-    : base;
 }
 
 export function extractHubChatContent(payload: unknown): string {
@@ -102,11 +95,12 @@ export async function callHubChat(input: {
     headers: {
       "content-type": "application/json",
       "x-hub-project-token": token,
+      "x-hub-project-id": resolveHubProjectId(),
       "x-hub-project-path": resolveHubProjectPath(),
     },
     body: JSON.stringify(
       buildHubChatBody({
-        provider: input.provider ?? "deepseek",
+        provider: input.provider ?? "openai",
         model: input.model,
         messages: input.messages,
       }),
@@ -126,9 +120,15 @@ export async function callHubChat(input: {
   }
 }
 
-export async function listHubModels(provider: Provider = "deepseek"): Promise<string[]> {
+export async function listHubModels(provider: Provider = "openai"): Promise<string[]> {
+  const token = requireProjectToken();
   const response = await fetch(resolveHubModelConfigUrl(), {
     method: "GET",
+    headers: {
+      "x-hub-project-token": token,
+      "x-hub-project-id": resolveHubProjectId(),
+      "x-hub-project-path": resolveHubProjectPath(),
+    },
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   }).catch(() => {
     throw new ProviderError("PROVIDER_UNAVAILABLE", "AI Hub model config did not respond in time.");
@@ -144,7 +144,24 @@ export async function listHubModels(provider: Provider = "deepseek"): Promise<st
   const hubProvider = parsed.data.providers.find((item) => item.id === provider);
   if (!hubProvider) return [];
   const enabled = hubProvider.enabledModels.length ? hubProvider.enabledModels : hubProvider.models;
-  return Array.from(new Set([hubProvider.model, ...enabled].filter(Boolean) as string[]));
+  return Array.from(
+    new Set(
+      ([hubProvider.model, ...enabled].filter(Boolean) as string[]).filter((model) =>
+        /^gpt-[a-z0-9][a-z0-9._-]*$/i.test(model),
+      ),
+    ),
+  );
+}
+
+function requireProjectToken(): string {
+  const token = process.env.HUB_PROJECT_TOKEN?.trim();
+  if (!token) {
+    throw new ProviderError(
+      "PROVIDER_AUTH_FAILED",
+      "AI Hub project token is not configured for this game.",
+    );
+  }
+  return token;
 }
 
 async function throwForProviderError(response: Response) {
@@ -229,5 +246,9 @@ function resolveHubModelConfigUrl(): string {
 }
 
 function resolveHubProjectPath(): string {
-  return process.env.NEXT_PUBLIC_BASE_PATH?.trim() || "/chess";
+  return process.env.HUB_PROJECT_PATH?.trim() || process.env.NEXT_PUBLIC_BASE_PATH?.trim() || "/chess";
+}
+
+function resolveHubProjectId(): string {
+  return process.env.HUB_PROJECT_ID?.trim() || "ai-chess-duel";
 }

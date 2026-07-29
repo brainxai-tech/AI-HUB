@@ -1,7 +1,13 @@
 import { z } from "zod";
 import type { ChessSide } from "./chess-game";
 
-export const ProviderSchema = z.enum(["deepseek", "openai", "anthropic", "gemini"]);
+export const ProviderSchema = z.literal("openai");
+export const GptModelSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(100)
+  .regex(/^gpt-[a-z0-9][a-z0-9._-]*$/i, "Only GPT chat models are supported.");
 
 export type Provider = z.infer<typeof ProviderSchema>;
 
@@ -12,12 +18,12 @@ export type ChatMessage = {
 
 export const ProviderTestRequestSchema = z.object({
   provider: ProviderSchema,
-  model: z.string().trim().min(1).max(100).optional(),
+  model: GptModelSchema.optional(),
 });
 
 export const ChessCoachRequestSchema = z.object({
-  provider: ProviderSchema.default("deepseek"),
-  model: z.string().trim().min(1).max(100).default("deepseek-v4-flash"),
+  provider: ProviderSchema.default("openai"),
+  model: GptModelSchema.default("gpt-5.4-mini"),
   fenBefore: z.string().trim().min(1).max(120),
   fenAfter: z.string().trim().min(1).max(120),
   moveHistory: z.array(z.string().trim().max(80)).max(240).default([]),

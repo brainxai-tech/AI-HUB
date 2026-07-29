@@ -2,7 +2,13 @@ import { z } from "zod";
 import { getGameStatus, getLegalUciMoves } from "./xiangqi";
 import type { XiangqiDifficulty } from "./xiangqi-engine";
 
-export const ProviderSchema = z.enum(["deepseek", "openai", "anthropic", "gemini"]);
+export const ProviderSchema = z.literal("openai");
+export const GptModelSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(100)
+  .regex(/^gpt-[a-z0-9][a-z0-9._-]*$/i, "Only GPT chat models are supported.");
 export const PlayerColorSchema = z.enum(["r", "b"]);
 export const XiangqiDifficultySchema = z.enum([
   "beginner",
@@ -12,7 +18,7 @@ export const XiangqiDifficultySchema = z.enum([
 ]);
 export const MoveSourceSchema = z.preprocess(
   (value) =>
-    value === "engine" || value === "pikafish" || value === "deepseek"
+    value === "engine" || value === "pikafish"
       ? "xiangqi-engine"
       : value,
   z.literal("xiangqi-engine"),
@@ -29,9 +35,9 @@ export type ChatMessage = {
 
 export const AiMoveRequestSchema = z.object({
   moveSource: MoveSourceSchema.default("xiangqi-engine"),
-  provider: ProviderSchema.default("deepseek"),
-  model: z.string().trim().min(1).max(100).default("deepseek-v4-flash"),
-  explainWithDeepSeek: z.boolean().default(false),
+  provider: ProviderSchema.default("openai"),
+  model: GptModelSchema.default("gpt-5.4-mini"),
+  explainWithModel: z.boolean().default(false),
   engineDifficulty: XiangqiDifficultySchema.default("casual"),
   fen: z.string().trim().min(1).max(260),
   moveHistory: z.array(z.string().trim().max(60)).max(400).default([]),
@@ -46,8 +52,8 @@ export const XiangqiHintRequestSchema = z.object({
 });
 
 export const PostGameMoveAnalysisRequestSchema = z.object({
-  provider: ProviderSchema.default("deepseek"),
-  model: z.string().trim().min(1).max(100).default("deepseek-v4-flash"),
+  provider: ProviderSchema.default("openai"),
+  model: GptModelSchema.default("gpt-5.4-mini"),
   fenBefore: z.string().trim().min(1).max(260),
   moveHistoryBefore: z.array(z.string().trim().max(60)).max(400).default([]),
   selectedMoveUci: z.string().trim().min(4).max(4),
@@ -58,7 +64,7 @@ export const PostGameMoveAnalysisRequestSchema = z.object({
 
 export const ProviderTestRequestSchema = z.object({
   provider: ProviderSchema,
-  model: z.string().trim().min(1).max(100).optional(),
+  model: GptModelSchema.optional(),
 });
 
 const MoveRecordSchema = z.object({
@@ -72,8 +78,8 @@ const MoveRecordSchema = z.object({
 });
 
 export const GameReviewRequestSchema = z.object({
-  provider: ProviderSchema.default("deepseek"),
-  model: z.string().trim().min(1).max(100).default("deepseek-v4-flash"),
+  provider: ProviderSchema.default("openai"),
+  model: GptModelSchema.default("gpt-5.4-mini"),
   playerColor: PlayerColorSchema,
   result: z.string().trim().min(1).max(80),
   reason: z.string().trim().min(1).max(120),
@@ -83,8 +89,8 @@ export const GameReviewRequestSchema = z.object({
 });
 
 export const XiangqiExplanationRequestSchema = z.object({
-  provider: ProviderSchema.default("deepseek"),
-  model: z.string().trim().min(1).max(100).default("deepseek-v4-flash"),
+  provider: ProviderSchema.default("openai"),
+  model: GptModelSchema.default("gpt-5.4-mini"),
   fenBefore: z.string().trim().min(1).max(260),
   moveHistoryBefore: z.array(z.string().trim().max(60)).max(400).default([]),
   aiColor: PlayerColorSchema,
@@ -152,7 +158,7 @@ export function parseXiangqiExplanationContent(content: string): string {
   const parsed = XiangqiExplanationContentSchema.safeParse(JSON.parse(jsonText));
 
   if (!parsed.success) {
-    throw new Error("DeepSeek explanation JSON must include an explanation string.");
+    throw new Error("Model explanation JSON must include an explanation string.");
   }
 
   return parsed.data.explanation;
@@ -254,7 +260,7 @@ export function parseGameReviewContent(content: string): string {
   const parsed = GameReviewContentSchema.safeParse(JSON.parse(jsonText));
 
   if (!parsed.success) {
-    throw new Error("DeepSeek game review JSON must include a review string.");
+    throw new Error("Model game review JSON must include a review string.");
   }
 
   return parsed.data.review;
