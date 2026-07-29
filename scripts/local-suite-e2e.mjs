@@ -54,7 +54,12 @@ try {
     windowsHide: true,
   });
   const supervisorOutput = collectOutput(supervisor);
-  await waitUntilReady("http://127.0.0.1:4194/hub/api/health", supervisor, 240_000);
+  await Promise.all([
+    waitUntilReady("http://127.0.0.1:4194/hub/api/health", supervisor, 240_000),
+    waitUntilReady("http://127.0.0.1:4195/health", supervisor, 240_000),
+    waitUntilReady("http://127.0.0.1:4201/ppt-report-coach/api/providers", supervisor, 240_000),
+    waitUntilReady("http://127.0.0.1:4202/work-report/api/providers", supervisor, 240_000),
+  ]);
 
   const discovered = await fetchJson("http://127.0.0.1:4194/hub/api/provider-models", {
     method: "POST",
@@ -78,7 +83,7 @@ try {
       },
     }),
   });
-  assert.equal(configured.defaultProvider, "openai");
+  assert.equal(configured.defaultProvider, "routing");
   assert.equal(JSON.stringify(configured).includes("e2e-routing-key"), false);
 
   const selection = await fetchJson("http://127.0.0.1:4194/work-report/api/model-selection", {
@@ -90,10 +95,14 @@ try {
 
   for (const project of manifest.projects) {
     const response = await fetch(`http://127.0.0.1:4194${project.route}`, {
-      redirect: "follow",
+      redirect: "manual",
       signal: AbortSignal.timeout(30_000),
     });
-    assert.equal(response.ok, true, `${project.id} returned ${response.status}`);
+    assert.equal(
+      response.ok,
+      true,
+      `${project.id} returned ${response.status}${response.headers.get("location") ? ` -> ${response.headers.get("location")}` : ""}`,
+    );
     assert.match(response.headers.get("content-type") || "", /text\/html/i, `${project.id} did not return HTML`);
     assert.ok((await response.text()).length > 80, `${project.id} returned an empty page`);
   }
@@ -106,7 +115,7 @@ try {
   await page.goto("http://127.0.0.1:4194/hub/", { waitUntil: "networkidle" });
   assert.ok(await page.locator("[data-project-card]").count() >= 29, "Hub project catalog did not render");
 
-  await page.goto("http://127.0.0.1:4194/work-report/", { waitUntil: "networkidle" });
+  await page.goto("http://127.0.0.1:4194/work-report/", { waitUntil: "domcontentloaded" });
   await page.locator(".suite-model-trigger").waitFor({ state: "visible" });
   assert.match(await page.locator(".suite-model-trigger").innerText(), /gpt-e2e/i);
   assert.equal(await page.locator('input[type="password"]').count(), 0);
