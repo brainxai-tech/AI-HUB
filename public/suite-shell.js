@@ -284,6 +284,7 @@
   function loadProjectStyles() {
     const projectStyleVersions = {
       idol: "20260729-idol1",
+      qisheng: "20260729-qisheng1",
     };
     const version = projectStyleVersions[projectId];
     if (!version || document.querySelector("link[data-suite-project-styles]")) return;
@@ -301,6 +302,10 @@
         [".api-connect-panel .section-kicker", "分析状态"],
         [".start-grid > .panel .hero-kicker", "匹配实验室"],
         [".start-grid > aside .section-kicker", "准备情况"],
+      ],
+      qisheng: [
+        [".settings-header h2", "陪伴设置"],
+        [".key-panel-header h2", "进入栖声"],
       ],
     };
 
