@@ -753,6 +753,9 @@ export function XiangqiApp() {
       <main className="setup-shell">
         <section className="setup-panel" aria-labelledby="setup-title">
           <div className="setup-intro">
+            <a className="hub-home-link" href="/hub/">
+              返回 AI HUB
+            </a>
             <p className="eyebrow">AI Xiangqi Duel</p>
             <h1 id="setup-title">现代棋院分析桌</h1>
             <p className="setup-copy">
@@ -883,13 +886,18 @@ export function XiangqiApp() {
             <h1 id="game-title">中国象棋 AI 对弈</h1>
             <p className="game-subtitle">{sideLabel(playerColor)}在下，AI 执{sideLabel(aiColor)}</p>
           </div>
-          <div className={`turn-pill ${isAiThinking ? "thinking" : ""}`}>
-            {isAiThinking ? (
-              <Loader2 aria-hidden="true" className="spin" size={18} />
-            ) : (
-              <Bot aria-hidden="true" size={18} />
-            )}
-            <span>{getTurnLabel(status, playerColor, gameStarted)}</span>
+          <div className="game-header-actions">
+            <a className="hub-home-link" href="/hub/">
+              AI HUB
+            </a>
+            <div className={`turn-pill ${isAiThinking ? "thinking" : ""}`}>
+              {isAiThinking ? (
+                <Loader2 aria-hidden="true" className="spin" size={18} />
+              ) : (
+                <Bot aria-hidden="true" size={18} />
+              )}
+              <span>{getTurnLabel(status, playerColor, gameStarted)}</span>
+            </div>
           </div>
         </div>
 

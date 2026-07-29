@@ -20,7 +20,10 @@
           <button type="button" data-site-target="mission">章节战役</button>
           <button type="button" data-site-target="roster">怒羽图鉴</button>
         </nav>
-        <button class="site-play-compact" type="button" data-site-planner>进入战役 <span aria-hidden="true">→</span></button>
+        <div class="site-header-actions">
+          <a class="site-hub-link" href="/hub/" aria-label="返回 AI HUB">AI HUB <span aria-hidden="true">↗</span></a>
+          <button class="site-play-compact" type="button" data-site-planner>进入战役 <span aria-hidden="true">→</span></button>
+        </div>
       </header>
 
       <div class="site-pages">
@@ -141,6 +144,7 @@
 
     <button id="site-return-button" class="site-return-button" type="button" hidden><span aria-hidden="true">⌂</span> 主站</button>
     <main id="app">
+      <a class="game-hub-link" href="/hub/" aria-label="返回 AI HUB"><span aria-hidden="true">↗</span> AI HUB</a>
       <section class="game-shell" aria-label="怒羽突击游戏">
         <div id="game-container" aria-label="游戏画面"></div>
         <div id="mission-launch-screen" class="mission-launch-screen" aria-hidden="true" aria-live="polite">

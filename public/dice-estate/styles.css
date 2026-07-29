@@ -3521,6 +3521,42 @@ dd {
   font-weight: 900;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.hub-home-link {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 10px;
+  border: 1px solid rgba(91, 73, 50, 0.32);
+  border-radius: 8px;
+  color: #52665b;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  background: rgba(255, 250, 240, 0.72);
+  box-shadow: var(--inset-shadow);
+}
+
+.hub-home-link:hover {
+  border-color: #9f875f;
+  color: #1f5f94;
+  background: #fff8e8;
+}
+
+.hub-home-link:focus-visible {
+  outline: 3px solid rgba(39, 110, 170, 0.36);
+  outline-offset: 2px;
+}
+
 .menu-button span[aria-hidden="true"] {
   font-size: 1rem;
 }
@@ -4085,6 +4121,21 @@ select:focus-visible {
     background: rgba(232, 220, 199, 0.95);
   }
 
+  .topbar-actions {
+    grid-area: menu;
+    gap: 4px;
+  }
+
+  .hub-home-link {
+    width: 36px;
+    min-height: 38px;
+    padding: 0;
+  }
+
+  .hub-home-label {
+    display: none;
+  }
+
   .brand {
     grid-area: brand;
     gap: 6px;
@@ -4139,7 +4190,6 @@ select:focus-visible {
   }
 
   .menu-button {
-    grid-area: menu;
     min-width: 40px;
     min-height: 38px;
     padding: 0 8px;

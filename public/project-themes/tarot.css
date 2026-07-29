@@ -1,0 +1,83 @@
+/* Tarot keeps its ritual atmosphere while sharing the Hub tool structure. */
+html[data-suite-kind="tool"][data-suite-id="tarot"] {
+  --suite-tool-bg: #f4f1f8;
+  --suite-tool-bg-soft: #ece7f2;
+  --suite-tool-surface: #fffdfb;
+  --suite-tool-surface-subtle: #f8f4fa;
+  --suite-tool-ink: #261d33;
+  --suite-tool-muted: #6d6279;
+  --suite-tool-faint: #8d8298;
+  --suite-tool-line: #ded5e7;
+  --suite-tool-line-strong: #cabed7;
+  --suite-tool-primary: #68408a;
+  --suite-tool-primary-strong: #50306b;
+  --suite-tool-primary-soft: #f0e8f7;
+  --suite-tool-route: #68408a;
+  --suite-tool-pulse: #c49443;
+  --suite-tool-circuit: #8d6ca8;
+  --tarot-gold: #b8842f;
+  --tarot-night: #22172e;
+  background: var(--suite-tool-bg);
+}
+
+html[data-suite-kind="tool"][data-suite-id="tarot"] body.suite-enhanced {
+  background:
+    radial-gradient(circle at 85% 8%, rgba(184, 132, 47, 0.13), transparent 25rem),
+    radial-gradient(circle at 10% 88%, rgba(104, 64, 138, 0.12), transparent 28rem),
+    linear-gradient(180deg, #fbf8fc, #f1edf5) !important;
+}
+
+html[data-suite-kind="tool"][data-suite-id="tarot"] body.suite-enhanced::before {
+  background-image:
+    radial-gradient(circle at center, rgba(104, 64, 138, 0.08) 1px, transparent 1.5px) !important;
+  background-size: 34px 34px !important;
+}
+
+html[data-suite-kind="tool"][data-suite-id="tarot"] body.suite-enhanced .suite-project::before {
+  background: var(--tarot-gold);
+  box-shadow: 0 0 0 4px rgba(184, 132, 47, 0.14);
+}
+
+html[data-suite-kind="tool"][data-suite-id="tarot"] body.suite-enhanced :is(.sanctum-shell, .altar-panel, .history-panel, .result-panel) {
+  border-color: rgba(202, 190, 215, 0.92) !important;
+}
+
+html[data-suite-kind="tool"][data-suite-id="tarot"] body.suite-enhanced .altar-panel {
+  background:
+    linear-gradient(180deg, rgba(255, 253, 251, 0.98), rgba(248, 244, 250, 0.98)) !important;
+  box-shadow: 0 18px 48px rgba(38, 29, 51, 0.1) !important;
+}
+
+html[data-suite-kind="tool"][data-suite-id="tarot"] body.suite-enhanced :is(.sigil, .brand-stamp) {
+  border-color: rgba(184, 132, 47, 0.45) !important;
+  background: #fff9ec !important;
+  color: var(--tarot-gold) !important;
+}
+
+html[data-suite-kind="tool"][data-suite-id="tarot"] body.suite-enhanced :is(.primary-action, button[type="submit"]) {
+  border-color: var(--suite-tool-primary) !important;
+  background: var(--suite-tool-primary) !important;
+}
+
+html[data-suite-kind="tool"][data-suite-id="tarot"] body.suite-enhanced :is(.tarot-card, .card-back, .card-front) {
+  border-color: rgba(184, 132, 47, 0.5) !important;
+  background-color: var(--tarot-night) !important;
+  box-shadow: 0 14px 30px rgba(34, 23, 46, 0.2) !important;
+}
+
+html[data-suite-kind="tool"][data-suite-id="tarot"] body.suite-enhanced .card-front {
+  background: linear-gradient(160deg, #342041, #21162b) !important;
+  color: #fff9e9 !important;
+}
+
+@media (max-width: 760px) {
+  html[data-suite-kind="tool"][data-suite-id="tarot"] body.suite-enhanced .sanctum-shell {
+    padding-inline: 12px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-suite-kind="tool"][data-suite-id="tarot"] body.suite-enhanced :is(.tarot-card, .card-back, .card-front) {
+    transition: none !important;
+  }
+}

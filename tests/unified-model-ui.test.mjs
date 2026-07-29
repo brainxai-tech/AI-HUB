@@ -78,9 +78,10 @@ test("shared project shell hides legacy provider button grids instead of relabel
 });
 
 test("shared project shell loads the common design foundation for tools but excludes every game", async () => {
-  const [suiteShell, toolFoundation] = await Promise.all([
+  const [suiteShell, toolFoundation, suiteTheme] = await Promise.all([
     read("public/suite-shell.js"),
     read("public/suite-tool-foundation.css"),
+    read("public/suite-theme.css"),
   ]);
 
   assert.match(suiteShell, /gameProjectIds = new Set/);
@@ -94,19 +95,28 @@ test("shared project shell loads the common design foundation for tools but excl
     assert.match(suiteShell, new RegExp(`"${gameId}"`));
   }
   assert.match(suiteShell, /inferSuiteKind/);
+  assert.match(suiteShell, /function applySuiteIdentity/);
+  assert.match(suiteShell, /applySuiteIdentity\(\)/);
   assert.match(suiteShell, /dataset\.suiteKind = suiteKind/);
   assert.match(suiteShell, /suiteKind === "tool"/);
   assert.match(suiteShell, /loadToolFoundationStyles/);
-  assert.match(suiteShell, /suite-tool-foundation\.css\?v=20260728-tool-foundation4/);
+  assert.match(suiteShell, /suite-tool-foundation\.css\?v=20260730-signal-routing1/);
   assert.match(suiteShell, /firstSegment === "hub" && secondSegment === "dice-estate"/);
 
   assert.match(toolFoundation, /html\[data-suite-kind="tool"\]/);
   assert.match(toolFoundation, /--suite-tool-radius:\s*14px/);
   assert.match(toolFoundation, /--suite-tool-radius-lg:\s*16px/);
+  assert.match(toolFoundation, /--suite-tool-font-display:/);
+  assert.match(toolFoundation, /--suite-tool-route:/);
+  assert.match(toolFoundation, /\.suite-topbar::after/);
+  assert.match(toolFoundation, /:has\(\.suite-model-trigger:not\(\[hidden\]\)\)/);
+  assert.match(toolFoundation, /data-suite-id="ai-counterfactual-life-simulator"/);
+  assert.match(toolFoundation, /overflow-x:\s*clip/);
   assert.match(toolFoundation, /grid-template-columns:\s*minmax\(0, 1fr\) auto/);
   assert.match(toolFoundation, /white-space:\s*nowrap/);
   assert.match(toolFoundation, /\.suite-project > strong/);
   assert.match(toolFoundation, /\.source-pill/);
   assert.match(toolFoundation, /\.tarot-card\):not\(\.card-back\)/);
   assert.doesNotMatch(toolFoundation, /ai-xiangqi-duel|ai-chess-duel|ai-go-duel|fury-flock|dice-estate-duel/);
+  assert.match(suiteTheme, /input:not\(\[type="checkbox"\]\):not\(\[type="radio"\]\)/);
 });

@@ -195,9 +195,14 @@ export function ChessApp() {
             <h1>AI 国际象棋</h1>
             <p className="game-subtitle">本地合法走子 + Hub 共享模型教练</p>
           </div>
-          <div className={`turn-pill ${thinking ? "thinking" : ""}`}>
-            <Swords size={18} />
-            {thinking ? "AI 思考中" : status.result}
+          <div className="game-header-actions">
+            <a className="hub-home-link" href="/hub/">
+              AI HUB
+            </a>
+            <div className={`turn-pill ${thinking ? "thinking" : ""}`}>
+              <Swords size={18} />
+              {thinking ? "AI 思考中" : status.result}
+            </div>
           </div>
         </header>
 
