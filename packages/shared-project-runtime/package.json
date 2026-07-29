@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.mjs",
     "test": "node --test *.test.mjs",
-    "verify": "node --check server.mjs && node --test *.test.mjs"
+    "verify": "node --check server.mjs && node --check project-web-runtime.mjs && node --test *.test.mjs"
   },
   "engines": {
     "node": ">=22.15"

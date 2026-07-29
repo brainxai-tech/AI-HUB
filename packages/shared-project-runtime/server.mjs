@@ -12,6 +12,7 @@ import {
 } from "./remaining-projects.mjs";
 import { createNativeProjectHandler, nativeProjectAccessSpecs, nativeProjectIds } from "./native-projects.mjs";
 import { createNextProjectHandler, nextProjectAccessSpecs, nextProjectIds } from "./next-projects.mjs";
+import { createProjectWebRuntime } from "./project-web-runtime.mjs";
 
 const runtimeRoot = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_APPS_ROOT = path.resolve(runtimeRoot, "../../apps");
@@ -909,9 +910,12 @@ export async function startServer(options = {}) {
   const chatUrl = options.chatUrl || process.env.HUB_CHAT_COMPLETIONS_URL || DEFAULT_HUB_CHAT_URL;
   const port = Number(options.port || process.env.PORT || DEFAULT_PORT);
   const adapterRoot = options.adapterRoot || path.join(path.dirname(fileURLToPath(import.meta.url)), "adapters");
-  const [projects, credentials] = await Promise.all([
+  const serveProjectUi = options.serveProjectUi ?? process.env.AIHUB_SERVE_PROJECT_UI === "true";
+  const manifestPath = options.manifestPath || process.env.AIHUB_PROJECT_MANIFEST_PATH || path.resolve(runtimeRoot, "../../deploy/project-manifest.json");
+  const [projects, credentials, projectWebRuntime] = await Promise.all([
     loadProjects(appsRoot),
     loadCredentials(credentialsPath),
+    serveProjectUi ? createProjectWebRuntime({ appsRoot, manifestPath }) : null,
   ]);
   const handleRemainingProject = await createRemainingProjectHandler({
     adapterRoot,
@@ -944,6 +948,7 @@ export async function startServer(options = {}) {
           ok: true,
           runtime: "shared-static-pilot",
           projects: projectIds(),
+          projectUi: projectWebRuntime?.projectIds || [],
         });
         return;
       }
@@ -1040,6 +1045,9 @@ export async function startServer(options = {}) {
           chatUrl,
         ));
 
+      if (!handled && projectWebRuntime && await projectWebRuntime.handle(request, response, pathname)) {
+        return;
+      }
       if (!handled) {
         sendJson(response, 404, { error: { code: "NOT_FOUND", message: "接口不存在。" } });
       }
@@ -1054,6 +1062,9 @@ export async function startServer(options = {}) {
     server.once("error", reject);
     server.listen(port, "127.0.0.1", resolve);
   });
+  if (projectWebRuntime) {
+    server.once("close", () => void projectWebRuntime.close());
+  }
   console.log(`Shared static project API listening on http://127.0.0.1:${port}`);
   return server;
 }

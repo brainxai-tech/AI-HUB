@@ -12,6 +12,7 @@ import {
   validateCozeRunPayload,
 } from "./integrations/coze.mjs";
 import { RequestGovernor, requestedTokenLimit, validateChatPayload } from "./request-policy.mjs";
+import { createLocalProjectProxy } from "./local-project-proxy.mjs";
 import {
   buildObservabilitySummary,
   createAnonymousEventLimiter,
@@ -30,6 +31,12 @@ const observabilityLogPath =
 const port = Number.parseInt(process.env.PORT || "4194", 10);
 const adminToken = process.env.HUB_ADMIN_TOKEN || "";
 const localMode = process.env.HUB_LOCAL_MODE === "true";
+const localProjectProxy = localMode && process.env.HUB_LOCAL_PROJECT_PROXY !== "false"
+  ? createLocalProjectProxy({
+      manifestPath: process.env.HUB_LOCAL_PROJECT_MANIFEST_PATH || path.join(__dirname, "deploy/project-manifest.json"),
+      sharedOrigin: process.env.HUB_LOCAL_SHARED_ORIGIN || "http://127.0.0.1:4195",
+    })
+  : null;
 const remoteGatewayOrigin = normalizeRemoteGatewayOrigin(process.env.HUB_REMOTE_GATEWAY_ORIGIN || "");
 const projectToken = process.env.HUB_PROJECT_TOKEN || "";
 const projectTokensPath =
@@ -120,9 +127,18 @@ const providerCatalog = {
   routing: {
     label: "AI Routing",
     adapter: "openai-compatible",
-    baseUrl: "https://drhknode.airouting.com/v1",
+    baseUrl: normalizeRoutingBaseUrl(process.env.HUB_ROUTING_BASE_URL || "https://drhknode.airouting.com/v1"),
   },
 };
+
+function normalizeRoutingBaseUrl(value) {
+  const url = new URL(value);
+  const loopbackHttp = localMode && url.protocol === "http:" && ["127.0.0.1", "localhost", "::1"].includes(url.hostname);
+  if ((!loopbackHttp && url.protocol !== "https:") || url.username || url.password || url.search || url.hash) {
+    throw new Error("HUB_ROUTING_BASE_URL must be HTTPS, except for a loopback URL in local mode.");
+  }
+  return url.toString().replace(/\/+$/, "");
+}
 
 function normalizeModelName(value) {
   if (typeof value !== "string") {
@@ -1383,6 +1399,10 @@ async function handleApi(request, response, pathname) {
 
 const server = createServer(async (request, response) => {
   try {
+    const rawUrl = new URL(request.url || "/", `http://${request.headers.host || "127.0.0.1"}`);
+    if (localProjectProxy && !rawUrl.pathname.startsWith("/hub") && await localProjectProxy.handle(request, response, rawUrl)) {
+      return;
+    }
     const { pathname } = normalizePath(request.url || "/", request.headers.host);
 
     if (pathname.startsWith("/api/")) {
