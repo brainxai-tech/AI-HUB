@@ -71,6 +71,7 @@ test("release UI and server contain no project key controls or direct provider f
   assert.doesNotMatch(bundle, /type:[^,}]*password|sessionStorage|apiKey|apiBaseUrl|BYOK/i);
   assert.match(bundle, /shubao-report-history/);
   assert.match(bundle, /localStorage/);
+  assert.match(bundle, /dn=`\/work-report\/`\.replace/);
   assert.doesNotMatch(contracts, /apiKey|apiBaseUrl|model:\s*z\./i);
   assert.doesNotMatch(gateway, /Authorization|normalizeChatEndpoint|request\.apiKey|request\.model/i);
   assert.match(gateway, /hubRuntime\.provider !== "openai"/);

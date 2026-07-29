@@ -47,6 +47,9 @@ for (const forbidden of [
 if (!browserBundle.includes("shubao-report-history") || !browserBundle.includes("localStorage")) {
   throw new Error("Local report history storage was not retained");
 }
+if (!browserBundle.includes('dn=`/work-report/`.replace')) {
+  throw new Error("Recovered browser release does not use the unified /work-report API base path");
+}
 
 const contracts = readFileSync(resolve(root, "dist-server/src/shared/contracts.js"), "utf8");
 if (/apiKey|apiBaseUrl|model:\s*z\./i.test(contracts)) throw new Error("Legacy client routing fields remain in request schema");
