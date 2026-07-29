@@ -232,6 +232,7 @@ test("Hub shell transfer stays below 1.5 MiB before lazy cover loading", async (
     "public/suite-theme.css",
     "public/suite-tool-foundation.css",
     "public/suite-shell.js",
+    "public/project-themes/idol.css",
     "public/capabilities.js",
     "public/projects.js",
     "public/cover-manifest.js",
@@ -553,6 +554,21 @@ test("shared project shell resolves nested Hub project API paths", async () => {
   assert.match(shell, /firstSegment !== "hub"/);
   assert.match(shell, /projectId !== "hub" && segments\[1\]/);
   assert.match(shell, /`\/hub\/\$\{segments\[1\]\}`/);
+});
+
+test("shared shell loads the first project-specific design correction without changing games", async () => {
+  const [shell, idolTheme] = await Promise.all([
+    readProjectFile("public/suite-shell.js"),
+    readProjectFile("public/project-themes/idol.css"),
+  ]);
+
+  assert.match(shell, /function loadProjectStyles/);
+  assert.match(shell, /idol: "20260729-idol1"/);
+  assert.match(shell, /project-themes\/\$\{encodeURIComponent\(projectId\)\}\.css/);
+  assert.match(shell, /"匹配实验室"/);
+  assert.match(idolTheme, /data-suite-kind="tool"\]\[data-suite-id="idol"/);
+  assert.match(idolTheme, /prefers-reduced-motion/);
+  assert.doesNotMatch(idolTheme, /data-suite-kind="game"/);
 });
 
 test("sensitive projects disclose data handling and professional boundaries", async () => {

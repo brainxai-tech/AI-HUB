@@ -29,13 +29,17 @@
   document.documentElement.dataset.suiteKind = suiteKind;
 
   loadPickerStyles();
-  if (suiteKind === "tool") loadToolFoundationStyles();
+  if (suiteKind === "tool") {
+    loadToolFoundationStyles();
+    loadProjectStyles();
+  }
   recordRecentVisit();
 
   const ensureShell = () => {
     document.body.classList.add("suite-enhanced");
     document.body.dataset.suiteId = projectId;
     document.body.dataset.suiteKind = suiteKind;
+    applyProjectChromeCopy();
     sanitizeLegacyModelUi();
     const firstMain = document.querySelector("main, [role='main']");
     if (firstMain && !firstMain.id) firstMain.id = "suite-main";
@@ -275,6 +279,35 @@
     link.href = "/hub/suite-tool-foundation.css?v=20260728-tool-foundation4";
     link.dataset.suiteToolFoundation = "true";
     document.head.append(link);
+  }
+
+  function loadProjectStyles() {
+    const projectStyleVersions = {
+      idol: "20260729-idol1",
+    };
+    const version = projectStyleVersions[projectId];
+    if (!version || document.querySelector("link[data-suite-project-styles]")) return;
+
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = `/hub/project-themes/${encodeURIComponent(projectId)}.css?v=${version}`;
+    link.dataset.suiteProjectStyles = projectId;
+    document.head.append(link);
+  }
+
+  function applyProjectChromeCopy() {
+    const copyByProject = {
+      idol: [
+        [".api-connect-panel .section-kicker", "分析状态"],
+        [".start-grid > .panel .hero-kicker", "匹配实验室"],
+        [".start-grid > aside .section-kicker", "准备情况"],
+      ],
+    };
+
+    for (const [selector, copy] of copyByProject[projectId] || []) {
+      const element = document.querySelector(selector);
+      if (element && element.textContent !== copy) element.textContent = copy;
+    }
   }
 
   function sanitizeLegacyModelUi() {
