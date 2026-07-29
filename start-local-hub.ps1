@@ -6,6 +6,8 @@ $localUrl = "http://127.0.0.1:4310/hub/"
 $keyConfigUrl = "http://127.0.0.1:4310/hub/key-config/"
 $modelConfigUrl = "http://127.0.0.1:4310/hub/api/model-config"
 $pidPath = Join-Path $runtimeDir "local-server.pid"
+$projectRegistryPath = Join-Path $runtimeDir "project-tokens.json"
+$sharedCredentialsPath = Join-Path $runtimeDir "shared-project-credentials.json"
 
 function Test-LocalHubReady {
   try {
@@ -51,7 +53,16 @@ Remove-Item Env:HUB_REMOTE_GATEWAY_ORIGIN -ErrorAction SilentlyContinue
 $env:HUB_CONFIG_PATH = Join-Path $runtimeDir "model-config.json"
 $env:HUB_PROJECT_MODELS_PATH = Join-Path $runtimeDir "project-model-selections.json"
 $env:HUB_OBSERVABILITY_LOG_PATH = Join-Path $runtimeDir "observability-events.jsonl"
-$env:HUB_PROJECT_TOKENS_PATH = Join-Path $runtimeDir "project-tokens.json"
+$env:HUB_PROJECT_TOKENS_PATH = $projectRegistryPath
+
+& $node `
+  "scripts/provision-local-runtime.mjs" `
+  "--manifest" (Join-Path $appRoot "deploy/project-manifest.json") `
+  "--registry" $projectRegistryPath `
+  "--shared" $sharedCredentialsPath
+if ($LASTEXITCODE -ne 0) {
+  throw "Unable to provision local project access."
+}
 
 $serverProcess = Start-Process `
   -WindowStyle Hidden `

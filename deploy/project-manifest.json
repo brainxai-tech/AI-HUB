@@ -11,7 +11,7 @@
   },
   "projects": [
     { "id": "idol-match-test", "route": "/idol-match/", "source": "apps/idol-match-test", "stack": "next", "api": "shared" },
-    { "id": "qisheng-emotional-companion", "route": "/qisheng/", "source": "apps/qisheng-emotional-companion", "stack": "node-static", "api": "shared" },
+    { "id": "qisheng-emotional-companion", "runtimeId": "ai-emotional-companion-local", "route": "/qisheng/", "source": "apps/qisheng-emotional-companion", "stack": "node-static", "api": "shared" },
     { "id": "ai-tarot-sanctum", "route": "/tarot/", "source": "apps/ai-tarot-sanctum", "stack": "next", "api": "shared" },
     { "id": "qingqing-grassland-personality", "route": "/grassland/", "source": "apps/qingqing-grassland-personality", "stack": "next", "api": "shared" },
     { "id": "ai-cooking-coach", "route": "/cooking/", "source": "apps/ai-cooking-coach", "stack": "node-static", "api": "shared" },
