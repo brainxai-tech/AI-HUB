@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
+import path from "node:path";
 import test from "node:test";
+import { pathToFileURL } from "node:url";
 
 import {
   buildStoryVisualFallback,
@@ -18,13 +20,20 @@ test("portable legacy adapters use their Express 4 runtime contract", () => {
 });
 
 test("legacy server imports resolve through the portable apps root", () => {
-  const appsRoot = "C:\\workspace\\AI-HUB\\apps";
+  const appsRoot = path.resolve("fixtures", "apps");
+  const expectedModuleUrl = pathToFileURL(path.join(
+    appsRoot,
+    "ai-dream-director",
+    "dist-server",
+    "server",
+    "modelGateway.js",
+  )).href;
   assert.equal(
     mapLegacyServerImport(
       "/home/admin/apps/ai-dream-director/dist-server/server/modelGateway.js",
       appsRoot,
     ),
-    new URL("file:///C:/workspace/AI-HUB/apps/ai-dream-director/dist-server/server/modelGateway.js").href,
+    expectedModuleUrl,
   );
   assert.equal(
     mapLegacyServerImport(
