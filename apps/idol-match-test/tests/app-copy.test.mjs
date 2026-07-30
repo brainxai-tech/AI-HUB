@@ -51,6 +51,12 @@ describe("app handoff copy", () => {
     assert.match(componentSource, /generateDeepSeekMatchResult/);
     assert.match(componentSource, /api\/compatible-result/);
     assert.match(componentSource, /fixedIdolId/);
+    assert.match(componentSource, />分析状态<\/p>/);
+    assert.match(componentSource, />匹配实验室<\/p>/);
+    assert.match(componentSource, />准备情况<\/p>/);
+    assert.doesNotMatch(componentSource, />SMART RESULT<\/p>/);
+    assert.doesNotMatch(componentSource, />IDOL MATCH LAB<\/p>/);
+    assert.doesNotMatch(componentSource, />READY<\/p>/);
     assert.match(componentSource, /固定匹配/);
   });
 });

@@ -124,6 +124,12 @@ test("generation uses Hub-managed credentials and exposes no project-level key f
   assert.match(app, /function isLocalHost/);
   assert.match(app, /`\$\{LOCAL_APP_ORIGIN\}\$\{path\}`/);
   assert.match(app, /return path;/);
+
+  const basePathIndex = app.indexOf("const basePath = getHostedBasePath();");
+  const localFallbackIndex = app.indexOf('if (location.protocol === "file:" || isLocalHost(location.hostname))');
+  assert.ok(basePathIndex >= 0, "mounted Hub path detection is present");
+  assert.ok(localFallbackIndex >= 0, "standalone local fallback is present");
+  assert.ok(basePathIndex < localFallbackIndex, "mounted Hub paths take priority over the standalone localhost fallback");
 });
 
 test("planner screen keeps output views below the agent panel", async () => {

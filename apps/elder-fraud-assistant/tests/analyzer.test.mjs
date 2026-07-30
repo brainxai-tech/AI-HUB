@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeMessage } from "../src/fraudAnalyzer.mjs";
+import { analyzeMessage } from "../public/fraudAnalyzer.mjs";
 
 test("flags authority scam with secrecy and transfer request as stop", () => {
   const result = analyzeMessage("这里是公安局，你涉嫌洗钱。马上把钱转入安全账户，不要告诉家人。");

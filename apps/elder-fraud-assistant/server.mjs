@@ -2,10 +2,11 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
-import { analyzeMessage } from "./src/fraudAnalyzer.mjs";
+import { analyzeMessage } from "./public/fraudAnalyzer.mjs";
 import { callModelProvider } from "./src/modelAnalyzer.mjs";
 
 const root = fileURLToPath(new URL(".", import.meta.url));
+const publicRoot = join(root, "public");
 const port = Number(process.env.PORT || 4182);
 const maxBodySize = 220_000;
 const publicBasePaths = ["/elder"];
@@ -30,12 +31,12 @@ const mimeTypes = {
 
 function resolvePath(urlPath) {
   const requested = decodeURIComponent(urlPath.split("?")[0]);
-  const cleanPath = requested === "/" ? "/public/index.html" : requested;
+  const cleanPath = requested === "/" ? "index.html" : requested.replace(/^[/\\]+/, "");
   const normalized = normalize(cleanPath).replace(/^(\.\.[/\\])+/, "");
-  const filePath = join(root, normalized);
+  const filePath = join(publicRoot, normalized);
 
-  if (!filePath.startsWith(root)) {
-    return join(root, "public/index.html");
+  if (!filePath.startsWith(publicRoot)) {
+    return join(publicRoot, "index.html");
   }
 
   return filePath;

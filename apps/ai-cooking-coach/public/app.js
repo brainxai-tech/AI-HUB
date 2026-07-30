@@ -441,12 +441,12 @@ function appUrl(path) {
   if (LOCAL_APP_ORIGINS.has(location.origin)) {
     return path;
   }
-  if (location.protocol === "file:" || isLocalHost(location.hostname)) {
-    return `${LOCAL_APP_ORIGIN}${path}`;
-  }
   const basePath = getHostedBasePath();
   if (basePath) {
     return `${basePath}${path}`;
+  }
+  if (location.protocol === "file:" || isLocalHost(location.hostname)) {
+    return `${LOCAL_APP_ORIGIN}${path}`;
   }
   return path;
 }
