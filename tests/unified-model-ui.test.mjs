@@ -36,6 +36,10 @@ test("shared project shell removes legacy vendor controls and keeps only GPT mod
   assert.match(suiteShell, /forbiddenProviderPattern/);
   assert.match(suiteShell, /modelFamilyPattern/);
   assert.match(suiteShell, /sanitizeLegacyModelUi/);
+  assert.match(suiteShell, /preservesModelReferenceUi/);
+  assert.match(suiteShell, /projectId === "hub-model-atlas"/);
+  assert.match(suiteShell, /if \(!preservesModelReferenceUi\) sanitizeLegacyModelUi\(\)/);
+  assert.match(suiteShell, /if \(!preservesModelReferenceUi\) installModelPicker\(actions\)/);
   assert.match(suiteShell, /MutationObserver/);
   assert.match(suiteShell, /hideLegacyElement\(select\)/);
   assert.match(suiteShell, /state\.models\.filter/);

@@ -385,6 +385,15 @@ test("model guide compares only GPT models with transparent scoring and pricing"
   assert.doesNotMatch(hubHtml, /href="#modelStrengths">了解模型差异/);
 
   for (const id of [
+    "comparison",
+    "compareTitle",
+    "comparisonPresets",
+    "modelLandscape",
+    "landscapeAxisLabel",
+    "comparisonRecommendation",
+    "comparePicker",
+    "compareStatus",
+    "modelComparisonTable",
     "methodTitle",
     "methodology",
     "providerTitle",
@@ -457,6 +466,14 @@ test("model guide compares only GPT models with transparent scoring and pricing"
   assert.match(guideHtml, /2026-06-25 原始数据/);
   assert.doesNotMatch(guideHtml, /AI HUB 编辑评分/);
   assert.match(guideApp, /renderLeaderboard/);
+  assert.match(guideApp, /renderComparison/);
+  assert.match(guideApp, /renderLandscape/);
+  assert.match(guideApp, /is-near-right/);
+  assert.match(guideApp, /renderRecommendation/);
+  assert.match(guideApp, /renderComparisonTable/);
+  assert.match(guideApp, /toggleComparedModel/);
+  assert.match(guideApp, /refreshedButton\.focus\(\)/);
+  assert.match(guideApp, /80\/20 成本/);
   assert.match(guideApp, /renderProviderProfiles/);
   assert.match(guideApp, /renderModelCard/);
   assert.match(guideApp, /scoreOf/);
@@ -466,6 +483,10 @@ test("model guide compares only GPT models with transparent scoring and pricing"
   assert.match(guideApp, /LiveBench 原始 CSV/);
   assert.match(guideApp, /Artificial Analysis 榜单/);
   assert.match(guideStyles, /\.model-guide-grid/);
+  assert.match(guideStyles, /\.model-compare__stage/);
+  assert.match(guideStyles, /\.model-landscape__point/);
+  assert.match(guideStyles, /\.model-comparison-table/);
+  assert.match(guideStyles, /\.model-compare-picker/);
   assert.match(guideStyles, /\.model-provider-grid/);
   assert.match(guideStyles, /\.model-provider-grid:has\(\.model-provider-card\[open\]\)/);
   assert.match(guideStyles, /align-items:\s*start/);

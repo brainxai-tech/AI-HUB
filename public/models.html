@@ -12,7 +12,7 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='Arial' font-size='30' font-weight='700' fill='white'%3EAI%3C/text%3E%3C/svg%3E" />
     <link rel="stylesheet" href="/hub/styles.css?v=20260724-routing-promo1" />
     <link rel="stylesheet" href="/hub/suite-theme.css?v=20260717-frontend5" />
-    <link rel="stylesheet" href="/hub/model-guide.css?v=20260727-benchmarks1" />
+    <link rel="stylesheet" href="/hub/model-guide.css?v=20260730-comparison1" />
   </head>
   <body>
     <main id="suite-main" class="app-shell model-guide-shell">
@@ -21,10 +21,10 @@
         <div class="model-guide-hero__grid">
           <div>
             <span class="eyebrow">MODEL ATLAS · 来源核对 2026/07/27</span>
-            <h1>先看懂差异，再为任务选模型</h1>
+            <h1>把模型放在同一张图上</h1>
             <p>
-              能力分数来自 LiveBench 与 Artificial Analysis 国际第三方测评；官方资料只用于核对型号、上下文和价格。
-              目标是让后续自动路由的每一次选择都能被用户看懂。
+              能力分数来自 LiveBench 与 Artificial Analysis 国际第三方测评。不再来回翻九张长卡片：先按任务看推荐，
+              再在能力、速度与成本之间直接比较；需要证据时，再展开完整测评和来源。
             </p>
           </div>
           <aside aria-label="本页数据范围">
@@ -38,10 +38,61 @@
         </p>
       </header>
 
+      <section id="comparison" class="model-compare" aria-labelledby="compareTitle">
+        <div class="section-heading model-compare__heading">
+          <div class="section-heading__copy">
+            <span class="eyebrow">MODEL COMPASS</span>
+            <h2 id="compareTitle">先选任务，再看取舍</h2>
+            <p class="section-description">横轴是 80 万输入 + 20 万输出的估算成本，纵轴随任务切换为对应能力或速度。点击图中型号即可加入下方同屏比较。</p>
+          </div>
+          <div class="model-compare__source-note">
+            <span>能力</span><strong>LiveBench</strong>
+            <span>速度</span><strong>Artificial Analysis</strong>
+            <span>成本</span><strong>官方单价</strong>
+          </div>
+        </div>
+
+        <div id="comparisonPresets" class="model-preset-tabs" role="group" aria-label="按任务查看模型"></div>
+
+        <div class="model-compare__stage">
+          <article class="model-landscape-card" aria-labelledby="landscapeTitle">
+            <div class="model-landscape-card__head">
+              <div>
+                <span class="eyebrow">能力 × 成本</span>
+                <h3 id="landscapeTitle">型号位置图</h3>
+              </div>
+              <p id="landscapeAxisLabel">纵轴：LiveBench 综合</p>
+            </div>
+            <div id="modelLandscape" class="model-landscape" aria-live="polite"></div>
+            <div class="model-landscape__legend" aria-label="坐标说明">
+              <span>← 成本更低</span>
+              <span><i></i> 已加入比较</span>
+              <span><i></i> 当前任务推荐</span>
+              <span>成本更高 →</span>
+            </div>
+          </article>
+          <aside id="comparisonRecommendation" class="model-recommendation" aria-live="polite"></aside>
+        </div>
+
+        <div class="model-compare__picker-head">
+          <div>
+            <span class="eyebrow">同屏比较</span>
+            <h3>选择 2–4 个型号</h3>
+          </div>
+          <p id="compareStatus" role="status" aria-live="polite"></p>
+        </div>
+        <div id="comparePicker" class="model-compare-picker" aria-label="选择要比较的型号" aria-describedby="compareStatus"></div>
+        <div class="model-comparison-frame" tabindex="0" aria-label="模型横向对比表，可横向滚动">
+          <table id="modelComparisonTable" class="model-comparison-table"></table>
+        </div>
+        <p class="model-comparison-footnote">“领先”只表示当前所选型号在该行数据中最优；缺少完全匹配的第三方数据时显示“暂无”，不会用近似型号补齐。</p>
+      </section>
+
       <section id="methodology" class="model-guide-method" aria-labelledby="methodTitle">
         <div>
           <span class="eyebrow">评分怎么看</span>
           <h2 id="methodTitle">LiveBench 能力实测 + Artificial Analysis 性能数据</h2>
+          <p class="section-description">比较工作台只提取最常用的决策数据；完整口径和边界仍保留在这里。</p>
         </div>
         <div class="model-guide-method__notes">
           <p><strong>官方事实</strong><span>型号名称、上下文、输入输出模态、工具与 Token 单价（每 100 万输入/输出 Token）均链接到官方模型页或定价页。</span></p>
@@ -120,7 +171,7 @@
     </main>
 
     <script src="/hub/model-guide-data.js?v=20260728-gpt-only1"></script>
-    <script src="/hub/model-guide.js?v=20260728-gpt-only1"></script>
-    <script src="/hub/suite-shell.js?v=20260728-gpt-only1" data-suite-project="大模型差异图鉴" data-suite-id="hub-model-atlas" data-suite-hub="/hub/"></script>
+    <script src="/hub/model-guide.js?v=20260730-comparison1"></script>
+    <script src="/hub/suite-shell.js?v=20260730-model-atlas1" data-suite-project="大模型差异图鉴" data-suite-id="hub-model-atlas" data-suite-hub="/hub/"></script>
   </body>
 </html>

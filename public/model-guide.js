@@ -20,11 +20,55 @@
     { id: "language", label: "语言" },
     { id: "instruction", label: "指令遵循" },
   ];
+  const presetCatalog = [
+    {
+      id: "balanced",
+      label: "日常均衡",
+      metric: "overall",
+      recommendation: "gpt-5.6-terra",
+      reason: "综合能力只比旗舰低一档，80/20 示例成本约为旗舰的一半，适合作为多数项目的稳定主力。",
+    },
+    {
+      id: "quality",
+      label: "质量优先",
+      metric: "overall",
+      recommendation: "gpt-5.6-sol",
+      reason: "LiveBench 综合、推理、数学和语言均处于当前对比组前列，适合高价值、长链路任务。",
+    },
+    {
+      id: "coding",
+      label: "编程与 Agent",
+      metric: "coding",
+      recommendation: "gpt-5.6-sol",
+      reason: "编程分数领先，并保持较强的 Agent 编程与推理能力，适合生产级工程和多工具工作流。",
+    },
+    {
+      id: "speed",
+      label: "速度优先",
+      metric: "speed",
+      recommendation: "gpt-5.6-luna",
+      reason: "Artificial Analysis 的完全匹配记录中输出速度最高，同时成本明显低于 Sol 与 Terra。",
+    },
+    {
+      id: "budget",
+      label: "成本优先",
+      metric: "overall",
+      recommendation: "gpt-5.4-nano",
+      reason: "80/20 示例成本最低，适合分类、抽取、排序和大量简单自动化；复杂任务应升级型号。",
+    },
+  ];
   const providerOrder = ["OpenAI"];
   const providerMarks = {
     OpenAI: "GPT",
   };
   const elements = {
+    presets: document.getElementById("comparisonPresets"),
+    landscape: document.getElementById("modelLandscape"),
+    landscapeAxisLabel: document.getElementById("landscapeAxisLabel"),
+    recommendation: document.getElementById("comparisonRecommendation"),
+    comparePicker: document.getElementById("comparePicker"),
+    compareStatus: document.getElementById("compareStatus"),
+    comparisonTable: document.getElementById("modelComparisonTable"),
     rankingTabs: document.getElementById("rankingTabs"),
     leaderboard: document.getElementById("leaderboard"),
     providerProfiles: document.getElementById("providerProfiles"),
@@ -36,7 +80,15 @@
     empty: document.getElementById("modelEmpty"),
     sourceList: document.getElementById("sourceList"),
   };
-  const state = { metric: "overall", provider: "all", query: "", sort: "overall" };
+  const state = {
+    metric: "overall",
+    provider: "all",
+    query: "",
+    sort: "overall",
+    preset: "balanced",
+    compared: ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", "gpt-5.4-nano"],
+    compareMessage: "已预选旗舰、均衡、高频和低成本四个代表型号。",
+  };
 
   if (!models.length || !elements.grid) {
     if (elements.grid) {
@@ -45,6 +97,7 @@
     return;
   }
 
+  renderComparison();
   renderProviderProfiles();
   renderTabs();
   renderProviderFilters();
@@ -52,6 +105,150 @@
   renderLeaderboard();
   renderModels();
   bindEvents();
+
+  function renderComparison() {
+    if (!elements.presets || !elements.landscape || !elements.comparisonTable) return;
+    renderPresetTabs();
+    renderLandscape();
+    renderRecommendation();
+    renderComparePicker();
+    renderComparisonTable();
+  }
+
+  function renderPresetTabs() {
+    elements.presets.innerHTML = presetCatalog.map(function (preset) {
+      const recommendation = modelById(preset.recommendation);
+      return '<button type="button" data-preset="' + escapeHtml(preset.id) + '" aria-pressed="' +
+        (preset.id === state.preset) + '"><span>' + escapeHtml(preset.label) + '</span><small>' +
+        escapeHtml(recommendation ? recommendation.name : "资料待确认") + '</small></button>';
+    }).join("");
+  }
+
+  function renderLandscape() {
+    const preset = currentPreset();
+    const plotted = models.map(function (model) {
+      return { model: model, value: presetValue(model, preset) };
+    }).filter(function (item) { return item.value !== null; });
+    const missing = models.filter(function (model) { return presetValue(model, preset) === null; });
+    const values = plotted.map(function (item) { return item.value; });
+    const costs = plotted.map(function (item) { return sampleCostOf(item.model); });
+    const minValue = values.length ? Math.min.apply(Math, values) : 0;
+    const maxValue = values.length ? Math.max.apply(Math, values) : 100;
+    const minCost = costs.length ? Math.min.apply(Math, costs) : 0;
+    const maxCost = costs.length ? Math.max.apply(Math, costs) : 1;
+    const metricLabel = preset.metric === "speed" ? "AA 输出速度" : metricLabelOf(preset.metric);
+    elements.landscapeAxisLabel.textContent = "纵轴：" + metricLabel + " · 同组相对位置";
+
+    const points = plotted.map(function (item) {
+      const model = item.model;
+      const selected = state.compared.indexOf(model.id) >= 0;
+      const recommended = model.id === preset.recommendation;
+      const x = normalizedLogPosition(sampleCostOf(model), minCost, maxCost, 8, 92);
+      const y = normalizedPosition(item.value, minValue, maxValue, 11, 88);
+      const valueLabel = preset.metric === "speed" ? formatScore(item.value) + " tok/s" : formatScore(item.value);
+      return '<button type="button" class="model-landscape__point' + (recommended ? ' is-recommended' : '') +
+        (selected ? ' is-selected' : '') + (x >= 72 ? ' is-near-right' : '') +
+        '" data-compare-id="' + escapeHtml(model.id) + '" aria-pressed="' + selected +
+        '" style="--point-x:' + x + '%;--point-y:' + y + '%" title="' + escapeHtml(model.name + " · " + metricLabel + " " + valueLabel) + '">' +
+        '<span aria-hidden="true"></span><strong>' + escapeHtml(shortModelName(model.name)) + '</strong><small>' +
+        escapeHtml(valueLabel) + '</small></button>';
+    }).join("");
+
+    const missingCopy = missing.length
+      ? '<div class="model-landscape__missing"><strong>暂无完全匹配数据</strong><span>' + missing.map(function (model) {
+        return escapeHtml(shortModelName(model.name));
+      }).join(" · ") + '</span></div>'
+      : "";
+    elements.landscape.innerHTML = '<div class="model-landscape__axis model-landscape__axis--y"><span>更强</span><span>更弱</span></div>' +
+      '<div class="model-landscape__plot">' + points + '</div>' + missingCopy;
+  }
+
+  function renderRecommendation() {
+    const preset = currentPreset();
+    const model = modelById(preset.recommendation);
+    if (!model) return;
+    const metricValue = presetValue(model, preset);
+    const metricLabel = preset.metric === "speed" ? "输出速度" : metricLabelOf(preset.metric);
+    const metricDisplay = preset.metric === "speed" ? formatScore(metricValue) + " tok/s" : formatScore(metricValue);
+    const selected = state.compared.indexOf(model.id) >= 0;
+    const selectionFull = state.compared.length >= 4;
+    elements.recommendation.innerHTML = '<span class="model-recommendation__eyebrow">' + escapeHtml(preset.label) + '推荐</span>' +
+      '<div class="model-recommendation__identity"><span aria-hidden="true">GPT</span><div><small>' + escapeHtml(model.badge) +
+      '</small><h3>' + escapeHtml(model.name) + '</h3></div></div><p>' + escapeHtml(preset.reason) + '</p>' +
+      '<dl><div><dt>' + escapeHtml(metricLabel) + '</dt><dd>' + escapeHtml(metricDisplay) + '</dd></div>' +
+      '<div><dt>80/20 成本</dt><dd>' + escapeHtml(formatMoney(sampleCostOf(model), model.currency)) + '</dd></div>' +
+      '<div><dt>适合</dt><dd>' + escapeHtml(model.bestFor.slice(0, 2).join("、")) + '</dd></div></dl>' +
+      '<button type="button" data-recommend-add="' + escapeHtml(model.id) + '"' +
+      (selected || selectionFull ? ' disabled' : '') + '>' +
+      (selected ? '已在同屏比较' : selectionFull ? '先移除一个型号' : '加入同屏比较') + '</button>';
+  }
+
+  function renderComparePicker() {
+    const count = state.compared.length;
+    elements.comparePicker.innerHTML = models.map(function (model) {
+      const selected = state.compared.indexOf(model.id) >= 0;
+      const disabled = !selected && count >= 4;
+      return '<button type="button" data-compare-id="' + escapeHtml(model.id) + '" aria-pressed="' + selected + '"' +
+        (disabled ? ' disabled' : '') + '><span aria-hidden="true"></span><strong>' + escapeHtml(shortModelName(model.name)) +
+        '</strong><small>' + escapeHtml(model.badge) + '</small></button>';
+    }).join("");
+    elements.compareStatus.textContent = state.compareMessage + " 当前已选择 " + count + " / 4 个。";
+  }
+
+  function renderComparisonTable() {
+    const selectedModels = state.compared.map(modelById).filter(Boolean);
+    const rows = [
+      { id: "position", label: "型号定位", type: "text", value: function (model) { return model.badge; } },
+      { id: "overall", label: "LiveBench 综合", type: "score", better: "max", value: function (model) { return scoreOf(model, "overall"); } },
+      { id: "reasoning", label: "推理", type: "score", better: "max", value: function (model) { return scoreOf(model, "reasoning"); } },
+      { id: "coding", label: "编程", type: "score", better: "max", value: function (model) { return scoreOf(model, "coding"); } },
+      { id: "agentic", label: "Agent 编程", type: "score", better: "max", value: function (model) { return scoreOf(model, "agentic"); } },
+      { id: "speed", label: "输出速度", type: "speed", better: "max", value: outputSpeedOf },
+      { id: "latency", label: "首段延迟", type: "latency", better: "min", value: latencyOf },
+      { id: "cost", label: "80/20 成本", type: "cost", better: "min", value: sampleCostOf },
+      { id: "context", label: "上下文", type: "text", value: function (model) { return model.context; } },
+      { id: "fit", label: "更适合", type: "tags", value: function (model) { return model.bestFor; } },
+    ];
+    const header = '<caption>所选 GPT 型号能力、性能与成本对比</caption><thead><tr><th scope="col">比较项</th>' +
+      selectedModels.map(function (model) {
+        return '<th scope="col"><span>' + escapeHtml(model.badge) + '</span><strong>' + escapeHtml(shortModelName(model.name)) + '</strong></th>';
+      }).join("") + '</tr></thead>';
+    const body = rows.map(function (row) {
+      const values = selectedModels.map(row.value);
+      const best = bestNumericValue(values, row.better);
+      return '<tr data-comparison-row="' + escapeHtml(row.id) + '"><th scope="row">' + escapeHtml(row.label) + '</th>' +
+        selectedModels.map(function (model, index) {
+          return renderComparisonCell(row, values[index], best, values);
+        }).join("") + '</tr>';
+    }).join("");
+    elements.comparisonTable.innerHTML = header + '<tbody>' + body + '</tbody>';
+  }
+
+  function renderComparisonCell(row, value, best, rowValues) {
+    if (row.type === "tags") {
+      return '<td><div class="model-comparison-table__tags">' + (value || []).map(function (item) {
+        return '<span>' + escapeHtml(item) + '</span>';
+      }).join("") + '</div></td>';
+    }
+    if (row.type === "text") return '<td><strong class="model-comparison-table__text">' + escapeHtml(value || "以 API 为准") + '</strong></td>';
+    if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+      return '<td class="is-missing"><strong>暂无</strong><small>无完全匹配数据</small></td>';
+    }
+    const numeric = Number(value);
+    const isBest = best !== null && Math.abs(numeric - best) < 0.0001;
+    const max = Math.max.apply(Math, rowValues
+      .filter(function (item) { return item !== null && item !== undefined && item !== ""; })
+      .map(Number)
+      .filter(Number.isFinite));
+    const barWidth = row.type === "score" ? numeric : max > 0 ? numeric / max * 100 : 0;
+    let display = formatScore(numeric);
+    if (row.type === "speed") display += " tok/s";
+    if (row.type === "latency") display += " s";
+    if (row.type === "cost") display = "$" + Number(numeric).toLocaleString("zh-CN", { maximumFractionDigits: 2 });
+    return '<td class="model-comparison-table__metric' + (isBest ? ' is-best' : '') + '"><div><strong>' +
+      escapeHtml(display) + '</strong>' + (isBest ? '<span>领先</span>' : '') + '</div><i style="--metric-width:' +
+      Math.max(3, Math.min(100, barWidth)) + '%"></i></td>';
+  }
 
   function renderProviderProfiles() {
     if (!elements.providerProfiles) return;
@@ -273,6 +470,24 @@
   }
 
   function bindEvents() {
+    elements.presets.addEventListener("click", function (event) {
+      const button = event.target.closest("button[data-preset]");
+      if (!button || button.dataset.preset === state.preset) return;
+      const preset = presetCatalog.find(function (item) { return item.id === button.dataset.preset; });
+      if (!preset) return;
+      state.preset = preset.id;
+      state.compareMessage = "已切换到“" + preset.label + "”，图中推荐位置已更新。";
+      renderComparison();
+      const refreshedButton = elements.presets.querySelector('button[data-preset="' + preset.id + '"]');
+      if (refreshedButton) refreshedButton.focus();
+    });
+    elements.landscape.addEventListener("click", handleCompareToggle);
+    elements.comparePicker.addEventListener("click", handleCompareToggle);
+    elements.recommendation.addEventListener("click", function (event) {
+      const button = event.target.closest("button[data-recommend-add]");
+      if (!button) return;
+      toggleComparedModel(button.dataset.recommendAdd);
+    });
     elements.rankingTabs.addEventListener("click", function (event) {
       const button = event.target.closest("button[data-metric]");
       if (!button) return;
@@ -295,6 +510,94 @@
       state.sort = elements.sort.value;
       renderModels();
     });
+  }
+
+  function handleCompareToggle(event) {
+    const button = event.target.closest("button[data-compare-id]");
+    if (!button) return;
+    toggleComparedModel(button.dataset.compareId);
+  }
+
+  function toggleComparedModel(modelId) {
+    const index = state.compared.indexOf(modelId);
+    const model = modelById(modelId);
+    if (!model) return;
+    if (index >= 0) {
+      if (state.compared.length <= 2) {
+        state.compareMessage = "至少保留两个型号，才能形成有效对比。";
+      } else {
+        state.compared.splice(index, 1);
+        state.compareMessage = "已从同屏比较移除 " + model.name + "。";
+      }
+    } else if (state.compared.length >= 4) {
+      state.compareMessage = "同屏最多比较四个型号，请先移除一个。";
+    } else {
+      state.compared.push(modelId);
+      state.compareMessage = "已把 " + model.name + " 加入同屏比较。";
+    }
+    renderComparison();
+  }
+
+  function currentPreset() {
+    return presetCatalog.find(function (preset) { return preset.id === state.preset; }) || presetCatalog[0];
+  }
+
+  function modelById(modelId) {
+    return models.find(function (model) { return model.id === modelId; });
+  }
+
+  function shortModelName(name) {
+    return String(name || "").replace(/^GPT-/i, "");
+  }
+
+  function metricLabelOf(metricId) {
+    const metric = metricCatalog.find(function (item) { return item.id === metricId; });
+    return metric ? metric.label : metricId;
+  }
+
+  function presetValue(model, preset) {
+    return preset.metric === "speed" ? outputSpeedOf(model) : scoreOf(model, preset.metric);
+  }
+
+  function sampleCostOf(model) {
+    const input = Number(model && model.input);
+    const output = Number(model && model.output);
+    if (!Number.isFinite(input) || !Number.isFinite(output)) return null;
+    return input * 0.8 + output * 0.2;
+  }
+
+  function outputSpeedOf(model) {
+    const benchmark = model && model.benchmarks && model.benchmarks.artificialAnalysis;
+    const value = benchmark && Number(benchmark.outputTokensPerSecond);
+    return Number.isFinite(value) ? value : null;
+  }
+
+  function latencyOf(model) {
+    const benchmark = model && model.benchmarks && model.benchmarks.artificialAnalysis;
+    const value = benchmark && Number(benchmark.latencySeconds);
+    return Number.isFinite(value) ? value : null;
+  }
+
+  function bestNumericValue(values, direction) {
+    if (!direction) return null;
+    const numeric = values
+      .filter(function (value) { return value !== null && value !== undefined && value !== ""; })
+      .map(Number)
+      .filter(Number.isFinite);
+    if (!numeric.length) return null;
+    return direction === "min" ? Math.min.apply(Math, numeric) : Math.max.apply(Math, numeric);
+  }
+
+  function normalizedPosition(value, min, max, floor, ceiling) {
+    if (max === min) return (floor + ceiling) / 2;
+    return floor + (Number(value) - min) / (max - min) * (ceiling - floor);
+  }
+
+  function normalizedLogPosition(value, min, max, floor, ceiling) {
+    const safeValue = Math.max(0.001, Number(value));
+    const safeMin = Math.max(0.001, Number(min));
+    const safeMax = Math.max(safeMin, Number(max));
+    return normalizedPosition(Math.log(safeValue), Math.log(safeMin), Math.log(safeMax), floor, ceiling);
   }
 
   function scoreOf(model, metric) {

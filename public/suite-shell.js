@@ -22,6 +22,7 @@
   const legacyProviderChoicePattern = /(?:gpt-[a-z0-9_.-]+|^(?:演示模式|演示|demo(?:\s*mode)?|本地预览|local(?:[-\s]*preview)?))/i;
   const legacyModelHeadingPattern = /^(?:(?:AI|Hub)\s*)?(?:模型|模型配置|模型设置|模型服务|选择模型|大模型|models?|model\s*(?:provider|settings?|selection|configuration|service)?)$/i;
   const legacyModelFieldPattern = /(?:^|[-_.\s])(?:provider|vendor|model)(?:$|[-_.\s])|供应商|提供商|模型/i;
+  const preservesModelReferenceUi = projectId === "hub-model-atlas";
   let sanitizingLegacyUi = false;
 
   applySuiteIdentity();
@@ -39,7 +40,7 @@
     document.body.dataset.suiteId = projectId;
     document.body.dataset.suiteKind = suiteKind;
     applyProjectChromeCopy();
-    sanitizeLegacyModelUi();
+    if (!preservesModelReferenceUi) sanitizeLegacyModelUi();
     const firstMain = document.querySelector("main, [role='main']");
     if (firstMain && !firstMain.id) firstMain.id = "suite-main";
     if (firstMain && !firstMain.hasAttribute("tabindex")) firstMain.setAttribute("tabindex", "-1");
@@ -88,7 +89,7 @@
     bar.append(brandWrap, actions);
     document.body.prepend(bar);
     if (skip) document.body.prepend(skip);
-    installModelPicker(actions);
+    if (!preservesModelReferenceUi) installModelPicker(actions);
   };
 
   const start = () => {
