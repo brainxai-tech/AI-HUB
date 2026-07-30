@@ -34,6 +34,8 @@ apps/ai-paper-reading-coach/paper-coach-smoke.manifest.json
 data/
 !apps/*/data/
 !apps/*/data/**
+!apps/*/src/data/
+!apps/*/src/data/**
 !apps/*/public/data/
 !apps/*/public/data/**
 backups/
