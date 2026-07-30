@@ -484,6 +484,10 @@ export function isMainModule(importMetaUrl, argvPath, resolveRealPath = realpath
   }
 }
 
+export function resolveAppsRoot(appsRoot, resolveRealPath = realpathSync) {
+  return resolveRealPath(path.resolve(appsRoot));
+}
+
 async function readJsonBody(request) {
   const chunks = [];
   let bytes = 0;
@@ -904,7 +908,7 @@ async function loadCredentials(credentialsPath) {
 }
 
 export async function startServer(options = {}) {
-  const appsRoot = options.appsRoot || process.env.AIHUB_APPS_ROOT || DEFAULT_APPS_ROOT;
+  const appsRoot = resolveAppsRoot(options.appsRoot || process.env.AIHUB_APPS_ROOT || DEFAULT_APPS_ROOT);
   const credentialsPath =
     options.credentialsPath || process.env.AIHUB_SHARED_CREDENTIALS_PATH || DEFAULT_CREDENTIALS_PATH;
   const chatUrl = options.chatUrl || process.env.HUB_CHAT_COMPLETIONS_URL || DEFAULT_HUB_CHAT_URL;

@@ -149,6 +149,14 @@ test("main-module detection resolves a current release symlink", () => {
   );
 });
 
+test("shared runtime resolves a current apps symlink before installing import hooks", () => {
+  const runtimeRoot = path.resolve("test-runtime");
+  const currentApps = path.join(runtimeRoot, "current", "apps");
+  const releaseApps = path.join(runtimeRoot, "releases", "20260730T073857", "apps");
+  const realpath = (value) => (value === currentApps ? releaseApps : value);
+  assert.equal(serverModule.resolveAppsRoot(currentApps, realpath), releaseApps);
+});
+
 test("extractCredentials selects both shared-runtime batches", () => {
   const dump = Object.values(projectSpecsForTest()).map(({ id, token }) => ({
     name: id,
