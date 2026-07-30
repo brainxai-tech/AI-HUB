@@ -1,4 +1,4 @@
-import { analyzeMessage, sampleMessages } from "../src/fraudAnalyzer.mjs";
+import { analyzeMessage, sampleMessages } from "./fraudAnalyzer.mjs";
 
 function appUrl(path) {
   const basePath = location.pathname === "/elder" || location.pathname.startsWith("/elder/")

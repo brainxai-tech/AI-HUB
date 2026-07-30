@@ -57,6 +57,24 @@ async function waitForProviders() {
       if (homeResponse.status >= 500) {
         throw new Error(`home returned HTTP ${homeResponse.status}`);
       }
+      const homeHtml = await homeResponse.text();
+      if (!homeHtml.includes('href="./styles.css"') || !homeHtml.includes('src="./app.js"')) {
+        throw new Error("home does not use public-root-relative assets");
+      }
+
+      for (const assetPath of [
+        "/styles.css",
+        "/app.js",
+        "/fraudAnalyzer.mjs",
+        `${publicBasePath}/styles.css`,
+        `${publicBasePath}/app.js`,
+        `${publicBasePath}/fraudAnalyzer.mjs`
+      ]) {
+        const assetResponse = await fetch(`${baseUrl}${assetPath}`, { cache: "no-store" });
+        if (!assetResponse.ok) {
+          throw new Error(`${assetPath} returned HTTP ${assetResponse.status}`);
+        }
+      }
 
       const response = await fetch(`${baseUrl}/api/providers`, { cache: "no-store" });
       if (!response.ok) {

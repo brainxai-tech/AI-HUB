@@ -602,7 +602,7 @@ export function IdolMatchTest() {
         {screen === "start" && (
           <section className="api-connect-panel api-connect-panel--gate" data-status={deepSeekConnectionStatus}>
             <div>
-              <p className="section-kicker">SMART RESULT</p>
+              <p className="section-kicker">分析状态</p>
               <h2 className="api-key-label">智能分析自动准备</h2>
               <p className="small-muted">
                 匹配爱豆由本地固定规则决定；完成答题后会自动生成结果说明，无需额外设置。
@@ -615,7 +615,7 @@ export function IdolMatchTest() {
         {screen === "start" && (
           <section className="start-grid">
             <div className="panel">
-              <p className="hero-kicker">IDOL MATCH LAB</p>
+              <p className="hero-kicker">匹配实验室</p>
               <h2 className="hero-title">{activeMode.questionCount}题找到你最可能粉上的爱豆</h2>
               <p className="hero-copy">
                 体验版更快，专业版更细。两种版本都会从颜值审美、舞台/作品偏好、陪伴需求、反差感、消费倾向和饭圈互动方式建模。
@@ -668,7 +668,7 @@ export function IdolMatchTest() {
             </div>
 
             <aside className="panel">
-              <p className="section-kicker">READY</p>
+              <p className="section-kicker">准备情况</p>
               <div className="stat-grid">
                 <div className="stat-tile">
                   <span className="stat-number">{activeMode.questionCount}</span>
