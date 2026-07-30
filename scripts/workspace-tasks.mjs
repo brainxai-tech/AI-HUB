@@ -103,6 +103,9 @@ function checkBuilds() {
         : path.join(item.directory, "dist", "index.html");
     if (!existsSync(expected)) missing.push(`${item.id}: ${path.relative(root, expected)}`);
     if (item.stack === "next" && existsSync(expected)) checkNextRoute(item, missing);
+    if (["vite", "vite-static"].includes(item.stack) && existsSync(expected)) {
+      checkViteRoute(item, expected, missing);
+    }
   }
   for (const item of packages.filter(({ api, stack }) => api === "dedicated" && stack !== "next")) {
     const server = path.join(item.directory, "dist-server", "server", "index.js");
@@ -110,6 +113,13 @@ function checkBuilds() {
   }
   if (missing.length) throw new Error(`Missing workspace runtime artifacts:\n${missing.join("\n")}`);
   console.log(`\nWorkspace runtime artifacts ready: ${manifest.projects.length} tools and ${manifest.games.length} games.`);
+}
+
+function checkViteRoute(item, indexPath, missing) {
+  const html = readFileSync(indexPath, "utf8");
+  if (/(?:src|href)=["']\/assets\//i.test(html)) {
+    missing.push(`${item.id}: Vite build uses root /assets/ instead of ${item.route}assets/`);
+  }
 }
 
 function checkNextRoute(item, missing) {
