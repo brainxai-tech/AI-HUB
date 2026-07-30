@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { publicAssetPath } from "@/lib/public-path";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "AI 国际象棋",
   description: "Hub-ready AI chess duel with shared model-gateway coaching.",
   icons: {
-    icon: "/icon.svg",
+    icon: publicAssetPath("icon.svg"),
   },
 };
 
