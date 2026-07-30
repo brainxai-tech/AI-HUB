@@ -43,7 +43,7 @@ for (const file of tracked) {
 }
 
 const manifest = JSON.parse(readFileSync(path.join(root, "deploy/project-manifest.json"), "utf8"));
-if (manifest.projects.length !== 29) failures.push(`manifest project count is ${manifest.projects.length}, expected 29`);
+if (manifest.projects.length !== 32) failures.push(`manifest project count is ${manifest.projects.length}, expected 32`);
 if (manifest.games.length !== 5) failures.push(`manifest game count is ${manifest.games.length}, expected 5`);
 const entries = [...manifest.projects, ...manifest.games];
 if (new Set(entries.map(({ id }) => id)).size !== entries.length) failures.push("manifest contains duplicate ids");

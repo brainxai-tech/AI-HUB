@@ -38,6 +38,9 @@
     { "id": "ai-cold-start-brand-lab", "route": "/brand-lab/", "source": "apps/ai-cold-start-brand-lab", "stack": "vite", "api": "shared" },
     { "id": "ai-ppt-report-coach", "route": "/ppt-report-coach/", "source": "apps/ai-ppt-report-coach", "stack": "vite", "api": "dedicated", "port": 4201 },
     { "id": "ai-work-report-generator", "route": "/work-report/", "source": "apps/ai-work-report-generator", "stack": "vite", "api": "dedicated", "port": 4202 },
+    { "id": "mbti-persona-compass", "route": "/mbti/", "source": "apps/mbti-persona-compass", "stack": "vite", "api": "dedicated", "port": 4203 },
+    { "id": "ai-essay-coach", "route": "/essay/", "source": "apps/ai-essay-coach", "stack": "vite", "api": "dedicated", "port": 4204 },
+    { "id": "yingzhou-ai", "route": "/poetry/", "source": "apps/yingzhou-ai", "stack": "vite", "api": "dedicated", "port": 4205 },
     { "id": "elder-fraud-assistant", "route": "/elder/", "source": "apps/elder-fraud-assistant", "stack": "node-static", "api": "shared" }
   ],
   "games": [

@@ -11,6 +11,7 @@
     { "id": "ai-course-teaching-assistant", "scopes": ["model:chat"] },
     { "id": "ai-data-analyst", "scopes": ["model:chat"] },
     { "id": "ai-dream-director", "scopes": ["model:chat"] },
+    { "id": "ai-essay-coach", "scopes": ["model:chat"] },
     { "id": "ai-emotional-companion-local", "scopes": ["model:chat"] },
     { "id": "ai-english-theater", "scopes": ["model:chat"] },
     { "id": "ai-go-duel", "scopes": ["model:chat"] },
@@ -28,7 +29,9 @@
     { "id": "ai-zhougong-dream", "scopes": ["model:chat"] },
     { "id": "elder-fraud-assistant", "scopes": ["model:chat"] },
     { "id": "idol-match-test", "scopes": ["model:chat"] },
+    { "id": "mbti-persona-compass", "scopes": ["model:chat"] },
     { "id": "qingqing-grassland-personality", "scopes": ["model:chat"] },
-    { "id": "xhs-copywriting-master", "scopes": ["model:chat"] }
+    { "id": "xhs-copywriting-master", "scopes": ["model:chat"] },
+    { "id": "yingzhou-ai", "scopes": ["model:chat"] }
   ]
 }

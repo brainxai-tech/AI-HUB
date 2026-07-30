@@ -1,12 +1,12 @@
 # AI HUB 源码与运行约定
 
-本仓库的目标是让任何人从 GitHub 全新克隆后，安装、构建并启动 29 个工具和 5 款游戏。用户只在 Hub 配置 AI Routing API Key；工具和游戏浏览器不直接接触 Key 或项目令牌。
+本仓库的目标是让任何人从 GitHub 全新克隆后，安装、构建并启动 32 个工具和 5 款游戏。用户只在 Hub 配置 AI Routing API Key；工具和游戏浏览器不直接接触 Key 或项目令牌。
 
 ## 清单与目录
 
 `deploy/project-manifest.json` 是运行边界的唯一清单：
 
-- `manifest.projects`：29 个工具。
+- `manifest.projects`：32 个工具。
 - `manifest.games`：5 款游戏。
 - `apps/<project-id>/`：工具源码。
 - `games/<game-id>/`：四款独立游戏源码。
@@ -23,6 +23,7 @@
 - 27 个项目由 `shared-project-runtime` 在 4195 端口提供页面和 API。
 - AI PPT 汇报教练在 4201 端口运行。
 - AI 工作汇报生成器在 4202 端口运行。
+- 人格罗盘、八百字 AI、吟舟 AI 分别在 4203、4204、4205 端口运行。
 
 ### 游戏
 
@@ -54,12 +55,12 @@ npm run workspace:verify
 npm run start:suite
 ```
 
-`workspace:install`、`workspace:build` 和 `workspace:verify` 处理 29 个工具及四个包含 `package.json` 的游戏。Dice Estate 没有独立 npm 包，但仍由根测试和安全扫描覆盖。
+`workspace:install`、`workspace:build` 和 `workspace:verify` 处理 32 个工具及四个包含 `package.json` 的游戏。Dice Estate 没有独立 npm 包，但仍由根测试和安全扫描覆盖。
 
 完整套件负责：
 
 1. 创建本机项目级令牌注册表。
-2. 启动 Hub、共享运行时、两个专用工具和三个专用棋类游戏。
+2. 启动 Hub、共享运行时、五个专用工具和三个专用棋类游戏。
 3. 向每个子进程只注入自己的项目身份和令牌。
 4. 下载、校验并缓存固定 Pikafish；仅象棋进程接收 `PIKAFISH_PATH`。
 5. 由 Hub 安全提供 Fury Flock 和 Dice Estate 静态资源。

@@ -7,11 +7,11 @@ const read = (pathname) => readFile(new URL(`../${pathname}`, import.meta.url), 
 test("deployment manifest covers every tool and game exactly once", async () => {
   const manifest = JSON.parse(await read("deploy/project-manifest.json"));
   assert.equal(manifest.version, 2);
-  assert.equal(manifest.projects.length, 29);
+  assert.equal(manifest.projects.length, 32);
   assert.equal(manifest.games.length, 5);
   assert.equal(Object.hasOwn(manifest, "excludedGames"), false);
-  assert.equal(new Set(manifest.projects.map(({ id }) => id)).size, 29);
-  assert.equal(new Set(manifest.projects.map(({ route }) => route)).size, 29);
+  assert.equal(new Set(manifest.projects.map(({ id }) => id)).size, 32);
+  assert.equal(new Set(manifest.projects.map(({ route }) => route)).size, 32);
 
   for (const project of manifest.projects) {
     assert.match(project.id, /^[a-z0-9][a-z0-9-]+$/);
@@ -32,8 +32,8 @@ test("deployment manifest covers every tool and game exactly once", async () => 
   );
 
   const allEntries = [...manifest.projects, ...manifest.games];
-  assert.equal(new Set(allEntries.map(({ id }) => id)).size, 34);
-  assert.equal(new Set(allEntries.map(({ route }) => route)).size, 34);
+  assert.equal(new Set(allEntries.map(({ id }) => id)).size, 37);
+  assert.equal(new Set(allEntries.map(({ route }) => route)).size, 37);
 
   for (const game of manifest.games) {
     assert.match(game.id, /^[a-z0-9][a-z0-9-]+$/);

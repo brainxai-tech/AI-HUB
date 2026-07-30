@@ -27,6 +27,32 @@ const mockReport = {
   closingNote: "此内容由本地测试上游生成。",
 };
 
+const mockPersona = {
+  headline: "你在安静中整理方向",
+  reasoningSummary: "四个维度共同形成当前偏好，同时保留情境弹性。",
+  dimensionInsights: [
+    { dimension: "EI", conclusion: "偏向内在充电", reason: "独处场景回答一致。", evidenceQuestionIds: [5, 13], nuance: "必要社交与内向偏好并不冲突。" },
+    { dimension: "SN", conclusion: "偏向整体可能", reason: "更常关注模式与方向。", evidenceQuestionIds: [10, 26], nuance: "重要决定仍会核对事实。" },
+    { dimension: "TF", conclusion: "价值感受优先", reason: "决策持续考虑相关人的体验。", evidenceQuestionIds: [3, 27], nuance: "重视感受不等于缺少逻辑。" },
+    { dimension: "JP", conclusion: "保留探索空间", reason: "对变化的接受度较高。", evidenceQuestionIds: [8, 32], nuance: "关键节点仍可以主动规划。" },
+  ],
+  crossSignals: ["既需要独处，也愿意为重视的人主动连接。"],
+  growthExperiments: [
+    { title: "十五分钟开工", action: "选一件事先投入十五分钟。", rationale: "用小行动保护理想。" },
+    { title: "边界句", action: "清楚拒绝一件非必要请求。", rationale: "减少价值消耗。" },
+    { title: "事实核对", action: "决定前写下三个事实。", rationale: "平衡直觉与证据。" },
+  ],
+  closingNote: "把结果当作当前偏好地图，而不是终身标签。",
+};
+
+const mockPoems = {
+  drafts: [
+    { style: "清雅", title: "竹林夜月", lines: ["清风入竹林", "月照一池心", "远客听松语", "归舟带梦深"], interpretation: "以月夜写静思。", imagery: ["竹林", "明月", "归舟"] },
+    { style: "雄浑", title: "塞上长风", lines: ["长风开远塞", "落日照孤城", "万里云涛起", "一歌天地明"], interpretation: "以边塞写开阔心境。", imagery: ["长风", "落日", "云涛"] },
+    { style: "自然", title: "雨后村居", lines: ["小雨过前村", "新茶暖旧痕", "儿童归学晚", "灯火照柴门"], interpretation: "以村居写寻常温度。", imagery: ["小雨", "新茶", "灯火"] },
+  ],
+};
+
 const mockUpstream = createServer(async (request, response) => {
   const chunks = [];
   for await (const chunk of request) chunks.push(chunk);
@@ -56,6 +82,10 @@ const mockUpstream = createServer(async (request, response) => {
       });
     } else if (/chess coach|Xiangqi|9x9 Go/i.test(systemPrompt)) {
       content = JSON.stringify({ explanation: "E2E Hub GPT 教练讲解" });
+    } else if (systemPrompt.includes("人格偏好解读师")) {
+      content = JSON.stringify(mockPersona);
+    } else if (systemPrompt.includes("吟舟 AI")) {
+      content = JSON.stringify(mockPoems);
     } else {
       content = JSON.stringify(mockReport);
     }
@@ -83,8 +113,9 @@ try {
   await Promise.all([
     waitUntilReady("http://127.0.0.1:4194/hub/api/health", supervisor, 240_000),
     waitUntilReady("http://127.0.0.1:4195/health", supervisor, 240_000),
-    waitUntilReady("http://127.0.0.1:4201/ppt-report-coach/api/providers", supervisor, 240_000),
-    waitUntilReady("http://127.0.0.1:4202/work-report/api/providers", supervisor, 240_000),
+    ...manifest.projects.filter(({ api }) => api === "dedicated").map((project) =>
+      waitUntilReady(`http://127.0.0.1:${project.port}${project.route}api/providers`, supervisor, 240_000),
+    ),
     ...manifest.games.map((game) =>
       waitUntilReady(`http://127.0.0.1:4194${game.route}`, supervisor, 240_000),
     ),
@@ -155,7 +186,7 @@ try {
   );
 
   await page.goto("http://127.0.0.1:4194/hub/", { waitUntil: "networkidle" });
-  assert.ok(await page.locator("[data-project-card]").count() >= 29, "Hub project catalog did not render");
+  assert.ok(await page.locator("[data-project-card]").count() >= 32, "Hub project catalog did not render");
 
   await page.goto("http://127.0.0.1:4194/work-report/", { waitUntil: "domcontentloaded" });
   await page.locator(".suite-model-trigger").waitFor({ state: "visible" });
@@ -173,6 +204,65 @@ try {
   const chatPayload = JSON.parse(chatRequest.body);
   assert.equal(chatPayload.model, "gpt-e2e");
   assert.equal(chatPayload.provider, undefined);
+
+  const personaResponse = await fetchJson("http://127.0.0.1:4194/mbti/api/ai-interpretation", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ answers: Object.fromEntries(Array.from({ length: 32 }, (_, index) => [String(index + 1), 2])) }),
+  });
+  assert.equal(personaResponse.data.headline, mockPersona.headline);
+  assert.equal(personaResponse.meta.model, "gpt-e2e");
+
+  const essayResponse = await fetchJson("http://127.0.0.1:4194/essay/api/analyze", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      input: {
+        prompt: "请以一次主动承担责任的经历为题写一篇文章。",
+        grade: "初三",
+        genre: "记叙文",
+        targetLength: 800,
+        includePunctuation: true,
+        scene: "日常练习",
+      },
+    }),
+  });
+  assert.ok(essayResponse.data.requirements.length >= 3);
+  assert.equal(essayResponse.meta.model, "gpt-e2e");
+
+  const poetryResponse = await fetchJson("http://127.0.0.1:4194/poetry/api/poems/generate", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      input: {
+        theme: "雨后归舟",
+        genre: "five-quatrain",
+        mode: "regulated",
+        rhymeBook: "new-rhyme",
+        mood: "quiet",
+        acrostic: "",
+      },
+    }),
+  });
+  assert.equal(poetryResponse.data.drafts.length, 3);
+  assert.equal(poetryResponse.meta.model, "gpt-e2e");
+
+  for (const [projectId, route] of [
+    ["mbti-persona-compass", "/mbti/"],
+    ["ai-essay-coach", "/essay/"],
+    ["yingzhou-ai", "/poetry/"],
+  ]) {
+    await page.goto(`http://127.0.0.1:4194${route}`, { waitUntil: "networkidle" });
+    await page.locator(".suite-model-trigger").waitFor({ state: "visible" });
+    assert.match(await page.locator(".suite-model-trigger").innerText(), /gpt-e2e/i, `${projectId} did not display the Hub GPT model`);
+    await assertNoBrowserCredentials(page, projectId);
+  }
+
+  for (const promptFragment of ["人格偏好解读师", "中文写作教练", "吟舟 AI"]) {
+    const request = findChatRequest(promptFragment);
+    assert.ok(request, `${promptFragment} request did not reach the routing upstream`);
+    assert.equal(JSON.parse(request.body).model, "gpt-e2e");
+  }
 
   await page.goto("http://127.0.0.1:4194/xiangqi/", { waitUntil: "networkidle" });
   await page.locator("#setup-title").waitFor({ state: "visible" });
@@ -283,7 +373,7 @@ try {
     .split(/\r?\n/)
     .filter(Boolean)
     .map((line) => JSON.parse(line));
-  for (const projectId of ["ai-chess-duel", "dice-estate-duel"]) {
+  for (const projectId of ["mbti-persona-compass", "ai-essay-coach", "yingzhou-ai", "ai-chess-duel", "dice-estate-duel"]) {
     assert.ok(
       observability.some((event) => event.eventType === "generate" && event.projectId === projectId && event.statusCode === 200),
       `${projectId} was not recorded as a successful Hub generation`,
@@ -291,7 +381,7 @@ try {
   }
 
   console.log(
-    `Local suite E2E passed: ${manifest.projects.length} tools, ${manifest.games.length} games, Hub GPT routing, and Fury screenshot at ${furyScreenshot}.`,
+    `Local suite E2E passed: ${manifest.projects.length} tools, ${manifest.games.length} games, three imported products, Hub GPT routing, and Fury screenshot at ${furyScreenshot}.`,
   );
 } catch (error) {
   if (supervisor) {

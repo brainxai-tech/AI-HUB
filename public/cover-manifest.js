@@ -984,5 +984,92 @@ window.AI_PROJECT_COVERS = Object.freeze({
         "bytes": 32786
       }
     ]
+  },
+  "mbti-persona-compass": {
+    "width": 1200,
+    "height": 675,
+    "fallback": "/hub/assets/project-covers/generated/mbti-persona-compass-480w.95d654047a39.webp",
+    "avif": [
+      {
+        "src": "/hub/assets/project-covers/generated/mbti-persona-compass-480w.4222ad4617e7.avif",
+        "width": 480,
+        "bytes": 5986
+      },
+      {
+        "src": "/hub/assets/project-covers/generated/mbti-persona-compass-800w.7e0683a45098.avif",
+        "width": 800,
+        "bytes": 10624
+      }
+    ],
+    "webp": [
+      {
+        "src": "/hub/assets/project-covers/generated/mbti-persona-compass-480w.95d654047a39.webp",
+        "width": 480,
+        "bytes": 8644
+      },
+      {
+        "src": "/hub/assets/project-covers/generated/mbti-persona-compass-800w.402b2728d6d0.webp",
+        "width": 800,
+        "bytes": 16744
+      }
+    ]
+  },
+  "ai-essay-coach": {
+    "width": 1200,
+    "height": 675,
+    "fallback": "/hub/assets/project-covers/generated/ai-essay-coach-480w.7c8c4e6fad0b.webp",
+    "avif": [
+      {
+        "src": "/hub/assets/project-covers/generated/ai-essay-coach-480w.ed9316504956.avif",
+        "width": 480,
+        "bytes": 6635
+      },
+      {
+        "src": "/hub/assets/project-covers/generated/ai-essay-coach-800w.ab178a3a9c50.avif",
+        "width": 800,
+        "bytes": 11687
+      }
+    ],
+    "webp": [
+      {
+        "src": "/hub/assets/project-covers/generated/ai-essay-coach-480w.7c8c4e6fad0b.webp",
+        "width": 480,
+        "bytes": 10388
+      },
+      {
+        "src": "/hub/assets/project-covers/generated/ai-essay-coach-800w.d68b781493e2.webp",
+        "width": 800,
+        "bytes": 19990
+      }
+    ]
+  },
+  "yingzhou-ai": {
+    "width": 1200,
+    "height": 675,
+    "fallback": "/hub/assets/project-covers/generated/yingzhou-ai-480w.263ec1c31669.webp",
+    "avif": [
+      {
+        "src": "/hub/assets/project-covers/generated/yingzhou-ai-480w.085def6f66bf.avif",
+        "width": 480,
+        "bytes": 4505
+      },
+      {
+        "src": "/hub/assets/project-covers/generated/yingzhou-ai-800w.8aad9b4a7f43.avif",
+        "width": 800,
+        "bytes": 8196
+      }
+    ],
+    "webp": [
+      {
+        "src": "/hub/assets/project-covers/generated/yingzhou-ai-480w.263ec1c31669.webp",
+        "width": 480,
+        "bytes": 6002
+      },
+      {
+        "src": "/hub/assets/project-covers/generated/yingzhou-ai-800w.74a5a817ce57.webp",
+        "width": 800,
+        "bytes": 11504
+      }
+    ]
   }
 });

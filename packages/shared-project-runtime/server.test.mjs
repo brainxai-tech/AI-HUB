@@ -186,7 +186,7 @@ test("client env provisioning covers the complete Hub credential manifest", () =
   envFiles["unrelated.env"] = "HUB_PROJECT_ID=unrelated\nHUB_PROJECT_TOKEN=do-not-copy-this-token-value\n";
 
   const result = extractClientEnvCredentials(envFiles);
-  assert.equal(clientProjectIds.length, 29);
+  assert.equal(clientProjectIds.length, 32);
   assert.deepEqual(Object.keys(result.projects).sort(), [...clientProjectIds].sort());
 });
 

@@ -15,12 +15,12 @@ test("local provisioning creates and reuses scoped credentials for tools and mod
   const sharedPath = path.join(directory, "shared.json");
 
   const created = await provisionLocalAccess({ manifestPath, registryPath, sharedPath });
-  assert.deepEqual(created, { created: true, projectCount: 33 });
+  assert.deepEqual(created, { created: true, projectCount: 36 });
 
   const registry = JSON.parse(await readFile(registryPath, "utf8"));
   const shared = JSON.parse(await readFile(sharedPath, "utf8"));
-  assert.equal(Object.keys(registry.projects).length, 33);
-  assert.equal(Object.keys(shared.projects).length, 33);
+  assert.equal(Object.keys(registry.projects).length, 36);
+  assert.equal(Object.keys(shared.projects).length, 36);
   assert.ok(shared.projects["ai-emotional-companion-local"]);
   assert.ok(!shared.projects["qisheng-emotional-companion"]);
   assert.ok(shared.projects["ai-xiangqi-duel"]);
@@ -35,6 +35,6 @@ test("local provisioning creates and reuses scoped credentials for tools and mod
   );
 
   const reused = await provisionLocalAccess({ manifestPath, registryPath, sharedPath });
-  assert.deepEqual(reused, { created: false, projectCount: 33 });
+  assert.deepEqual(reused, { created: false, projectCount: 36 });
   assert.deepEqual(JSON.parse(await readFile(sharedPath, "utf8")), shared);
 });

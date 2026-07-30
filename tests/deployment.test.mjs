@@ -64,6 +64,35 @@ test("Nginx exposes all unified game routes with safe cache and API boundaries",
   assert.match(config, /location = \/api\/agent\/decision \{[\s\S]*?proxy_pass http:\/\/127\.0\.0\.1:4194;/);
 });
 
+test("imported products use hardened release-scoped services and dedicated routes", async () => {
+  const products = [
+    { id: "mbti-persona-compass", route: "mbti", port: 4203 },
+    { id: "ai-essay-coach", route: "essay", port: 4204 },
+    { id: "yingzhou-ai", route: "poetry", port: 4205 },
+  ];
+  const nginx = await readFile(new URL("../deploy/nginx/idol-match-test.conf", import.meta.url), "utf8");
+
+  for (const { id, route, port } of products) {
+    const unit = await readFile(new URL(`../deploy/systemd/${id}.service`, import.meta.url), "utf8");
+    for (const directive of [
+      "Restart=on-failure",
+      "NoNewPrivileges=true",
+      "PrivateTmp=true",
+      "ProtectSystem=strict",
+      "ProtectHome=read-only",
+      "UMask=0077",
+    ]) {
+      assert.match(unit, new RegExp(`^${directive}$`, "m"), `${id} is missing ${directive}`);
+    }
+    assert.match(unit, new RegExp(`^WorkingDirectory=/opt/ai-project-hub/current/apps/${id}$`, "m"));
+    assert.match(unit, new RegExp(`^Environment=PORT=${port}$`, "m"));
+    assert.match(unit, new RegExp(`^EnvironmentFile=/home/admin/\\.config/ai-project-hub/clients/${id}\\.env$`, "m"));
+    assert.match(unit, new RegExp(`^ExecStart=/usr/bin/node /opt/ai-project-hub/current/apps/${id}/dist-server/server/index\\.js --prod$`, "m"));
+    assert.match(nginx, new RegExp(`location = /${route} \\{\\s*return 301 /${route}/;`));
+    assert.match(nginx, new RegExp(`location \\^~ /${route}/ \\{[\\s\\S]*?proxy_pass http://127\\.0\\.0\\.1:${port};`));
+  }
+});
+
 test("Nginx exposes centralized administration while application token auth protects writes", async () => {
   const config = await readFile(new URL("../deploy/nginx/idol-match-test.conf", import.meta.url), "utf8");
   const modelConfigStart = config.indexOf("location = /hub/api/model-config {");

@@ -44,9 +44,9 @@ test("project data contains the requested project entries", async () => {
   const projectIds = Array.from(projects, (project) => project.id);
 
   assert.ok(Array.isArray(projects));
-  assert.equal(projects.length, 34);
+  assert.equal(projects.length, 37);
   assert.equal(new Set(projectIds).size, projects.length);
-  for (const id of ["ai-ppt-report-coach", "ai-work-report-generator", "ai-xiangqi-duel", "ai-chess-duel", "ai-go-duel", "fury-flock", "dice-estate-duel"]) {
+  for (const id of ["ai-ppt-report-coach", "ai-work-report-generator", "mbti-persona-compass", "ai-essay-coach", "yingzhou-ai", "ai-xiangqi-duel", "ai-chess-duel", "ai-go-duel", "fury-flock", "dice-estate-duel"]) {
     assert.ok(projectIds.includes(id), `${id} is missing`);
   }
   assert.ok(
@@ -72,6 +72,9 @@ test("project data keeps every project on the current Hub origin", async () => {
     ["dice-estate-duel", "https://hub.example/hub/dice-estate/"],
     ["ai-ppt-report-coach", "https://hub.example/ppt-report-coach/"],
     ["ai-work-report-generator", "https://hub.example/work-report/"],
+    ["mbti-persona-compass", "https://hub.example/mbti/"],
+    ["ai-essay-coach", "https://hub.example/essay/"],
+    ["yingzhou-ai", "https://hub.example/poetry/"],
   ]);
 
   for (const project of projects) {
@@ -136,7 +139,7 @@ test("original project cover fallbacks remain packaged", async () => {
     /\.(?:jpe?g|png|svg)$/i.test(name),
   );
 
-  assert.ok(originals.length >= 34, `only ${originals.length} original cover files remain`);
+  assert.ok(originals.length >= 37, `only ${originals.length} original cover files remain`);
   for (const project of projects) {
     if (!project.image.startsWith("/hub/assets/project-covers/")) continue;
     const relativePath = project.image.slice("/hub/".length).split("?", 1)[0];
