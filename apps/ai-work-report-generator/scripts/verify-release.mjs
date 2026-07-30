@@ -26,6 +26,7 @@ for (const expected of [
   'data-suite-id="ai-work-report-generator"',
   'data-suite-api="/work-report"',
   'data-suite-hub="/hub/"',
+  'href="./favicon.svg"',
   '/work-report/assets/index-hub-routing.js',
 ]) {
   if (!index.includes(expected)) throw new Error(`Missing unified shell marker: ${expected}`);
