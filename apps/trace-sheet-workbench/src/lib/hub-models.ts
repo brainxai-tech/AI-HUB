@@ -119,9 +119,11 @@ export async function callHubChat({
   return text;
 }
 
-function normalizeHubProviderCatalog(config: unknown): HubProvider[] {
+export function normalizeHubProviderCatalog(config: unknown): HubProvider[] {
   const providers = isRecord(config) && Array.isArray(config.providers) ? config.providers : [];
-  const provider = providers.filter(isRecord).find((item) => String(item.id) === "routing");
+  const provider = providers
+    .filter(isRecord)
+    .find((item) => ["routing", "openai"].includes(String(item.id)));
   const enabledModels = uniqueStrings(readArray(provider, "enabledModels")).filter(isSupportedModel);
   const catalogModels = uniqueStrings(readArray(provider, "models")).filter(isSupportedModel);
   const configuredModel = stringField(provider, "model");

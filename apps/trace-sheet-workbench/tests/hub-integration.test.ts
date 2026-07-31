@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { normalizeHubProviderCatalog } from "../src/lib/hub-models";
 
 const projectRoot = resolve(import.meta.dirname, "..");
 const readProjectFile = (path: string) => readFileSync(resolve(projectRoot, path), "utf8");
@@ -41,5 +42,26 @@ describe("AI HUB integration", () => {
     expect(gateway).not.toContain("gemini");
     expect(route).not.toContain("Authorization");
     expect(route).not.toContain("Bearer ");
+  });
+
+  it("normalizes the Hub project compatibility alias to the internal GPT route", () => {
+    const [provider] = normalizeHubProviderCatalog({
+      providers: [{
+        id: "openai",
+        label: "GPT · AI Routing",
+        model: "gpt-5.6-luna",
+        models: ["gpt-5.6-luna", "claude-opus-4-8"],
+        enabledModels: ["gpt-5.6-luna", "gemini-3.5-flash"],
+        enabled: true,
+        configured: true,
+      }],
+    });
+
+    expect(provider.id).toBe("routing");
+    expect(provider.defaultModel).toBe("gpt-5.6-luna");
+    expect(provider.models).toEqual(["gpt-5.6-luna"]);
+    expect(provider.enabledModels).toEqual(["gpt-5.6-luna"]);
+    expect(provider.enabled).toBe(true);
+    expect(provider.configured).toBe(true);
   });
 });
