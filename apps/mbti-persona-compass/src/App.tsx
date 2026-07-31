@@ -164,16 +164,14 @@ function Header({ compact, onHome }: { compact: boolean; onHome: () => void }) {
     <header className={`site-header ${compact ? "is-compact" : ""}`}>
       <button className="brand" type="button" onClick={onHome} aria-label="返回人格罗盘首页">
         <span className="brand-mark"><Compass size={22} strokeWidth={1.8} /></span>
-        <span className="brand-name">人格罗盘</span>
-        <span className="brand-en">PERSONA</span>
+        <span className="brand-copy">
+          <strong className="brand-name">人格罗盘</strong>
+          <span className="brand-en">PERSONA MAP</span>
+        </span>
       </button>
       <div className="header-actions">
-        {!compact && <span className="header-note">把偏好当作线索，而不是标签</span>}
-        <span className="ai-settings-button" aria-label="使用 AI Hub 统一模型">
-          <span className="ai-status-dot is-ready" />
-          <Sparkles size={17} />
-          <span>Hub GPT</span>
-        </span>
+        {!compact && <span className="header-note">32 个情境 · 4 维连续坐标</span>}
+        <span className="privacy-note"><ShieldCheck size={16} /> 答案仅存本机</span>
       </div>
     </header>
   );
@@ -186,10 +184,10 @@ function Intro({ score, onResume, onFresh }: { score: ScoreResult; onResume: () 
   return (
     <section className="intro-page">
       <div className="intro-copy">
-        <div className="eyebrow"><Sparkles size={15} /> 16 型人格倾向测试</div>
-        <h1>别急着定义自己。<br /><span>先看看你如何选择。</span></h1>
+        <div className="eyebrow"><span>PERSONA MAP</span> 16 型人格倾向测试</div>
+        <h1>你不是一种类型。<br /><span>你是一组会移动的坐标。</span></h1>
         <p className="intro-lead">
-          32 个真实情境，定位你的能量、信息、决策与行动偏好。没有标准答案，只有更接近此刻的你。
+          用 32 个日常情境，看清你在能量、信息、决策与行动上的自然偏好。没有标准答案，也不会把四个字母当成终身标签。
         </p>
 
         {hasSaved ? (
@@ -215,21 +213,35 @@ function Intro({ score, onResume, onFresh }: { score: ScoreResult; onResume: () 
         )}
 
         <div className="intro-facts" aria-label="测试说明">
-          <span><Timer size={17} /> 约 5–7 分钟</span>
-          <span><Brain size={17} /> 四维连续得分</span>
-          <span><ShieldCheck size={17} /> 进度仅存本机</span>
+          <span><Timer size={18} /><b>5–7 分钟</b><small>完成 32 个选择</small></span>
+          <span><Brain size={18} /><b>连续得分</b><small>不止四个字母</small></span>
+          <span><ShieldCheck size={18} /><b>本机保存</b><small>随时退出再继续</small></span>
         </div>
       </div>
 
       <div className="intro-visual" aria-hidden="true">
-        <div className="coordinate-note north-note">向内充电</div>
-        <div className="coordinate-note east-note">看见可能</div>
-        <div className="coordinate-note south-note">灵活探索</div>
-        <div className="coordinate-note west-note">依据价值</div>
-        <PersonaCompass progress={0} />
-        <div className="visual-caption">
-          <span>你的坐标不止四个字母</span>
-          <span>它是一组会变化的倾向</span>
+        <div className="atlas-frame">
+          <div className="atlas-toolbar">
+            <div><span>PERSONA COORDINATES</span><strong>人格坐标档案</strong></div>
+            <span className="atlas-status"><i /> 等待定位</span>
+          </div>
+          <div className="atlas-stage">
+            <div className="coordinate-note north-note">向内充电</div>
+            <div className="coordinate-note east-note">看见可能</div>
+            <div className="coordinate-note south-note">灵活探索</div>
+            <div className="coordinate-note west-note">依据价值</div>
+            <PersonaCompass progress={0} />
+          </div>
+          <div className="atlas-dimensions">
+            <span><b>E / I</b> 能量方向</span>
+            <span><b>S / N</b> 信息方式</span>
+            <span><b>T / F</b> 决策依据</span>
+            <span><b>J / P</b> 行动节奏</span>
+          </div>
+          <div className="visual-caption">
+            <span>坐标会随经历与情境移动</span>
+            <span>这次结果，只描述此刻的你</span>
+          </div>
         </div>
       </div>
     </section>
