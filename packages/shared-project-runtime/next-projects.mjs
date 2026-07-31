@@ -6,6 +6,9 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { installScopedHubFetch, runWithHubScope } from "./remaining-projects.mjs";
 
 const MAX_BODY_BYTES = 10 * 1024 * 1024;
+const runtimeDependencyUrls = new Map([
+  ["zod", import.meta.resolve("zod")],
+]);
 const projectSpecs = [
   {
     id: "xhs-copywriting-master",
@@ -83,6 +86,10 @@ export function nextProjectIds() {
 export function nextProjectAccessSpecs() {
   return projectSpecs
     .map(({ id, basePath }) => ({ id, basePath }));
+}
+
+export function nextRuntimeDependencies() {
+  return [...runtimeDependencyUrls.keys()];
 }
 
 export function stripNextApiPath(pathname, basePath) {
@@ -175,6 +182,9 @@ function installNextHooks(appsRoot) {
     resolve(specifier, context, nextResolve) {
       if (specifier === "next/server" || specifier === "next/server.js") {
         return { url: responseShimUrl, shortCircuit: true };
+      }
+      if (runtimeDependencyUrls.has(specifier)) {
+        return { url: runtimeDependencyUrls.get(specifier), shortCircuit: true };
       }
 
       const parentPath = context.parentURL?.startsWith("file:") ? fileURLToPath(context.parentURL) : "";

@@ -8,6 +8,7 @@ import {
   createNextProjectHandler,
   nextProjectAccessSpecs,
   nextProjectIds,
+  nextRuntimeDependencies,
   stripNextApiPath,
 } from "./next-projects.mjs";
 
@@ -29,6 +30,10 @@ test("every Next project exposes the shared project-model selection seam", () =>
     nextProjectAccessSpecs().map(({ id }) => id),
     nextProjectIds(),
   );
+});
+
+test("Next route handlers resolve their shared validation dependency from the runtime", () => {
+  assert.deepEqual(nextRuntimeDependencies(), ["zod"]);
 });
 
 test("Next handler converts Node requests and responses", async () => {
