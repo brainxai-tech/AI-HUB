@@ -7,12 +7,12 @@ const projectRoot = resolve(import.meta.dirname, "..");
 const readProjectFile = (path: string) => readFileSync(resolve(projectRoot, path), "utf8");
 
 describe("AI HUB integration", () => {
-  it("loads the shared suite shell before hydration with a stable project identity", () => {
+  it("loads the shared suite shell after hydration with a stable project identity", () => {
     const layout = readProjectFile("app/layout.tsx");
 
     expect(layout).toContain('data-suite-id="trace-sheet-workbench"');
     expect(layout).toContain('src="/hub/suite-shell.js');
-    expect(layout).toContain('strategy="beforeInteractive"');
+    expect(layout).toContain('strategy="afterInteractive"');
   });
 
   it("supports the immutable /tracesheet deployment base path", () => {

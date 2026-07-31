@@ -22,8 +22,8 @@ export default function RootLayout({
       <body className="suite-enhanced">
         {children}
         <Script
-          src="/hub/suite-shell.js?v=20260731-tracesheet1"
-          strategy="beforeInteractive"
+          src="/hub/suite-shell.js?v=20260731-tracesheet2"
+          strategy="afterInteractive"
           data-suite-project="迹算 · Excel 清洗工作台"
           data-suite-id="trace-sheet-workbench"
           data-suite-hub="/hub/"
