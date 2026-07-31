@@ -4,6 +4,8 @@ import { readFile } from "node:fs/promises";
 const providersSource = await readFile("app/api/providers/route.ts", "utf8");
 const generateSource = await readFile("app/api/generate/route.ts", "utf8");
 const layoutSource = await readFile("app/layout.tsx", "utf8");
+const pageSource = await readFile("app/page.tsx", "utf8");
+const stylesSource = await readFile("app/globals.css", "utf8");
 
 assert.match(providersSource, /export async function GET/);
 assert.match(providersSource, /AI_HUB_MODEL_CONFIG_URL/);
@@ -28,6 +30,14 @@ assert.doesNotMatch(
 );
 assert.match(layoutSource, /\/hub\/suite-shell\.js/);
 assert.match(layoutSource, /data-suite-id="xhs-copywriting-master"/);
+assert.match(layoutSource, /data-suite-kind="tool"/);
+assert.match(pageSource, /xl:grid-cols-\[minmax\(320px,390px\)_minmax\(0,1fr\)\]/);
+assert.doesNotMatch(pageSource, /lg:grid-cols-\[390px_minmax\(0,1fr\)_310px\]/);
+assert.match(pageSource, /className="xhs-advanced/);
+assert.match(pageSource, /className="xhs-generate-button/);
+assert.match(pageSource, /resultPanelRef\.current\?\.scrollIntoView/);
+assert.match(stylesSource, /data-suite-id="xhs-copywriting-master"/);
+assert.match(stylesSource, /\.xhs-empty-preview/);
 
 const baseUrl = process.env.VERIFY_BASE_URL?.replace(/\/+$/, "");
 if (baseUrl) {

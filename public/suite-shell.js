@@ -27,6 +27,7 @@
 
   applySuiteIdentity();
 
+  loadShellStyles();
   loadPickerStyles();
   if (suiteKind === "tool") {
     loadToolFoundationStyles();
@@ -269,6 +270,18 @@
     link.rel = "stylesheet";
     link.href = "/hub/project-model-selector.css?v=20260727-project-models";
     link.dataset.suiteModelStyles = "true";
+    document.head.append(link);
+  }
+
+  function loadShellStyles() {
+    if (
+      document.querySelector('link[href*="/hub/suite-theme.css"]') ||
+      document.querySelector('link[data-suite-shell-styles]')
+    ) return;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "/hub/suite-theme.css?v=20260731-shell-foundation1";
+    link.dataset.suiteShellStyles = "true";
     document.head.append(link);
   }
 

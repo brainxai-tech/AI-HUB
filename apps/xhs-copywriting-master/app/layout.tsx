@@ -13,7 +13,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" className="suite-enhanced-root">
+    <html
+      lang="zh-CN"
+      className="suite-enhanced-root"
+      data-suite-id="xhs-copywriting-master"
+      data-suite-kind="tool"
+    >
       <body className="suite-enhanced">
         {children}
         <Script

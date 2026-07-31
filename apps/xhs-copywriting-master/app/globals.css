@@ -51,3 +51,136 @@ select:focus-visible {
   background: rgba(36, 33, 36, 0.18);
   border-radius: 999px;
 }
+
+html[data-suite-kind="tool"][data-suite-id="xhs-copywriting-master"] body.suite-enhanced {
+  --xhs-note-red: #d93149;
+  --xhs-note-red-dark: #aa2038;
+  --xhs-note-paper: #fffcfa;
+  --xhs-note-ink: #201a1c;
+  background:
+    radial-gradient(circle at 9% 2%, rgba(217, 49, 73, 0.1), transparent 25rem),
+    radial-gradient(circle at 93% 7%, rgba(38, 122, 109, 0.07), transparent 24rem),
+    linear-gradient(180deg, #fffaf8 0, #f7f2f1 220px, #f0ecec 100%) !important;
+  color: var(--xhs-note-ink) !important;
+}
+
+.xhs-workbench {
+  isolation: isolate;
+}
+
+.xhs-hero {
+  position: relative;
+}
+
+.xhs-hero::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--xhs-note-red, #d93149) 0 84px, rgba(32, 26, 28, 0.1) 84px);
+}
+
+.xhs-brief-panel,
+.xhs-preview-panel,
+.xhs-history-panel {
+  border-color: rgba(64, 48, 54, 0.13) !important;
+  background: rgba(255, 252, 250, 0.92) !important;
+  box-shadow: 0 16px 45px rgba(71, 45, 52, 0.075) !important;
+}
+
+.xhs-preview-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.xhs-preview-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--xhs-note-red, #d93149), #f08b98 56%, transparent);
+}
+
+.xhs-advanced summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  list-style: none;
+}
+
+.xhs-advanced summary::-webkit-details-marker {
+  display: none;
+}
+
+.xhs-advanced summary::after {
+  content: "+";
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(217, 49, 73, 0.09);
+  color: var(--xhs-note-red, #d93149);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.xhs-advanced[open] summary::after {
+  content: "−";
+}
+
+.xhs-generate-button {
+  background: var(--xhs-note-red, #d93149) !important;
+  box-shadow: 0 10px 24px rgba(217, 49, 73, 0.2) !important;
+}
+
+.xhs-generate-button:hover:not(:disabled) {
+  background: var(--xhs-note-red-dark, #aa2038) !important;
+}
+
+.xhs-empty-preview {
+  background:
+    linear-gradient(90deg, transparent 0 34px, rgba(217, 49, 73, 0.1) 34px 35px, transparent 35px),
+    repeating-linear-gradient(180deg, var(--xhs-note-paper, #fffcfa) 0 31px, rgba(60, 42, 48, 0.065) 31px 32px) !important;
+}
+
+.xhs-result-block {
+  position: relative;
+  overflow: hidden;
+}
+
+.xhs-result-block::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 44px;
+  height: 3px;
+  background: var(--xhs-note-red, #d93149);
+}
+
+@media (max-width: 639px) {
+  html[data-suite-kind="tool"][data-suite-id="xhs-copywriting-master"] body.suite-enhanced .xhs-hero h1 {
+    max-width: 100%;
+    font-size: clamp(27px, 8vw, 31px) !important;
+    line-height: 1.18 !important;
+    overflow-wrap: anywhere;
+    text-wrap: pretty;
+  }
+
+  .xhs-advanced summary {
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

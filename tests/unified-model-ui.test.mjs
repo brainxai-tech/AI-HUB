@@ -105,6 +105,10 @@ test("shared project shell loads the common design foundation for tools but excl
   assert.match(suiteShell, /applySuiteIdentity\(\)/);
   assert.match(suiteShell, /dataset\.suiteKind = suiteKind/);
   assert.match(suiteShell, /suiteKind === "tool"/);
+  assert.match(suiteShell, /function loadShellStyles/);
+  assert.match(suiteShell, /loadShellStyles\(\)/);
+  assert.match(suiteShell, /suite-theme\.css\?v=20260731-shell-foundation1/);
+  assert.match(suiteShell, /link\[href\*="\/hub\/suite-theme\.css"\]/);
   assert.match(suiteShell, /loadToolFoundationStyles/);
   assert.match(suiteShell, /suite-tool-foundation\.css\?v=20260730-signal-routing1/);
   assert.match(suiteShell, /firstSegment === "hub" && secondSegment === "dice-estate"/);

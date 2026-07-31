@@ -11,7 +11,7 @@ import {
   Trash2,
   Wand2,
 } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useRef, useState } from "react";
 import type {
   CopyLength,
   CopywritingInput,
@@ -87,6 +87,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
   const [source, setSource] = useState<"mock" | "ai" | null>(null);
+  const resultPanelRef = useRef<HTMLElement | null>(null);
 
   const canGenerate = useMemo(
     () =>
@@ -120,6 +121,17 @@ export default function Home() {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextHistory));
   }
 
+  function focusResultPanel() {
+    window.requestAnimationFrame(() => {
+      resultPanelRef.current?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+        block: "start",
+      });
+    });
+  }
+
   async function generateCopy(optimizeMode?: string) {
     if (!canGenerate) {
       setError("请先填写主题、卖点和目标人群。");
@@ -150,6 +162,7 @@ export default function Home() {
       setResult(data.result);
       setSource(data.source);
       persistHistory(data.result);
+      focusResultPanel();
     } catch (generateError) {
       setError(
         generateError instanceof Error
@@ -172,6 +185,7 @@ export default function Home() {
     setResult(item.result);
     setSource(null);
     setError("");
+    focusResultPanel();
   }
 
   function deleteHistory(id: string) {
@@ -188,9 +202,9 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen px-4 py-5 text-ink sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-w-[1440px] flex-col gap-5">
-        <header className="flex flex-col gap-4 border-b border-black/10 pb-5 lg:flex-row lg:items-end lg:justify-between">
+    <main className="xhs-workbench min-h-screen px-4 py-5 text-ink sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-[1380px] flex-col gap-5">
+        <header className="xhs-hero flex flex-col gap-4 border-b border-black/10 pb-5 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-xhs/20 bg-white/75 px-3 py-1 text-sm font-medium text-xhs">
               <Sparkles size={16} />
@@ -213,24 +227,11 @@ export default function Home() {
               <RotateCcw size={16} />
               重置
             </button>
-            <button
-              className="inline-flex h-10 items-center gap-2 rounded-md bg-ink px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-black disabled:cursor-not-allowed disabled:bg-black/35"
-              disabled={!canGenerate || Boolean(loadingMode)}
-              onClick={() => generateCopy()}
-              type="button"
-            >
-              {loadingMode === "生成文案" ? (
-                <Loader2 className="animate-spin" size={16} />
-              ) : (
-                <Wand2 size={16} />
-              )}
-              生成文案
-            </button>
           </div>
         </header>
 
-        <section className="grid gap-5 lg:grid-cols-[390px_minmax(0,1fr)_310px]">
-          <aside className="rounded-lg border border-black/10 bg-white/88 p-4 shadow-soft">
+        <section className="grid items-start gap-5 xl:grid-cols-[minmax(320px,390px)_minmax(0,1fr)]">
+          <aside className="xhs-brief-panel rounded-lg border border-black/10 bg-white/88 p-4 shadow-soft sm:p-5">
             <div className="mb-4 flex items-center gap-2">
               <PenLine className="text-xhs" size={18} />
               <h2 className="text-lg font-semibold">输入 brief</h2>
@@ -282,138 +283,174 @@ export default function Home() {
                 />
               </Field>
 
-              <Field label="使用场景">
-                <input
-                  className="h-11 w-full rounded-md border border-black/12 bg-white px-3 text-sm"
-                  onChange={(event) =>
-                    updateInput("scenario", event.target.value)
-                  }
-                  placeholder="例如：通勤、旅行、约会、居家"
-                  value={input.scenario}
-                />
-              </Field>
+              <details className="xhs-advanced rounded-lg border border-black/10 bg-paper/70">
+                <summary className="cursor-pointer px-3 py-3 text-sm font-semibold">
+                  <span>风格与发布约束</span>
+                  <span className="ml-2 font-normal text-black/48">
+                    {input.type} · {input.tone} · {input.length}篇
+                  </span>
+                </summary>
+                <div className="space-y-4 border-t border-black/8 px-3 pb-3 pt-4">
+                  <Field label="使用场景">
+                    <input
+                      className="h-11 w-full rounded-md border border-black/12 bg-white px-3 text-sm"
+                      onChange={(event) =>
+                        updateInput("scenario", event.target.value)
+                      }
+                      placeholder="例如：通勤、旅行、约会、居家"
+                      value={input.scenario}
+                    />
+                  </Field>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Field label="文案类型">
-                  <select
-                    aria-label="文案类型"
-                    className="h-11 w-full rounded-md border border-black/12 bg-white px-3 text-sm"
-                    onChange={(event) =>
-                      updateInput("type", event.target.value as CopywritingType)
-                    }
-                    value={input.type}
-                  >
-                    {copyTypes.map((type) => (
-                      <option key={type}>{type}</option>
-                    ))}
-                  </select>
-                </Field>
-
-                <FieldGroup label="字数">
-                  <div
-                    aria-label="字数"
-                    className="grid min-h-14 grid-cols-3 gap-1 rounded-md border border-black/12 bg-white p-1"
-                    role="group"
-                  >
-                    {lengths.map((length) => (
-                      <button
-                        aria-pressed={input.length === length}
-                        className={clsx(
-                          "min-h-11 rounded text-sm font-medium transition",
-                          input.length === length
-                            ? "bg-xhs text-white"
-                            : "text-black/58 hover:bg-black/5",
-                        )}
-                        key={length}
-                        onClick={() => updateInput("length", length)}
-                        type="button"
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <Field label="文案类型">
+                      <select
+                        aria-label="文案类型"
+                        className="h-11 w-full rounded-md border border-black/12 bg-white px-3 text-sm"
+                        onChange={(event) =>
+                          updateInput(
+                            "type",
+                            event.target.value as CopywritingType,
+                          )
+                        }
+                        value={input.type}
                       >
-                        {length}
-                      </button>
-                    ))}
+                        {copyTypes.map((type) => (
+                          <option key={type}>{type}</option>
+                        ))}
+                      </select>
+                    </Field>
+
+                    <FieldGroup label="字数">
+                      <div
+                        aria-label="字数"
+                        className="grid min-h-14 grid-cols-3 gap-1 rounded-md border border-black/12 bg-white p-1"
+                        role="group"
+                      >
+                        {lengths.map((length) => (
+                          <button
+                            aria-pressed={input.length === length}
+                            className={clsx(
+                              "min-h-11 rounded text-sm font-medium transition",
+                              input.length === length
+                                ? "bg-xhs text-white"
+                                : "text-black/58 hover:bg-black/5",
+                            )}
+                            key={length}
+                            onClick={() => updateInput("length", length)}
+                            type="button"
+                          >
+                            {length}
+                          </button>
+                        ))}
+                      </div>
+                    </FieldGroup>
                   </div>
-                </FieldGroup>
-              </div>
 
-              <FieldGroup label="语气风格">
-                <div aria-label="语气风格" className="grid grid-cols-2 gap-2" role="group">
-                  {tones.map((tone) => (
-                    <button
-                      aria-pressed={input.tone === tone}
-                      className={clsx(
-                        "min-h-11 rounded-md border px-3 text-sm font-medium transition",
-                        input.tone === tone
-                          ? "border-xhs bg-xhs/8 text-xhs"
-                          : "border-black/12 bg-white text-black/65 hover:border-black/25",
-                      )}
-                      key={tone}
-                      onClick={() => updateInput("tone", tone)}
-                      type="button"
+                  <FieldGroup label="语气风格">
+                    <div
+                      aria-label="语气风格"
+                      className="grid grid-cols-2 gap-2"
+                      role="group"
                     >
-                      {tone}
-                    </button>
-                  ))}
+                      {tones.map((tone) => (
+                        <button
+                          aria-pressed={input.tone === tone}
+                          className={clsx(
+                            "min-h-11 rounded-md border px-3 text-sm font-medium transition",
+                            input.tone === tone
+                              ? "border-xhs bg-xhs/8 text-xhs"
+                              : "border-black/12 bg-white text-black/65 hover:border-black/25",
+                          )}
+                          key={tone}
+                          onClick={() => updateInput("tone", tone)}
+                          type="button"
+                        >
+                          {tone}
+                        </button>
+                      ))}
+                    </div>
+                  </FieldGroup>
+
+                  <Field label="禁用词">
+                    <input
+                      className="h-11 w-full rounded-md border border-black/12 bg-white px-3 text-sm"
+                      onChange={(event) =>
+                        updateInput("forbiddenWords", event.target.value)
+                      }
+                      placeholder="例如：最强、永久、百分百"
+                      value={input.forbiddenWords}
+                    />
+                  </Field>
+
+                  <Field label="补充要求">
+                    <textarea
+                      className="min-h-20 w-full resize-none rounded-md border border-black/12 bg-white px-3 py-2 text-sm leading-6"
+                      onChange={(event) =>
+                        updateInput("extraRequirements", event.target.value)
+                      }
+                      placeholder="例如：不要太广告，要像真实分享"
+                      value={input.extraRequirements}
+                    />
+                  </Field>
                 </div>
-              </FieldGroup>
+              </details>
 
-              <Field label="禁用词">
-                <input
-                  className="h-11 w-full rounded-md border border-black/12 bg-white px-3 text-sm"
-                  onChange={(event) =>
-                    updateInput("forbiddenWords", event.target.value)
-                  }
-                  placeholder="例如：最强、永久、百分百"
-                  value={input.forbiddenWords}
-                />
-              </Field>
-
-              <Field label="补充要求">
-                <textarea
-                  className="min-h-20 w-full resize-none rounded-md border border-black/12 bg-white px-3 py-2 text-sm leading-6"
-                  onChange={(event) =>
-                    updateInput("extraRequirements", event.target.value)
-                  }
-                  placeholder="例如：不要太广告，要像真实分享"
-                  value={input.extraRequirements}
-                />
-              </Field>
+              <button
+                className="xhs-generate-button inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-ink px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-black disabled:cursor-not-allowed disabled:bg-black/35"
+                disabled={!canGenerate || Boolean(loadingMode)}
+                type="submit"
+              >
+                {loadingMode === "生成文案" ? (
+                  <Loader2 className="animate-spin" size={17} />
+                ) : (
+                  <Wand2 size={17} />
+                )}
+                {loadingMode === "生成文案" ? "正在生成" : "生成并预览"}
+              </button>
             </form>
           </aside>
 
-          <section className="rounded-lg border border-black/10 bg-white/92 p-4 shadow-soft lg:min-h-[720px]">
-            <div className="mb-4 flex flex-col gap-3 border-b border-black/10 pb-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-lg font-semibold">生成结果</h2>
-                <p className="mt-1 text-sm text-black/55">
-                  {source === "ai"
-                    ? "已通过 AI Hub 生成"
-                    : source === "mock"
-                      ? "当前使用本地 mock 模式，仅用于开发自测"
-                      : "生成后会显示标题、正文、标签和建议"}
-                </p>
+          <div className="grid min-w-0 gap-5">
+            <section
+              className="xhs-preview-panel scroll-mt-24 rounded-lg border border-black/10 bg-white/92 p-4 shadow-soft sm:p-5 md:min-h-[620px]"
+              ref={resultPanelRef}
+            >
+              <div className="mb-4 flex flex-col gap-3 border-b border-black/10 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold">生成结果</h2>
+                  <p className="mt-1 text-sm text-black/55">
+                    {source === "ai"
+                      ? "已通过 AI Hub 生成"
+                      : source === "mock"
+                        ? "当前使用本地 mock 模式，仅用于开发自测"
+                        : "生成后会显示标题、正文、标签和建议"}
+                  </p>
+                </div>
+                {result ? (
+                  <div className="flex flex-wrap gap-2">
+                    {optimizeModes.map((mode) => (
+                      <button
+                        className="inline-flex min-h-10 items-center gap-1.5 rounded-md border border-black/12 bg-white px-3 text-sm font-medium transition hover:border-xhs hover:text-xhs disabled:cursor-not-allowed disabled:opacity-45"
+                        disabled={Boolean(loadingMode)}
+                        key={mode}
+                        onClick={() => generateCopy(mode)}
+                        type="button"
+                      >
+                        {loadingMode === mode ? (
+                          <Loader2 className="animate-spin" size={15} />
+                        ) : (
+                          <RefreshCw size={15} />
+                        )}
+                        {mode}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
-              <div className="flex flex-wrap gap-2">
-                {optimizeModes.map((mode) => (
-                  <button
-                    className="inline-flex min-h-10 items-center gap-1.5 rounded-md border border-black/12 bg-white px-3 text-sm font-medium transition hover:border-xhs hover:text-xhs disabled:cursor-not-allowed disabled:opacity-45"
-                    disabled={!result || Boolean(loadingMode)}
-                    key={mode}
-                    onClick={() => generateCopy(mode)}
-                    type="button"
-                  >
-                    {loadingMode === mode ? (
-                      <Loader2 className="animate-spin" size={15} />
-                    ) : (
-                      <RefreshCw size={15} />
-                    )}
-                    {mode}
-                  </button>
-                ))}
-              </div>
-            </div>
 
             {error ? (
-              <div className="mb-4 rounded-md border border-xhs/20 bg-xhs/8 px-4 py-3 text-sm text-xhs">
+              <div className="mb-4 rounded-md border border-xhs/20 bg-xhs/8 px-4 py-3 text-sm text-xhs" role="alert">
                 {error}
               </div>
             ) : null}
@@ -492,9 +529,9 @@ export default function Home() {
             ) : (
               <EmptyState />
             )}
-          </section>
+            </section>
 
-          <aside className="rounded-lg border border-black/10 bg-white/88 p-4 shadow-soft">
+          <aside className="xhs-history-panel rounded-lg border border-black/10 bg-white/88 p-4 shadow-soft sm:p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <History className="text-plum" size={18} />
@@ -506,7 +543,7 @@ export default function Home() {
             </div>
 
             {history.length ? (
-              <div className="scrollbar-thin max-h-[690px] space-y-3 overflow-auto pr-1">
+              <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
                 {history.map((item) => (
                   <div
                     className="rounded-md border border-black/10 bg-paper p-3"
@@ -534,11 +571,12 @@ export default function Home() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-md border border-dashed border-black/15 px-4 py-8 text-center text-sm leading-6 text-black/50">
+              <div className="rounded-md border border-dashed border-black/15 px-4 py-5 text-center text-sm leading-6 text-black/50">
                 生成后的文案会自动保存在这里，方便回看和复用。
               </div>
             )}
-          </aside>
+            </aside>
+          </div>
         </section>
       </div>
     </main>
@@ -594,7 +632,7 @@ function ResultBlock({
   title: string;
 }) {
   return (
-    <section className="rounded-lg border border-black/10 bg-white p-4">
+    <section className="xhs-result-block rounded-lg border border-black/10 bg-white p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h3 className="font-semibold">{title}</h3>
         <button
@@ -613,7 +651,7 @@ function ResultBlock({
 
 function EmptyState({ loadingMode }: { loadingMode?: string }) {
   return (
-    <div className="flex min-h-[560px] items-center justify-center rounded-lg border border-dashed border-black/15 bg-paper/80 p-8 text-center">
+    <div className="xhs-empty-preview flex min-h-[360px] items-center justify-center rounded-lg border border-dashed border-black/15 bg-paper/80 p-6 text-center sm:min-h-[480px] sm:p-8">
       <div className="max-w-sm">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-xhs/10 text-xhs">
           {loadingMode ? (

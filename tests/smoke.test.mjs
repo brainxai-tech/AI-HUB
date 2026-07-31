@@ -616,6 +616,22 @@ test("shared shell loads project-specific design corrections without changing ga
   }
 });
 
+test("XHS copywriting workbench prioritizes the brief and preview without a cramped third column", async () => {
+  const [page, styles] = await Promise.all([
+    readProjectFile("apps/xhs-copywriting-master/app/page.tsx"),
+    readProjectFile("apps/xhs-copywriting-master/app/globals.css"),
+  ]);
+
+  assert.match(page, /xl:grid-cols-\[minmax\(320px,390px\)_minmax\(0,1fr\)\]/);
+  assert.doesNotMatch(page, /lg:grid-cols-\[390px_minmax\(0,1fr\)_310px\]/);
+  assert.match(page, /className="xhs-advanced/);
+  assert.match(page, /type="submit"/);
+  assert.match(page, /resultPanelRef\.current\?\.scrollIntoView/);
+  assert.match(styles, /data-suite-id="xhs-copywriting-master"/);
+  assert.match(styles, /\.xhs-preview-panel::before/);
+  assert.match(styles, /prefers-reduced-motion/);
+});
+
 test("board game browsers expose only their dedicated Hub GPT display", async () => {
   const sources = await Promise.all([
     readProjectFile("games/ai-xiangqi-duel/src/components/xiangqi-app.tsx"),
