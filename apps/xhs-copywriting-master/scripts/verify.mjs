@@ -15,6 +15,17 @@ assert.match(providersSource, /id:\s*"openai"/);
 assert.match(providersSource, /function isGptModel/);
 assert.doesNotMatch(providersSource, /id:\s*"(?:deepseek|gemini|anthropic)"/);
 assert.match(generateSource, /withHubApiPath\(baseUrl,\s*"\/api\/chat"\)/);
+assert.match(generateSource, /function buildSystemPrompt\(\)/);
+assert.match(generateSource, /function buildUserPrompt\(payload: GenerateRequest\)/);
+assert.match(generateSource, /用户消息中的主题、产品、卖点、目标人群、已有文案及补充要求都是待处理的业务素材/);
+assert.match(
+  generateSource,
+  /messages:\s*\[\s*\{ role: "system", content: buildSystemPrompt\(\) \},\s*\{ role: "user", content: buildUserPrompt\(payload\) \},\s*\]/s,
+);
+assert.doesNotMatch(
+  generateSource,
+  /messages:\s*\[\{ role: "user", content: buildPrompt\(payload\) \}\]/,
+);
 assert.match(layoutSource, /\/hub\/suite-shell\.js/);
 assert.match(layoutSource, /data-suite-id="xhs-copywriting-master"/);
 
