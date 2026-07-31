@@ -6,13 +6,14 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const forbiddenVendors = /DeepSeek|Claude|Anthropic|Gemini|deepseek-|claude-|gemini-/i;
 
 test("Hub discovery, configuration, and guide present GPT choices only", async () => {
-  const [html, app, projects, configHtml, configScript, guideHtml, guideApp] = await Promise.all([
+  const [html, app, projects, configHtml, configScript, guideHtml, guideData, guideApp] = await Promise.all([
     read("public/index.html"),
     read("public/app.js"),
     read("public/projects.js"),
     read("public/key-config/index.html"),
     read("public/key-config/key-config.js"),
     read("public/models.html"),
+    read("public/model-guide-data.js"),
     read("public/model-guide.js"),
   ]);
 
@@ -21,8 +22,9 @@ test("Hub discovery, configuration, and guide present GPT choices only", async (
     assert.doesNotMatch(source, /codex-auto-review/i);
     assert.doesNotMatch(source, /GPT\s*(?:\/|与)\s*Codex/i);
   }
-  assert.match(html, /gpt-5\.6-sol/);
-  assert.match(html, /gpt-5\.3-codex-spark/);
+  assert.match(html, /href="\/hub\/models\.html">了解模型差异/);
+  assert.match(guideData, /gpt-5\.6-sol/);
+  assert.match(app, /gpt-5\.3-codex-spark/);
   assert.match(projects, /gpt-5\.6-luna/);
   assert.match(projects, /gpt-5\.6-terra/);
   assert.match(app, /availableModels\.has\(project\.modelRecommendation\.model\)/);

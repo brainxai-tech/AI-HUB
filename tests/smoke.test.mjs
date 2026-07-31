@@ -226,8 +226,8 @@ test("html loads project data before the app", async () => {
   assert.match(html, /\/hub\/capabilities\.js\?v=20260710-capabilities/);
   assert.match(html, /\/hub\/projects\.js\?v=20260728-gpt-only1/);
   assert.match(html, /\/hub\/cover-manifest\.js\?v=20260727-image2-office-hub-style-v2/);
-  assert.match(html, /\/hub\/styles\.css\?v=20260728-audit1/);
-  assert.match(html, /\/hub\/app\.js\?v=20260728-audit1/);
+  assert.match(html, /\/hub\/styles\.css\?v=20260731-layout1/);
+  assert.match(html, /\/hub\/app\.js\?v=20260731-layout1/);
   assert.match(html, /rel="icon" href="data:image\/svg\+xml/);
 });
 
@@ -290,12 +290,8 @@ test("project model reasons use an accessible disclosure without triggering navi
   assert.match(app, /modelRecommendation/);
   assert.match(app, /<details class="project-card__recommendation" data-recommendation-details/);
   assert.match(app, /<summary>/);
-  assert.match(app, /自动路由方案/);
-  assert.match(app, /规划中/);
-  assert.match(app, /主要候选/);
+  assert.match(app, /模型方案/);
   assert.match(app, /为什么它是主要候选/);
-  assert.match(app, /未来路由方式/);
-  assert.match(app, /当前仅展示推荐方案，不会自动切换模型/);
   assert.doesNotMatch(app, /自动路由已启用/);
   assert.match(app, /event\.target\.closest\("\[data-recommendation-details\]"\)/);
   assert.match(app, /class="project-card__link"[^>]+\$\{linkDisabledAttr\}/);
@@ -324,7 +320,7 @@ test("empty state and filtering hooks are present", async () => {
   assert.match(html, /placeholder="搜索项目名称、分类、状态或描述"/);
 });
 
-test("public Hub prioritizes a small recommended set before the complete catalog", async () => {
+test("public Hub uses one visible catalog with three featured projects and compact recents", async () => {
   const html = await readProjectFile("public/index.html");
   const app = await readProjectFile("public/app.js");
   const styles = await readProjectFile("public/styles.css");
@@ -332,45 +328,41 @@ test("public Hub prioritizes a small recommended set before the complete catalog
   for (const id of [
     "purposeNav",
     "featuredSection",
-    "featuredGrid",
     "recentSection",
     "recentGrid",
     "allProjectsDisclosure",
   ]) {
     assert.match(html, new RegExp(`id="${id}"`));
   }
-  assert.match(html, /路由方案示例/);
   assert.match(html, /完整项目库/);
+  assert.doesNotMatch(html, /id="featuredGrid"/);
+  assert.doesNotMatch(html, /<details id="allProjectsDisclosure"/);
   assert.match(app, /featuredProjectIds/);
-  assert.match(app, /ai-data-analyst/);
-  assert.match(app, /ai-misunderstanding-simulator/);
+  assert.match(app, /mbti-persona-compass/);
+  assert.match(app, /ai-essay-coach/);
+  assert.match(app, /yingzhou-ai/);
+  assert.match(app, /renderRecentProject/);
   assert.match(app, /replace\(\/\^AI\\s\*·\\s\*\/u/);
   assert.match(styles, /\.purpose-nav/);
-  assert.match(styles, /\.featured-grid/);
+  assert.match(styles, /\.recent-item/);
+  assert.match(styles, /\.catalog-section/);
 });
 
 test("public Hub promotes the planned auto-routing value without claiming it is active", async () => {
   const html = await readProjectFile("public/index.html");
   const styles = await readProjectFile("public/styles.css");
 
-  for (const id of ["routingHero", "modelStrengths", "routingFlow", "routingModes"]) {
+  for (const id of ["routingHero", "routingFlow"]) {
     assert.match(html, new RegExp(`id="${id}"`));
   }
-  assert.match(html, /自动路由能力建设中/);
+  assert.doesNotMatch(html, /id="modelStrengths"|id="routingModes"/);
   assert.match(html, /一个 API Key/);
-  assert.match(html, /GPT/);
-  assert.match(html, /gpt-5\.6-sol/);
-  assert.match(html, /gpt-5\.3-codex-spark/);
   assert.doesNotMatch(html, /Anthropic|Claude|DeepSeek|Gemini/i);
-  assert.match(html, /智能平衡/);
-  assert.match(html, /质量优先/);
-  assert.match(html, /省钱优先/);
-  assert.match(html, /速度优先/);
-  assert.match(html, /当前阶段不会自动切换模型/);
+  assert.match(html, /自动路由仍在建设中/);
+  assert.match(html, /不会调用未配置的模型/);
   assert.doesNotMatch(html, /自动路由已开启/);
-  assert.match(styles, /\.routing-hero/);
-  assert.match(styles, /\.model-strength-grid/);
-  assert.match(styles, /\.routing-flow/);
+  assert.match(html, /href="\/hub\/models\.html">了解模型差异/);
+  assert.match(styles, /\.routing-callout/);
 });
 
 test("model guide compares only GPT models with transparent scoring and pricing", async () => {

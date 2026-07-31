@@ -8,7 +8,7 @@ test("Hub landmarks use ARIA labels only with compatible roles", async () => {
   const html = await read("public/index.html");
 
   assert.match(html, /class="status-strip" role="group" aria-label="项目统计"/);
-  assert.match(html, /id="routingFlow" class="routing-flow" role="region" aria-labelledby="routingFlowTitle"/);
+  assert.match(html, /id="routingFlow" class="routing-callout__copy" role="region" aria-labelledby="routingHeroTitle"/);
 });
 
 test("Hub catalog count comes from the live project collection", async () => {
@@ -19,7 +19,7 @@ test("Hub catalog count comes from the live project collection", async () => {
 
   assert.match(html, /id="catalogCount">浏览全部项目</);
   assert.doesNotMatch(html, /浏览全部\s+\d+\s+个项目/);
-  assert.match(app, /catalogCount\.textContent = `浏览全部 \$\{projects\.length\} 个项目`/);
+  assert.match(app, /catalogCount\.textContent = `共 \$\{projects\.length\} 个项目`/);
 });
 
 test("muted text token remains dark enough for compact badges", async () => {

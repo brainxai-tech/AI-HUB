@@ -17,16 +17,14 @@
   };
 
   const featuredProjectIds = [
-    "ai-data-analyst",
-    "ai-misunderstanding-simulator",
-    "ai-book-decomposer",
-    "idol-match-test",
-    "dice-estate-duel",
-    "ai-go-duel",
+    "mbti-persona-compass",
+    "ai-essay-coach",
+    "yingzhou-ai",
   ];
+  const featuredProjectOrder = new Map(featuredProjectIds.map((id, index) => [id, index]));
   const purposeCategories = {
-    work: ["实用工具", "创作工具", "安全教育"],
-    learning: ["学习教育", "亲子教育"],
+    work: ["实用工具", "办公效率", "创作工具", "安全教育"],
+    learning: ["学习辅助", "学习教育", "亲子教育"],
     entertainment: ["娱乐互动"],
     games: ["游戏原型"],
   };
@@ -101,7 +99,6 @@
     compatibleEndpoint: document.querySelector("#compatibleEndpoint"),
     projectLaunchStatus: document.querySelector("#projectLaunchStatus"),
     purposeNav: document.querySelector("#purposeNav"),
-    featuredGrid: document.querySelector("#featuredGrid"),
     recentSection: document.querySelector("#recentSection"),
     recentGrid: document.querySelector("#recentGrid"),
     allProjectsDisclosure: document.querySelector("#allProjectsDisclosure"),
@@ -385,6 +382,8 @@
   }
 
   function getFilteredProjects(projects) {
+    const shouldFeatureFirst =
+      state.query === "" && state.category === "all" && state.purpose === "all" && state.sort === "updated";
     return projects
       .filter(
         (project) =>
@@ -393,6 +392,18 @@
       .filter((project) => state.category === "all" || project.category === state.category)
       .filter((project) => matchesQuery(project, state.query))
       .sort((first, second) => {
+        if (shouldFeatureFirst) {
+          const firstFeatured = featuredProjectOrder.has(first.id)
+            ? featuredProjectOrder.get(first.id)
+            : Number.POSITIVE_INFINITY;
+          const secondFeatured = featuredProjectOrder.has(second.id)
+            ? featuredProjectOrder.get(second.id)
+            : Number.POSITIVE_INFINITY;
+          if (firstFeatured !== secondFeatured) {
+            return firstFeatured - secondFeatured;
+          }
+        }
+
         if (state.sort === "name") {
           return first.name.localeCompare(second.name, "zh-CN");
         }
@@ -407,7 +418,7 @@
 
   function renderStatus(projects, filteredProjects) {
     if (elements.catalogCount) {
-      elements.catalogCount.textContent = `浏览全部 ${projects.length} 个项目`;
+      elements.catalogCount.textContent = `共 ${projects.length} 个项目`;
     }
 
     if (modelState.loaded || modelState.loadFailed) {
@@ -435,6 +446,7 @@
     elements.summary.textContent = hasActiveControls
       ? `找到 ${filteredProjects.length} 个项目`
       : `${filteredProjects.length} 个项目`;
+    elements.summary.hidden = !hasActiveControls;
     if (elements.resetFilters) {
       elements.resetFilters.hidden = !hasActiveControls;
     }
@@ -442,7 +454,7 @@
 
   function renderProjectCard(project, options) {
     const description = escapeHtml(project.description);
-    const isSpotlight = Boolean(options && options.spotlight);
+    const isFeatured = Boolean(options && options.featured);
     const requiresCapabilities = project.requiredCapabilities.length > 0;
     const availability = getProjectAvailability(project);
     const href = escapeHtml(project.url);
@@ -450,17 +462,17 @@
       ? ` data-required-capabilities="${escapeHtml(project.requiredCapabilities.join(" "))}"`
       : "";
     const image = renderProjectImage(project);
-    const spotlightAttr = isSpotlight ? ` data-spotlight="true"` : "";
+    const featuredAttr = isFeatured ? ` data-featured="true"` : "";
     const linkDisabledAttr = availability === "unavailable" || availability === "unknown"
       ? ` aria-disabled="true"`
       : "";
-    const recentEntry = options && options.recentEntry;
     const trustBadge = project.trust
-      ? `<span class="pill pill--trust" title="将处理：${escapeHtml(project.trust.data)}">隐私提醒</span>`
+      ? `<span class="pill pill--trust" title="将处理：${escapeHtml(project.trust.data)}；${escapeHtml(project.trust.boundary)}">隐私提醒</span>`
       : "";
-    const trustNote = project.trust
-      ? `<span class="project-card__trust">${escapeHtml(project.trust.boundary)}</span>`
-      : "";
+    const featuredBadge = isFeatured ? `<span class="pill pill--featured">精选</span>` : "";
+    const availabilityBadge = availability === "ready"
+      ? ""
+      : `<span class="pill pill--availability" data-state="${availability}">${availabilityLabel(availability)}</span>`;
     const availableModels = new Set();
     if (modelState.loaded && Array.isArray(modelState.config?.providers)) {
       for (const provider of modelState.config.providers) {
@@ -480,10 +492,9 @@
     const recommendation = modelRecommendation
       ? `<details class="project-card__recommendation" data-recommendation-details data-provider="${escapeHtml(modelRecommendation.provider.toLowerCase())}">
           <summary>
-            <span class="project-card__recommendation-label">自动路由方案 <em>规划中</em></span>
+            <span class="project-card__recommendation-label">模型方案</span>
             <span class="project-card__recommendation-candidate">
-              <small>主要候选</small>
-              <strong>${escapeHtml(modelRecommendation.provider)} · <code>${escapeHtml(modelRecommendation.model)}</code></strong>
+              <strong><code>${escapeHtml(modelRecommendation.model)}</code></strong>
             </span>
             <span class="project-card__recommendation-toggle" aria-hidden="true"></span>
           </summary>
@@ -491,38 +502,60 @@
             <strong>为什么它是主要候选</strong>
             <span>${escapeHtml(modelRecommendation.reason)}</span>
             <span class="project-card__routing-strengths" aria-label="模型优势">${routingStrengths}</span>
-            <span class="project-card__routing-future">
-              <strong>未来路由方式</strong>
-              <span>系统将结合任务复杂度、内容类型、速度和成本动态比较候选；当前仅展示推荐方案，不会自动切换模型。</span>
-            </span>
           </span>
         </details>`
       : "";
-    const footerLabel = recentEntry
-      ? `使用 ${Math.max(1, Number(recentEntry.visitCount || 1))} 次 · ${new Intl.DateTimeFormat("zh-CN", { month: "2-digit", day: "2-digit" }).format(new Date(recentEntry.lastOpenedAt))}`
-      : `更新：${formatDate(project.updatedAt)}`;
 
     return `
-      <article class="project-card" data-project-card data-project-id="${escapeHtml(project.id)}" data-project-url="${escapeHtml(project.url)}" data-availability="${availability}"${gateAttrs}${spotlightAttr}>
+      <article class="project-card" data-project-card data-project-id="${escapeHtml(project.id)}" data-project-url="${escapeHtml(project.url)}" data-availability="${availability}"${gateAttrs}${featuredAttr}>
         <a class="project-card__link" href="${href}" aria-label="打开 ${escapeHtml(project.displayName)}"${linkDisabledAttr}></a>
         ${image}
         <span class="project-card__top">
           <span class="project-meta">
+            ${featuredBadge}
             <span class="pill">${escapeHtml(project.category)}</span>
-            <span class="pill pill--availability" data-state="${availability}">${availabilityLabel(availability)}</span>
+            ${availabilityBadge}
             ${trustBadge}
           </span>
           <span>
             <h3>${escapeHtml(project.displayName)}</h3>
             <p>${description}</p>
-            ${trustNote}
           </span>
         </span>
         ${recommendation}
         <span class="project-card__footer">
-          <span>${escapeHtml(footerLabel)}</span>
           <span class="open-indicator" aria-hidden="true">打开 <span>↗</span></span>
         </span>
+      </article>
+    `;
+  }
+
+  function renderRecentProject(project, entry) {
+    const requiresCapabilities = project.requiredCapabilities.length > 0;
+    const availability = getProjectAvailability(project);
+    const gateAttrs = requiresCapabilities
+      ? ` data-required-capabilities="${escapeHtml(project.requiredCapabilities.join(" "))}"`
+      : "";
+    const linkDisabledAttr = availability === "unavailable" || availability === "unknown"
+      ? ` aria-disabled="true"`
+      : "";
+    const usedAt = new Intl.DateTimeFormat("zh-CN", { month: "2-digit", day: "2-digit" }).format(
+      new Date(entry.lastOpenedAt),
+    );
+    const image = project.image
+      ? `<span class="recent-item__media"><img src="${escapeHtml(project.image)}" alt="" loading="lazy" decoding="async" /></span>`
+      : `<span class="recent-item__media recent-item__media--empty" aria-hidden="true">AI</span>`;
+
+    return `
+      <article class="recent-item" data-project-card data-project-id="${escapeHtml(project.id)}" data-project-url="${escapeHtml(project.url)}" data-availability="${availability}"${gateAttrs}>
+        <a class="recent-item__link" href="${escapeHtml(project.url)}" aria-label="继续使用 ${escapeHtml(project.displayName)}"${linkDisabledAttr}></a>
+        ${image}
+        <span class="recent-item__copy">
+          <span class="recent-item__category">${escapeHtml(project.category)}</span>
+          <strong>${escapeHtml(project.displayName)}</strong>
+          <small>使用 ${Math.max(1, Number(entry.visitCount || 1))} 次 · ${usedAt}</small>
+        </span>
+        <span class="recent-item__arrow" aria-hidden="true">↗</span>
       </article>
     `;
   }
@@ -610,24 +643,9 @@
       return;
     }
 
-    const spotlightFirstProject =
-      state.query === "" && state.category === "all" && state.sort === "updated";
     elements.empty.hidden = true;
     elements.grid.innerHTML = filteredProjects
-      .map((project, index) => renderProjectCard(project, { spotlight: spotlightFirstProject && index === 0 }))
-      .join("");
-  }
-
-  function renderHomeSections(projects) {
-    if (!elements.featuredGrid) {
-      return;
-    }
-
-    const featuredProjects = featuredProjectIds
-      .map((id) => projects.find((project) => project.id === id))
-      .filter(Boolean);
-    elements.featuredGrid.innerHTML = featuredProjects
-      .map((project) => renderProjectCard(project, { spotlight: false }))
+      .map((project) => renderProjectCard(project, { featured: featuredProjectOrder.has(project.id) }))
       .join("");
   }
 
@@ -648,7 +666,7 @@
       .slice(0, 4);
     elements.recentSection.hidden = recentProjects.length === 0;
     elements.recentGrid.innerHTML = recentProjects
-      .map(({ project, entry }) => renderProjectCard(project, { recentEntry: entry }))
+      .map(({ project, entry }) => renderRecentProject(project, entry))
       .join("");
   }
 
@@ -657,7 +675,6 @@
       return;
     }
     renderProjects(modelState.projects);
-    renderHomeSections(modelState.projects);
     renderRecentProjects(modelState.projects);
   }
 
@@ -1157,16 +1174,14 @@
       state.purpose = purposeCategories[button.dataset.purpose] ? button.dataset.purpose : "all";
       state.category = "all";
       elements.category.value = "all";
-      elements.allProjectsDisclosure.open = true;
       for (const item of elements.purposeNav.querySelectorAll("[data-purpose]")) {
-        item.setAttribute("aria-pressed", String(item === button && state.purpose !== "all"));
+        item.setAttribute("aria-pressed", String(item === button));
       }
       renderProjects(projects);
       elements.allProjectsDisclosure.scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
     bindProjectCards(elements.grid, projects);
-    bindProjectCards(elements.featuredGrid, projects);
     bindProjectCards(elements.recentGrid, projects);
 
     elements.search.addEventListener("input", (event) => {
@@ -1186,13 +1201,16 @@
 
     if (elements.resetFilters) {
       elements.resetFilters.addEventListener("click", () => {
-      state.query = "";
-      state.category = "all";
-      state.purpose = "all";
-      state.sort = "updated";
+        state.query = "";
+        state.category = "all";
+        state.purpose = "all";
+        state.sort = "updated";
         elements.search.value = "";
         elements.category.value = "all";
         elements.sort.value = "updated";
+        for (const item of elements.purposeNav?.querySelectorAll("[data-purpose]") || []) {
+          item.setAttribute("aria-pressed", String(item.dataset.purpose === "all"));
+        }
         renderProjects(projects);
         elements.search.focus();
       });
@@ -1250,7 +1268,6 @@
     bindCozeIntegrationEvents();
     bindAdminAccessEvents();
     renderProjects(projects);
-    renderHomeSections(projects);
     renderRecentProjects(projects);
     if (!elements.adminAccessGate) {
       setPage(getPageFromHash());
