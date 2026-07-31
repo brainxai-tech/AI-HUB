@@ -147,6 +147,25 @@ export function normalizeHubProviderCatalog(config: unknown): HubProvider[] {
   }];
 }
 
+export function normalizeModelOperationInput(value: unknown) {
+  if (!isRecord(value)) return value;
+  const operation = { ...value };
+  const op = stringField(operation, "op") || stringField(operation, "type");
+  if (op) operation.op = op.toUpperCase();
+
+  if (operation.op === "DEDUP") {
+    if (!Array.isArray(operation.keys) && Array.isArray(operation.columns)) {
+      operation.keys = operation.columns;
+    }
+    if (typeof operation.keep === "string") operation.keep = operation.keep.toUpperCase();
+  }
+  if (operation.op === "JOIN" && typeof operation.joinType === "string") {
+    operation.joinType = operation.joinType.toUpperCase();
+  }
+
+  return operation;
+}
+
 function isSupportedModel(model: string) {
   return /^gpt-/i.test(model.trim());
 }

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { normalizeHubProviderCatalog } from "../src/lib/hub-models";
+import { normalizeHubProviderCatalog, normalizeModelOperationInput } from "../src/lib/hub-models";
 
 const projectRoot = resolve(import.meta.dirname, "..");
 const readProjectFile = (path: string) => readFileSync(resolve(projectRoot, path), "utf8");
@@ -63,5 +63,18 @@ describe("AI HUB integration", () => {
     expect(provider.enabledModels).toEqual(["gpt-5.6-luna"]);
     expect(provider.enabled).toBe(true);
     expect(provider.configured).toBe(true);
+  });
+
+  it("normalizes safe model aliases before strict operation validation", () => {
+    expect(normalizeModelOperationInput({
+      type: "dedup",
+      sourceId: "orders",
+      columns: ["订单号"],
+      keep: "first",
+    })).toMatchObject({
+      op: "DEDUP",
+      keys: ["订单号"],
+      keep: "FIRST",
+    });
   });
 });

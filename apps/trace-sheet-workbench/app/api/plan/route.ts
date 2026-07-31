@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { buildLocalPlan, type PlanContext, type TransformPlan } from "@/lib/trace-workbench";
-import { callHubChat, getProviderCatalog, HubModelError, type Provider } from "@/lib/hub-models";
+import {
+  callHubChat,
+  getProviderCatalog,
+  HubModelError,
+  normalizeModelOperationInput,
+  type Provider,
+} from "@/lib/hub-models";
 
 export const runtime = "nodejs";
 
@@ -22,7 +28,7 @@ const requestSchema = z.object({
   }),
 });
 
-const operationSchema = z.discriminatedUnion("op", [
+const operationSchema = z.preprocess(normalizeModelOperationInput, z.discriminatedUnion("op", [
   z.object({
     op: z.literal("JOIN"),
     rightSourceId: z.string(),
@@ -42,14 +48,19 @@ const operationSchema = z.discriminatedUnion("op", [
     expression: z.string(),
     emptyOnError: z.boolean().default(true),
   }),
-]);
+]));
+
+const riskSchema = z.preprocess(
+  (value) => typeof value === "string" ? value.toUpperCase() : value,
+  z.enum(["LOW", "MEDIUM", "HIGH"]),
+);
 
 const modelPlanSchema = z.object({
   goal: z.string().optional(),
   steps: z.array(z.object({
     title: z.string().min(1),
     reason: z.string().min(1),
-    risk: z.enum(["LOW", "MEDIUM", "HIGH"]),
+    risk: riskSchema,
     operation: operationSchema,
   })).min(1).max(12),
 });

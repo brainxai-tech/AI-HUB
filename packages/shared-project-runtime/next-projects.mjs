@@ -26,7 +26,7 @@ const projectSpecs = [
     id: "trace-sheet-workbench",
     basePath: "/tracesheet",
     aliasRoot: "src",
-    forceJson: false,
+    forceJson: true,
     routes: { "/plan": "app/api/plan/route.ts", "/providers": "app/api/providers/route.ts" },
   },
   {
