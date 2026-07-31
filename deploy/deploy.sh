@@ -88,7 +88,7 @@ validate_archive() {
 
   [[ -f "$archive" ]] || die "release archive not found: $archive"
   listing="$(tar -tzf "$archive")" || die "cannot read release archive"
-  if grep -Eq '(^/|(^|/)\.\.(/|$)|(^|/)\.env($|/)|(^|/)data(/|$)|(^|/)backups(/|$)|(^|/)\.git(/|$))' <<<"$listing"; then
+  if grep -Eq '(^/|(^|/)\.\.(/|$)|(^|/)\.env($|/)|^data(/|$)|^backups(/|$)|(^|/)\.git(/|$))' <<<"$listing"; then
     die "release archive contains a forbidden secret, runtime, backup, or VCS path"
   fi
 }

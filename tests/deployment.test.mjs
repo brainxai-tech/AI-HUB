@@ -133,6 +133,9 @@ test("release deployment is atomic, secret-free, and health checked", async () =
   assert.match(script, /\$release\/\.env/);
   assert.match(script, /\$release\/data/);
   assert.match(script, /\$release\/backups/);
+  assert.match(script, /\^data\(\/\|\$\)/);
+  assert.match(script, /\^backups\(\/\|\$\)/);
+  assert.doesNotMatch(script, /\(\^\|\/\)data\(\/\|\$\)/);
 });
 
 test("rollback activates a retained release through the same health gate", async () => {
