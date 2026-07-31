@@ -44,7 +44,7 @@ test("project data contains the requested project entries", async () => {
   const projectIds = Array.from(projects, (project) => project.id);
 
   assert.ok(Array.isArray(projects));
-  assert.equal(projects.length, 37);
+  assert.equal(projects.length, 38);
   assert.equal(new Set(projectIds).size, projects.length);
   for (const id of ["ai-ppt-report-coach", "ai-work-report-generator", "mbti-persona-compass", "ai-essay-coach", "yingzhou-ai", "ai-xiangqi-duel", "ai-chess-duel", "ai-go-duel", "fury-flock", "dice-estate-duel"]) {
     assert.ok(projectIds.includes(id), `${id} is missing`);
@@ -676,6 +676,7 @@ test("sensitive projects disclose data handling and professional boundaries", as
   for (const id of [
     "ai-legal-clause-translator",
     "ai-data-analyst",
+    "trace-sheet-workbench",
     "elder-fraud-assistant",
   ]) {
     assert.match(app, new RegExp(id));

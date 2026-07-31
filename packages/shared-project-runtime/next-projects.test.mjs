@@ -15,6 +15,7 @@ test("Next manifest covers all Hub projects with Next route handlers", () => {
   assert.deepEqual(nextProjectIds(), [
     "xhs-copywriting-master",
     "ai-data-analyst",
+    "trace-sheet-workbench",
     "ai-course-teaching-assistant",
     "ai-legal-clause-translator",
     "ai-tarot-sanctum",
@@ -37,6 +38,7 @@ test("Next handler converts Node requests and responses", async () => {
   const paths = {
     "xhs-copywriting-master": ["/generate", "/providers"],
     "ai-data-analyst": ["/llm", "/providers"],
+    "trace-sheet-workbench": ["/plan", "/providers"],
     "ai-course-teaching-assistant": ["/providers", "/teaching-bundles"],
     "ai-legal-clause-translator": ["/analyze", "/providers"],
     "ai-tarot-sanctum": ["/compatible-reading", "/deepseek-reading", "/providers"],

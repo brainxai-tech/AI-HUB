@@ -23,6 +23,7 @@ export const clientProjectIds = [
   "ai-counterfactual-life-simulator",
   "ai-course-teaching-assistant",
   "ai-data-analyst",
+  "trace-sheet-workbench",
   "ai-dream-director",
   "ai-emotional-companion-local",
   "ai-english-theater",

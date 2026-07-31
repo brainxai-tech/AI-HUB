@@ -52,6 +52,10 @@
       data: "业务数据文件",
       boundary: "上传前请移除客户信息与商业机密。",
     },
+    "trace-sheet-workbench": {
+      data: "Excel 与 CSV 文件",
+      boundary: "数据默认在浏览器内处理；调用模型时只发送字段与行数等结构摘要。",
+    },
     "elder-fraud-assistant": {
       data: "短信、通话或群聊内容",
       boundary: "涉及转账或人身风险时，请立即联系银行或警方。",

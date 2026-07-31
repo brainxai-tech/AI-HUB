@@ -20,6 +20,13 @@ const projectSpecs = [
     routes: { "/llm": "app/api/llm/route.ts", "/providers": "app/api/providers/route.ts" },
   },
   {
+    id: "trace-sheet-workbench",
+    basePath: "/tracesheet",
+    aliasRoot: "src",
+    forceJson: false,
+    routes: { "/plan": "app/api/plan/route.ts", "/providers": "app/api/providers/route.ts" },
+  },
+  {
     id: "ai-course-teaching-assistant",
     basePath: "/course",
     routes: {

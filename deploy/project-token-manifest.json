@@ -10,6 +10,7 @@
     { "id": "ai-counterfactual-life-simulator", "scopes": ["model:chat"] },
     { "id": "ai-course-teaching-assistant", "scopes": ["model:chat"] },
     { "id": "ai-data-analyst", "scopes": ["model:chat"] },
+    { "id": "trace-sheet-workbench", "scopes": ["model:chat"] },
     { "id": "ai-dream-director", "scopes": ["model:chat"] },
     { "id": "ai-essay-coach", "scopes": ["model:chat"] },
     { "id": "ai-emotional-companion-local", "scopes": ["model:chat"] },

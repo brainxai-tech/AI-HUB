@@ -1,6 +1,6 @@
 # Shared Project Runtime
 
-该进程在本地统一承载 27 个共享非游戏项目：
+该进程在本地统一承载 28 个共享非游戏项目：
 
 - 为 Vite 与 Node/static 项目提供构建后页面；
 - 为 Next.js 项目加载各自的生产构建；

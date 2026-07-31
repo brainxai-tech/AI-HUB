@@ -138,6 +138,15 @@ test("release deployment is atomic, secret-free, and health checked", async () =
   assert.doesNotMatch(script, /\(\^\|\/\)data\(\/\|\$\)/);
 });
 
+test("TraceSheet uses the shared API and an immutable static application route", async () => {
+  const config = await readFile(new URL("../deploy/nginx/idol-match-test.conf", import.meta.url), "utf8");
+
+  assert.match(config, /location = \/tracesheet \{\s*return 301 \/tracesheet\/;/);
+  assert.match(config, /location \^~ \/tracesheet\/api\/ \{[\s\S]*?proxy_pass http:\/\/127\.0\.0\.1:4195;/);
+  assert.match(config, /location \^~ \/tracesheet\/_next\/static\/ \{[\s\S]*?max-age=31536000, immutable/);
+  assert.match(config, /location \/tracesheet\/ \{[\s\S]*?try_files \$uri \$uri\/ \/tracesheet\/index\.html;/);
+});
+
 test("rollback activates a retained release through the same health gate", async () => {
   const script = await readFile(new URL("../deploy/rollback.sh", import.meta.url), "utf8");
 

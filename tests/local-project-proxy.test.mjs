@@ -16,8 +16,9 @@ async function listen(server) {
 
 test("local proxy covers tools and dedicated games while preserving ports", async () => {
   const proxy = createLocalProjectProxy({ manifestPath: "deploy/project-manifest.json" });
-  assert.equal(proxy.routes.length, 35);
+  assert.equal(proxy.routes.length, 36);
   assert.equal(proxy.match("/legal/")?.targetOrigin, "http://127.0.0.1:4195");
+  assert.equal(proxy.match("/tracesheet/api/plan")?.targetOrigin, "http://127.0.0.1:4195");
   assert.equal(proxy.match("/ppt-report-coach/")?.targetOrigin, "http://127.0.0.1:4201");
   assert.equal(proxy.match("/work-report/api/generate")?.targetOrigin, "http://127.0.0.1:4202");
   assert.equal(proxy.match("/mbti/api/providers")?.targetOrigin, "http://127.0.0.1:4203");

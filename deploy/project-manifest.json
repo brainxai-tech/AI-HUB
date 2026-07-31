@@ -20,6 +20,7 @@
     { "id": "ai-book-decomposer", "route": "/book/", "source": "apps/ai-book-decomposer", "stack": "node-static", "api": "shared" },
     { "id": "ai-bedtime-story-factory", "route": "/story/", "source": "apps/ai-bedtime-story-factory", "stack": "vite", "api": "shared" },
     { "id": "ai-data-analyst", "route": "/data/", "source": "apps/ai-data-analyst", "stack": "next", "api": "shared" },
+    { "id": "trace-sheet-workbench", "route": "/tracesheet/", "source": "apps/trace-sheet-workbench", "stack": "next", "api": "shared" },
     { "id": "ai-english-theater", "route": "/english/", "source": "apps/ai-english-theater", "stack": "node-static", "api": "shared" },
     { "id": "ai-course-teaching-assistant", "route": "/course/", "source": "apps/ai-course-teaching-assistant", "stack": "next", "api": "shared" },
     { "id": "ai-dream-director", "route": "/dream/", "source": "apps/ai-dream-director", "stack": "vite", "api": "shared" },

@@ -53,6 +53,11 @@ const MODEL_RECOMMENDATIONS = {
     model: "gpt-5.5",
     reason: "数据分析需要理解字段、发现异常、解释图表并把结论组织成业务报告；该型号综合推理和结构化输出能力强，适合把数字转成可行动洞察。",
   },
+  "trace-sheet-workbench": {
+    provider: "GPT",
+    model: "gpt-5.5",
+    reason: "Excel 清洗计划需要严格引用真实字段、拆解多步变换并保持可审计性；该型号擅长约束下的结构化规划，适合生成可复核的操作步骤。",
+  },
   "ai-english-theater": {
     provider: "GPT",
     model: "gpt-5.6-luna",
@@ -299,6 +304,17 @@ window.AI_PROJECTS = [
     category: "实用工具",
     stage: "live",
     updatedAt: "2026-06-29",
+    requiredCapabilities: ["model:chat"],
+  },
+  {
+    id: "trace-sheet-workbench",
+    name: "迹算 · Excel 清洗工作台",
+    description: "用自然语言合并、清洗和计算 Excel；执行前预览差异，执行后保留版本链与审计记录。",
+    url: `${SERVER}/tracesheet/`,
+    image: "/hub/assets/project-covers/trace-sheet-workbench.png?v=20260731-hub1",
+    category: "办公效率",
+    stage: "live",
+    updatedAt: "2026-07-31",
     requiredCapabilities: ["model:chat"],
   },
   {

@@ -103,6 +103,7 @@ test("migrated projects are part of the shared runtime manifest", () => {
     "elder-fraud-assistant",
     "idol-match-test",
     "qingqing-grassland-personality",
+    "trace-sheet-workbench",
     "xhs-copywriting-master",
   ]);
 });
@@ -186,7 +187,7 @@ test("client env provisioning covers the complete Hub credential manifest", () =
   envFiles["unrelated.env"] = "HUB_PROJECT_ID=unrelated\nHUB_PROJECT_TOKEN=do-not-copy-this-token-value\n";
 
   const result = extractClientEnvCredentials(envFiles);
-  assert.equal(clientProjectIds.length, 32);
+  assert.equal(clientProjectIds.length, 33);
   assert.deepEqual(Object.keys(result.projects).sort(), [...clientProjectIds].sort());
 });
 

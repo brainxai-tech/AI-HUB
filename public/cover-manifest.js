@@ -289,6 +289,35 @@ window.AI_PROJECT_COVERS = Object.freeze({
       }
     ]
   },
+  "trace-sheet-workbench": {
+    "width": 1200,
+    "height": 675,
+    "fallback": "/hub/assets/project-covers/generated/trace-sheet-workbench-480w.3765138134e1.webp",
+    "avif": [
+      {
+        "src": "/hub/assets/project-covers/generated/trace-sheet-workbench-480w.e636f5117686.avif",
+        "width": 480,
+        "bytes": 5638
+      },
+      {
+        "src": "/hub/assets/project-covers/generated/trace-sheet-workbench-800w.102474146366.avif",
+        "width": 800,
+        "bytes": 11169
+      }
+    ],
+    "webp": [
+      {
+        "src": "/hub/assets/project-covers/generated/trace-sheet-workbench-480w.3765138134e1.webp",
+        "width": 480,
+        "bytes": 7344
+      },
+      {
+        "src": "/hub/assets/project-covers/generated/trace-sheet-workbench-800w.13b71e7486ae.webp",
+        "width": 800,
+        "bytes": 14386
+      }
+    ]
+  },
   "ai-english-theater": {
     "width": 1672,
     "height": 941,

@@ -1,6 +1,6 @@
 # AI HUB
 
-AI HUB 把 32 个 AI 工具和 5 款游戏放进同一个可复现仓库，并统一提供项目目录、GPT 型号目录、项目级模型代理和本地一键启动。用户从 GitHub 全新克隆后，只需在 Hub 配置一次自己的 AI Routing API Key；各项目页面不接收、保存或显示 API Key。
+AI HUB 把 33 个 AI 工具和 5 款游戏放进同一个可复现仓库，并统一提供项目目录、GPT 型号目录、项目级模型代理和本地一键启动。用户从 GitHub 全新克隆后，只需在 Hub 配置一次自己的 AI Routing API Key；各项目页面不接收、保存或显示 API Key。
 
 ## 全新克隆与一键启动
 
@@ -38,7 +38,7 @@ npm run start:suite
 | 服务 | 端口 | 用途 |
 |---|---:|---|
 | Hub | 4194 | 首页、Key 配置、模型目录、项目代理、Fury Flock、Dice Estate |
-| shared-project-runtime | 4195 | 27 个共享运行时工具的页面和 API |
+| shared-project-runtime | 4195 | 28 个共享运行时工具的页面和 API |
 | AI PPT 汇报教练 | 4201 | 专用工具服务 |
 | AI 工作汇报生成器 | 4202 | 专用工具服务 |
 | 人格罗盘 · MBTI | 4203 | 专用工具服务 |
@@ -92,16 +92,16 @@ npm run security:scan
 npm run e2e
 ```
 
-`workspace:verify` 会验证 32 个工具和 4 个带独立依赖的游戏包；Hub 静态游戏 Dice Estate 由根仓库测试覆盖。`e2e` 使用本机模拟上游，不需要真实 Key，并验证 32 个工具路由、三款新导入产品的业务 API 与统一型号、5 款游戏的浏览器操作、项目身份、浏览器存档和 Fury Flock Canvas 截图。
+`workspace:verify` 会验证 33 个工具和 4 个带独立依赖的游戏包；Hub 静态游戏 Dice Estate 由根仓库测试覆盖。`e2e` 使用本机模拟上游，不需要真实 Key，并验证 33 个工具路由、业务 API 与统一型号、5 款游戏的浏览器操作、项目身份、浏览器存档和 Fury Flock Canvas 截图。
 
 ## 仓库结构
 
-- `apps/<project-id>/`：32 个工具的可构建源码。
+- `apps/<project-id>/`：33 个工具的可构建源码。
 - `games/`：象棋、国际象棋、围棋和 Fury Flock 源码。
 - `public/dice-estate/`：Dice Estate 的 Hub 静态游戏资源。
 - `packages/shared-project-runtime/`：共享页面服务和 API 适配层。
 - `public/`：Hub 首页、Key 配置页、统一选择器和共享视觉资源。
-- `deploy/project-manifest.json`：32 个 `projects` 和 5 个 `games` 的唯一运行清单。
+- `deploy/project-manifest.json`：33 个 `projects` 和 5 个 `games` 的唯一运行清单。
 - `scripts/local-suite.mjs`：完整套件的进程监督、项目凭证和 Pikafish 准备。
 - `SOURCE-RECOVERY.md`：仅有服务器发布产物的项目恢复边界。
 
