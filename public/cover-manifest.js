@@ -988,87 +988,87 @@ window.AI_PROJECT_COVERS = Object.freeze({
   "mbti-persona-compass": {
     "width": 1200,
     "height": 675,
-    "fallback": "/hub/assets/project-covers/generated/mbti-persona-compass-480w.95d654047a39.webp",
+    "fallback": "/hub/assets/project-covers/generated/mbti-persona-compass-480w.b59a5f673247.webp",
     "avif": [
       {
-        "src": "/hub/assets/project-covers/generated/mbti-persona-compass-480w.4222ad4617e7.avif",
+        "src": "/hub/assets/project-covers/generated/mbti-persona-compass-480w.f6df288b0f0a.avif",
         "width": 480,
-        "bytes": 5986
+        "bytes": 7526
       },
       {
-        "src": "/hub/assets/project-covers/generated/mbti-persona-compass-800w.7e0683a45098.avif",
+        "src": "/hub/assets/project-covers/generated/mbti-persona-compass-800w.8352a7d42b5d.avif",
         "width": 800,
-        "bytes": 10624
+        "bytes": 18032
       }
     ],
     "webp": [
       {
-        "src": "/hub/assets/project-covers/generated/mbti-persona-compass-480w.95d654047a39.webp",
+        "src": "/hub/assets/project-covers/generated/mbti-persona-compass-480w.b59a5f673247.webp",
         "width": 480,
-        "bytes": 8644
+        "bytes": 13528
       },
       {
-        "src": "/hub/assets/project-covers/generated/mbti-persona-compass-800w.402b2728d6d0.webp",
+        "src": "/hub/assets/project-covers/generated/mbti-persona-compass-800w.9bca08adc194.webp",
         "width": 800,
-        "bytes": 16744
+        "bytes": 31968
       }
     ]
   },
   "ai-essay-coach": {
     "width": 1200,
     "height": 675,
-    "fallback": "/hub/assets/project-covers/generated/ai-essay-coach-480w.7c8c4e6fad0b.webp",
+    "fallback": "/hub/assets/project-covers/generated/ai-essay-coach-480w.b75f80dc7e4f.webp",
     "avif": [
       {
-        "src": "/hub/assets/project-covers/generated/ai-essay-coach-480w.ed9316504956.avif",
+        "src": "/hub/assets/project-covers/generated/ai-essay-coach-480w.d45077fa3f46.avif",
         "width": 480,
-        "bytes": 6635
+        "bytes": 10184
       },
       {
-        "src": "/hub/assets/project-covers/generated/ai-essay-coach-800w.ab178a3a9c50.avif",
+        "src": "/hub/assets/project-covers/generated/ai-essay-coach-800w.4765e00c9cd5.avif",
         "width": 800,
-        "bytes": 11687
+        "bytes": 24853
       }
     ],
     "webp": [
       {
-        "src": "/hub/assets/project-covers/generated/ai-essay-coach-480w.7c8c4e6fad0b.webp",
+        "src": "/hub/assets/project-covers/generated/ai-essay-coach-480w.b75f80dc7e4f.webp",
         "width": 480,
-        "bytes": 10388
+        "bytes": 19106
       },
       {
-        "src": "/hub/assets/project-covers/generated/ai-essay-coach-800w.d68b781493e2.webp",
+        "src": "/hub/assets/project-covers/generated/ai-essay-coach-800w.50b9f077b3c4.webp",
         "width": 800,
-        "bytes": 19990
+        "bytes": 44990
       }
     ]
   },
   "yingzhou-ai": {
     "width": 1200,
     "height": 675,
-    "fallback": "/hub/assets/project-covers/generated/yingzhou-ai-480w.263ec1c31669.webp",
+    "fallback": "/hub/assets/project-covers/generated/yingzhou-ai-480w.aab66b26766d.webp",
     "avif": [
       {
-        "src": "/hub/assets/project-covers/generated/yingzhou-ai-480w.085def6f66bf.avif",
+        "src": "/hub/assets/project-covers/generated/yingzhou-ai-480w.856c47da31b8.avif",
         "width": 480,
-        "bytes": 4505
+        "bytes": 8128
       },
       {
-        "src": "/hub/assets/project-covers/generated/yingzhou-ai-800w.8aad9b4a7f43.avif",
+        "src": "/hub/assets/project-covers/generated/yingzhou-ai-800w.29fbfc33eaae.avif",
         "width": 800,
-        "bytes": 8196
+        "bytes": 19850
       }
     ],
     "webp": [
       {
-        "src": "/hub/assets/project-covers/generated/yingzhou-ai-480w.263ec1c31669.webp",
+        "src": "/hub/assets/project-covers/generated/yingzhou-ai-480w.aab66b26766d.webp",
         "width": 480,
-        "bytes": 6002
+        "bytes": 11424
       },
       {
-        "src": "/hub/assets/project-covers/generated/yingzhou-ai-800w.74a5a817ce57.webp",
+        "src": "/hub/assets/project-covers/generated/yingzhou-ai-800w.6fe06dbcb46c.webp",
         "width": 800,
-        "bytes": 11504
+        "bytes": 28274
       }
     ]
   }
