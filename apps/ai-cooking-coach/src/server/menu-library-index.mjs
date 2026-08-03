@@ -114,15 +114,19 @@ function diversifyRecipes(items, limit) {
 
 function bestRecipeForMeal(meal, recipes) {
   const mealName = String(meal.name || "").trim();
+  const mealNameTokens = matchingTokens(mealName);
   const mealTokens = matchingTokens(`${mealName} ${(meal.ingredients || []).join(" ")}`);
   const scored = recipes.map((recipe) => {
     const recipeName = String(recipe.name || "").trim();
+    const recipeNameTokens = matchingTokens(recipeName);
     const recipeTokens = matchingTokens(`${recipeName} ${recipe.ingredientsText}`);
-    let score = [...mealName].length >= 2 && [...recipeName].length >= 2
-      && (mealName.includes(recipeName) || recipeName.includes(mealName)) ? 20 : 0;
+    const nameContains = [...mealName].length >= 2 && [...recipeName].length >= 2
+      && (mealName.includes(recipeName) || recipeName.includes(mealName));
+    const nameOverlaps = [...mealNameTokens].some((token) => recipeNameTokens.has(token));
+    let score = nameContains ? 20 : 0;
     for (const token of mealTokens) if (recipeTokens.has(token)) score += token.length > 1 ? 3 : 1;
-    return { recipe, score };
-  }).sort((a, b) => b.score - a.score);
+    return { recipe, score, hasNameSignal: nameContains || nameOverlaps };
+  }).filter(({ hasNameSignal }) => hasNameSignal).sort((a, b) => b.score - a.score);
   return scored[0]?.score >= 6 ? scored[0].recipe : null;
 }
 
