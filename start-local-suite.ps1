@@ -11,6 +11,7 @@ $hubUrl = "http://127.0.0.1:4194/hub/"
 $readyUrls = @(
   "http://127.0.0.1:4194/hub/api/health",
   "http://127.0.0.1:4195/health",
+  "http://127.0.0.1:4196/health",
   "http://127.0.0.1:4201/ppt-report-coach/api/providers",
   "http://127.0.0.1:4202/work-report/api/providers",
   "http://127.0.0.1:4203/mbti/api/providers",

@@ -12,12 +12,13 @@ test("one-click suite owns every documented tool and game port", async () => {
     read("README.md"),
     read("deploy/project-manifest.json").then(JSON.parse),
   ]);
-  for (const port of [4194, 4195, 4201, 4202, 4203, 4204, 4205, 4211, 4212, 4213]) {
+  for (const port of [4194, 4195, 4196, 4201, 4202, 4203, 4204, 4205, 4211, 4212, 4213]) {
     assert.match(launcher, new RegExp(String(port)));
     assert.match(readme, new RegExp(String(port)));
   }
   assert.match(supervisor, /4194/);
   assert.match(supervisor, /4195/);
+  assert.match(supervisor, /manifest\.workflowApi/);
   assert.deepEqual(manifest.projects.filter(({ api }) => api === "dedicated").map(({ port }) => port), [4201, 4202, 4203, 4204, 4205]);
   assert.deepEqual(manifest.games.filter(({ api }) => api === "dedicated").map(({ port }) => port), [4211, 4212, 4213]);
   assert.match(supervisor, /manifest\.games\.filter/);

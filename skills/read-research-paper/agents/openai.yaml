@@ -1,0 +1,4 @@
+interface:
+  display_name: "Evidence Paper Reader"
+  short_description: "Read papers with paragraph retrieval and evidence citations"
+  default_prompt: "Use $read-research-paper to map a paper and answer questions with retrieved paragraph citations."

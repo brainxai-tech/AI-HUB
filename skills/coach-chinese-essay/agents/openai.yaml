@@ -1,0 +1,4 @@
+interface:
+  display_name: "Chinese Essay Coach"
+  short_description: "Guide Chinese essay practice with staged learner choices"
+  default_prompt: "Use $coach-chinese-essay to guide a learner from prompt analysis through authentic materials, outline selection, composition, and feedback."

@@ -30,6 +30,7 @@ const pikafishPath = process.env.PIKAFISH_PATH?.trim() || (
 
 const hubOrigin = "http://127.0.0.1:4194";
 const sharedOrigin = "http://127.0.0.1:4195";
+const workflowOrigin = "http://127.0.0.1:4196";
 const dedicatedProjects = manifest.projects.filter(({ api }) => api === "dedicated");
 const dedicatedGames = manifest.games.filter(({ api }) => api === "dedicated");
 
@@ -55,6 +56,14 @@ startChild("shared-runtime", path.join(root, manifest.sharedApi.package), ["serv
   AIHUB_SERVE_PROJECT_UI: "true",
   HUB_MODEL_CONFIG_URL: `${hubOrigin}/hub/api/model-config`,
   HUB_CHAT_COMPLETIONS_URL: `${hubOrigin}/hub/api/v1/chat/completions`,
+});
+
+startChild("agent-workflow-runtime", path.join(root, manifest.workflowApi.package), ["server.mjs"], {
+  PORT: String(manifest.workflowApi.port),
+  AIHUB_SKILLS_ROOT: path.join(root, manifest.workflowApi.skills),
+  AIHUB_WORKFLOW_DATA_DIR: path.join(runtimeDirectory, "workflow-runs"),
+  AIHUB_SHARED_PROJECT_ORIGIN: sharedOrigin,
+  AIHUB_ESSAY_ORIGIN: "http://127.0.0.1:4204/essay/",
 });
 
 for (const project of dedicatedProjects) {
@@ -97,6 +106,7 @@ try {
   await Promise.all([
     waitForJson(`${hubOrigin}/hub/api/health`),
     waitForJson(`${sharedOrigin}/health`),
+    waitForJson(`${workflowOrigin}/health`),
     ...dedicatedProjects.map((project) =>
       waitForJson(`http://127.0.0.1:${project.port}${project.route}api/providers`),
     ),
@@ -111,6 +121,7 @@ try {
     ready: true,
     hub: `${hubOrigin}/hub/`,
     sharedRuntime: sharedOrigin,
+    workflowRuntime: workflowOrigin,
     dedicated: Object.fromEntries([...dedicatedProjects, ...dedicatedGames].map(({ id, port }) => [id, port])),
     staticGames: {
       "fury-flock": `${hubOrigin}/fury-flock/`,

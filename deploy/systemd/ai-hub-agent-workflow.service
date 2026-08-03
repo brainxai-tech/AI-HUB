@@ -1,0 +1,57 @@
+[Unit]
+Description=AI HUB Agent Skill and Workflow Runtime
+Wants=network-online.target ai-project-hub.service ai-hub-shared-static-api.service ai-essay-coach.service
+After=network-online.target ai-project-hub.service ai-hub-shared-static-api.service ai-essay-coach.service
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=admin
+Group=admin
+WorkingDirectory=/opt/ai-project-hub/current/packages/agent-workflow-runtime
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+Environment=PORT=4196
+Environment=AIHUB_SKILLS_ROOT=/opt/ai-project-hub/current/skills
+Environment=AIHUB_WORKFLOW_DATA_DIR=/var/lib/ai-project-hub/workflow-runs
+Environment=AIHUB_SHARED_PROJECT_ORIGIN=http://127.0.0.1:4195
+Environment=AIHUB_ESSAY_ORIGIN=http://127.0.0.1:4204/essay/
+EnvironmentFile=-/etc/ai-project-hub/agent-workflow.env
+ExecStart=/usr/bin/node /opt/ai-project-hub/current/packages/agent-workflow-runtime/server.mjs
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=20
+UMask=0077
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectHostname=true
+ProtectClock=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectProc=invisible
+ProcSubset=pid
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RemoveIPC=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+ReadWritePaths=/var/lib/ai-project-hub
+ReadOnlyPaths=/opt/ai-project-hub
+InaccessiblePaths=-/home/admin/backups
+MemoryHigh=256M
+MemoryMax=384M
+TasksMax=48
+
+[Install]
+WantedBy=multi-user.target

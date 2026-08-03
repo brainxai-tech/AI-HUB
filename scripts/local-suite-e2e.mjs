@@ -113,6 +113,7 @@ try {
   await Promise.all([
     waitUntilReady("http://127.0.0.1:4194/hub/api/health", supervisor, 240_000),
     waitUntilReady("http://127.0.0.1:4195/health", supervisor, 240_000),
+    waitUntilReady("http://127.0.0.1:4196/health", supervisor, 240_000),
     ...manifest.projects.filter(({ api }) => api === "dedicated").map((project) =>
       waitUntilReady(`http://127.0.0.1:${project.port}${project.route}api/providers`, supervisor, 240_000),
     ),
@@ -120,6 +121,12 @@ try {
       waitUntilReady(`http://127.0.0.1:4194${game.route}`, supervisor, 240_000),
     ),
   ]);
+
+  const workflowSkills = await fetchJson("http://127.0.0.1:4196/api/skills");
+  assert.deepEqual(
+    workflowSkills.skills.map(({ id }) => id),
+    ["build-course-pack", "coach-chinese-essay", "plan-weekly-meals", "read-research-paper"],
+  );
 
   const discovered = await fetchJson("http://127.0.0.1:4194/hub/api/provider-models", {
     method: "POST",

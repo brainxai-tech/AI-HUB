@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "coach-chinese-essay",
+  "projectId": "ai-essay-coach",
+  "title": "中文作文分阶段教练",
+  "description": "审题、真实素材、三套提纲、用户选稿、成文和五维讲评。",
+  "adapter": "scripts/adapter.mjs",
+  "workflow": {
+    "id": "essay-coaching-v1",
+    "version": 1,
+    "steps": ["analyze", "collect-materials", "generate-outlines", "select-outline", "compose"],
+    "checkpoints": ["collect-materials", "select-outline"],
+    "actions": []
+  },
+  "knowledge": {
+    "mode": "user-authentic-material",
+    "sources": ["user-authentic-material"],
+    "citationRequired": false,
+    "plannedSources": ["versioned-grade-rubric"]
+  }
+}

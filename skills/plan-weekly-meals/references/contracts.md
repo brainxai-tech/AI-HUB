@@ -1,0 +1,29 @@
+# Workflow contract
+
+## Start input
+
+Submit `profile` using the fields already accepted by AI 备餐教练. At minimum include `days`, `familySize`, and relevant constraints. Example:
+
+```json
+{
+  "profile": {
+    "days": 7,
+    "familySize": 2,
+    "targetCalories": 1800,
+    "allergies": ["花生"],
+    "availableIngredients": ["鸡蛋", "番茄"]
+  }
+}
+```
+
+## Action: `adjust-meal`
+
+Submit `mealKey`, `reason`, and optional `constraints`. The adapter always attaches the immutable original plan.
+
+## Checkpoint: `weekly-execution`
+
+Submit `executionState` and optional `feedback`. The project returns a review containing wins, frictions, next-week adjustments, and prompt hints.
+
+## Grounding
+
+Keep every returned `rag` field and `ragGuardrail`. An unmatched ingredient is a warning, not permission to silently delete a necessary item.

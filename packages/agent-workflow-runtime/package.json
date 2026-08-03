@@ -1,0 +1,14 @@
+{
+  "name": "@ai-hub/agent-workflow-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "verify": "node --check server.mjs && node --check src/http-api.mjs && node --check src/workflow-runner.mjs && node --test tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=22.15"
+  }
+}

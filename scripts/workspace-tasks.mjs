@@ -11,6 +11,7 @@ const command = process.argv[2] || "check";
 
 const packages = [
   { id: "shared-project-runtime", directory: path.join(root, manifest.sharedApi.package), route: "", stack: "shared" },
+  { id: "agent-workflow-runtime", directory: path.join(root, manifest.workflowApi.package), route: "", stack: "workflow" },
   ...manifest.projects.map((project) => ({
     ...project,
     directory: path.join(root, project.source),
@@ -34,7 +35,8 @@ if (command === "install") {
 } else if (command === "verify") {
   runNpm({ id: "hub", directory: root, route: "", stack: "hub" }, "verify");
   runNpm(packages[0], "verify");
-  for (const item of packages.slice(1)) runNpm(item, "verify");
+  runNpm(packages[1], "verify");
+  for (const item of packages.slice(2)) runNpm(item, "verify");
   checkBuilds();
 } else if (command === "check") {
   checkBuilds();
@@ -95,7 +97,7 @@ function run(executable, args, cwd, label, env = process.env) {
 
 function checkBuilds() {
   const missing = [];
-  for (const item of packages.slice(1)) {
+  for (const item of packages.slice(2)) {
     const expected = item.stack === "next"
       ? path.join(item.directory, ".next", "BUILD_ID")
       : item.stack === "node-static"

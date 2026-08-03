@@ -9,6 +9,11 @@
     "package": "packages/shared-project-runtime",
     "port": 4195
   },
+  "workflowApi": {
+    "package": "packages/agent-workflow-runtime",
+    "skills": "skills",
+    "port": 4196
+  },
   "projects": [
     { "id": "idol-match-test", "route": "/idol-match/", "source": "apps/idol-match-test", "stack": "next", "api": "shared" },
     { "id": "qisheng-emotional-companion", "runtimeId": "ai-emotional-companion-local", "route": "/qisheng/", "source": "apps/qisheng-emotional-companion", "stack": "node-static", "api": "shared" },

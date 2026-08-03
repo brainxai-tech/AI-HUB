@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "build-course-pack",
+  "projectId": "ai-course-teaching-assistant",
+  "title": "课程教学包工作流",
+  "description": "基于课程要求和授权资料生成讲义、测验、错因与活动，并在教师确认后完成。",
+  "adapter": "scripts/adapter.mjs",
+  "workflow": {
+    "id": "course-pack-v1",
+    "version": 1,
+    "steps": ["ground-sources", "generate-bundle", "consistency-check", "teacher-review"],
+    "checkpoints": ["teacher-review"],
+    "actions": []
+  },
+  "knowledge": {
+    "mode": "user-provided-course-sources",
+    "sources": ["authorized-course-excerpts"],
+    "citationRequired": true,
+    "plannedSources": ["versioned-teaching-standards"]
+  }
+}

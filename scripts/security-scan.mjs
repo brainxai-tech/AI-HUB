@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const tracked = execFileSync("git", ["ls-files", "-z"], { cwd: root })
+const tracked = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], { cwd: root })
   .toString("utf8")
   .split("\0")
   .filter(Boolean);
@@ -73,5 +73,5 @@ if (failures.length) {
   for (const failure of failures) console.error(`- ${failure}`);
   process.exitCode = 1;
 } else {
-  console.log(`Security scan passed: ${tracked.length} tracked files, ${manifest.projects.length} tools, ${manifest.games.length} games, no committed secrets or dedicated direct-provider paths.`);
+  console.log(`Security scan passed: ${tracked.length} repository files, ${manifest.projects.length} tools, ${manifest.games.length} games, no committed secrets or dedicated direct-provider paths.`);
 }
