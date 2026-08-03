@@ -1,6 +1,7 @@
 import { validateProfile } from "../domain/prompt-builder.mjs";
 import { generatePlanWithDeepSeek } from "./deepseek-client.mjs";
 import { buildDemoPlan } from "./demo-plan.mjs";
+import { groundPlanWithMenuLibrary, retrieveMenuLibraryRecipes } from "./menu-library-index.mjs";
 
 const DEFAULT_MODEL = "";
 
@@ -23,7 +24,8 @@ export async function createPlanResponse(body = {}, { fetchImpl = globalThis.fet
     return { mode: "live", plan };
   } catch (error) {
     console.warn("AI plan generation failed; using fallback plan.", error?.message || error);
-    const plan = buildDemoPlan(validation.profile);
+    const recipes = retrieveMenuLibraryRecipes(validation.profile);
+    const plan = groundPlanWithMenuLibrary(buildDemoPlan(validation.profile), recipes);
     plan.summary = "智能规划暂时没有返回可解析的完整计划，已先生成一份本地可执行备餐计划；可以稍后再次生成获取实时 AI 版本。";
     return {
       mode: "fallback",

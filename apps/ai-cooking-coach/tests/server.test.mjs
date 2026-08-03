@@ -168,6 +168,42 @@ test("POST /api/plan falls back when Hub is unavailable without stopping the loc
   }
 });
 
+test("fallback plan preserves menu-library RAG provenance and allergy filtering", async () => {
+  const server = createCookingCoachServer({
+    fetchImpl: async () => {
+      throw new Error("network down");
+    }
+  });
+  const baseUrl = await listen(server);
+
+  try {
+    const response = await fetch(`${baseUrl}/api/plan`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        profile: {
+          days: 1,
+          familySize: 2,
+          targetCalories: 1600,
+          allergies: "花生",
+          cuisine: "中式家常",
+          goal: "健康备餐"
+        }
+      })
+    });
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.mode, "fallback");
+    assert.equal(body.plan.recipeRag.source, "menu-library-rag");
+    assert.ok(body.plan.recipeRag.retrieved.length > 0);
+    assert.ok(body.plan.recipeRag.retrieved.every(({ sourceId }) => sourceId.startsWith("menu:")));
+    assert.ok(body.plan.recipeRag.retrieved.every((recipe) => !/花生/.test(`${recipe.name} ${recipe.ingredientsText}`)));
+  } finally {
+    server.close();
+  }
+});
+
 test("GET /data/ingredient-nutrition-rag.json serves the nutrition RAG index", async () => {
   const server = createCookingCoachServer();
   const baseUrl = await listen(server);

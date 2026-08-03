@@ -197,7 +197,7 @@ function tokens(value) {
 
 function matchingTokens(value) {
   const normalized = String(value || "").toLowerCase();
-  const words = normalized.match(/[a-z0-9]{2,}/g) || [];
+  const words = normalized.match(/[a-z]{2,}/g) || [];
   const han = (normalized.match(/[\p{Script=Han}]+/gu) || []).flatMap((text) =>
     Array.from({ length: Math.max(0, text.length - 1) }, (_, index) => text.slice(index, index + 2))
   );

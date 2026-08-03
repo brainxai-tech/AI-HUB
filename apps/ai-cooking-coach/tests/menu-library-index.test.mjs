@@ -47,11 +47,13 @@ test("meal grounding refuses weak character-overlap provenance", () => {
   const recipes = [
     publicRecipeFixture(1, "罗汉斋", "豆腐；木耳；胡萝卜"),
     publicRecipeFixture(2, "麻婆豆腐", "豆腐；牛肉末；豆瓣酱"),
+    publicRecipeFixture(3, "红烧狮子头", "肉馅420g；荸荠80g；姜3g"),
   ];
   const plan = groundPlanWithMenuLibrary({
     days: [{ day: "第 1 天", meals: [
       { name: "燕麦酸奶杯", ingredients: ["燕麦", "酸奶"] },
       { name: "清蒸鲈鱼", ingredients: ["鲈鱼", "姜"] },
+      { name: "鸡胸糙米西兰花便当", ingredients: ["鸡胸肉150g", "糙米80g", "姜3g"] },
     ] }],
   }, recipes);
   assert.ok(plan.days[0].meals.every((meal) => meal.recipeRag === undefined));
