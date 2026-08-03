@@ -142,8 +142,10 @@ function startChild(name, cwd, args, additions) {
   const env = { ...process.env, ...additions };
   const child = spawn(process.execPath, args, { cwd, env, stdio: "inherit", windowsHide: true });
   child.suiteName = name;
+  child.suiteStartError = null;
   children.push(child);
   child.once("error", (error) => {
+    child.suiteStartError = error;
     console.error(`${name} failed to start: ${error.message}`);
   });
   return child;
@@ -161,8 +163,16 @@ async function waitForContentType(url, contentTypePattern) {
   const deadline = Date.now() + Number(process.env.AIHUB_SUITE_START_TIMEOUT_MS || 120_000);
   while (Date.now() < deadline) {
     if (existsSync(stopSignalPath)) throw new Error("Local suite stop requested during startup");
-    const failed = children.find(({ exitCode }) => exitCode !== null);
-    if (failed) throw new Error(`${failed.suiteName} exited before the suite became ready`);
+    const failedToStart = children.find(({ suiteStartError }) => suiteStartError);
+    if (failedToStart) {
+      throw new Error(`${failedToStart.suiteName} failed to start: ${failedToStart.suiteStartError.message}`);
+    }
+    const failed = children.find(({ exitCode, signalCode }) => exitCode !== null || signalCode !== null);
+    if (failed) {
+      throw new Error(
+        `${failed.suiteName} exited before the suite became ready (${failed.signalCode || `code ${failed.exitCode}`})`,
+      );
+    }
     try {
       const response = await fetch(url, { signal: AbortSignal.timeout(1_500), cache: "no-store" });
       if (response.ok && contentTypePattern.test(response.headers.get("content-type") || "")) return;

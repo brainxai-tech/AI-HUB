@@ -95,6 +95,15 @@ export const adapter = {
 function collectRagCitations(value) {
   const citations = [];
   const seen = new Set();
+  for (const match of value?.recipeRag?.matches || []) {
+    addCitation({
+      sourceId: match.sourceId || "",
+      name: match.name || "",
+      category: match.category || "",
+      technique: match.technique || "",
+      source: match.source || "menu-library-rag",
+    });
+  }
   visit(value);
   return citations;
 
@@ -107,13 +116,16 @@ function collectRagCitations(value) {
         englishName: node.rag.englishName || "",
         source: node.rag.source || node.rag.sourceName || "ingredient-nutrition-rag",
       };
-      const key = JSON.stringify(citation);
-      if (!seen.has(key)) {
-        seen.add(key);
-        citations.push(citation);
-      }
+      addCitation(citation);
     }
     Object.values(node).forEach(visit);
+  }
+
+  function addCitation(citation) {
+    const key = JSON.stringify(citation);
+    if (seen.has(key)) return;
+    seen.add(key);
+    citations.push(citation);
   }
 }
 

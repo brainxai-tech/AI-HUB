@@ -26,4 +26,4 @@ Submit `executionState` and optional `feedback`. The project returns a review co
 
 ## Grounding
 
-Keep every returned `rag` field and `ragGuardrail`. An unmatched ingredient is a warning, not permission to silently delete a necessary item.
+Keep every returned ingredient `rag` field, `ragGuardrail`, meal `recipeRag`, and top-level `recipeRag.matches`. Ingredient nutrition comes from `ingredient-nutrition-rag`; matched recipes come from `menu-library-rag` with stable `menu:<id>` source IDs. An unmatched ingredient is a warning, not permission to silently delete a necessary item.

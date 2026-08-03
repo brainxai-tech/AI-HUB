@@ -16,18 +16,6 @@ export function publicError(error) {
       ...(error.details === undefined ? {} : { details: error.details }),
     };
   }
-  if (
-    error &&
-    typeof error === "object" &&
-    typeof error.code === "string" &&
-    typeof error.message === "string"
-  ) {
-    return {
-      code: error.code,
-      message: error.message,
-      ...(error.details === undefined ? {} : { details: error.details }),
-    };
-  }
   return {
     code: "INTERNAL_ERROR",
     message: "工作流执行失败，请稍后重试。",

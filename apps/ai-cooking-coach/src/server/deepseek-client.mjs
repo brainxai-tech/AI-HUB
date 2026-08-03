@@ -2,6 +2,12 @@ import { buildCookingPrompt, calculateBodyMetrics, validateProfile } from "../do
 import { buildCookingAgentRuntimePrompt } from "../domain/cooking-agent-prompt.mjs";
 import { applyIngredientGovernance } from "../domain/ingredient-governance.mjs";
 import { extractJsonObject, normalizeMealPlan } from "../domain/plan-schema.mjs";
+import {
+  formatMenuLibraryContext,
+  groundPlanWithMenuLibrary,
+  loadLocalMenuLibrary,
+  retrieveMenuLibraryRecipes,
+} from "./menu-library-index.mjs";
 import { loadLocalNutritionIndex } from "./nutrition-index.mjs";
 import {
   buildCompatibleChatPayload,
@@ -118,8 +124,14 @@ export function buildCookingSystemPrompt(profileInput = {}) {
   return buildCookingAgentRuntimePrompt(profile, bodyMetrics);
 }
 
-export function buildDeepSeekPayload(profile, model = DEFAULT_MODEL, provider = defaultProvider()) {
+export function buildDeepSeekPayload(
+  profile,
+  model = DEFAULT_MODEL,
+  provider = defaultProvider(),
+  menuRecipes = retrieveMenuLibraryRecipes(validateProfile(profile).profile),
+) {
   const validation = validateProfile(profile);
+  const menuContext = formatMenuLibraryContext(menuRecipes);
   return buildCompatibleChatPayload({
     provider,
     model: model || defaultModelForProvider(provider),
@@ -130,7 +142,7 @@ export function buildDeepSeekPayload(profile, model = DEFAULT_MODEL, provider = 
       },
       {
         role: "user",
-        content: buildCookingPrompt(profile)
+        content: `${buildCookingPrompt(profile)}\n\n${menuContext}`
       }
     ],
     temperature: 0.4,
@@ -144,7 +156,8 @@ export async function generatePlanWithDeepSeek({
   provider = defaultProvider(),
   apiBaseUrl = "",
   fetchImpl = globalThis.fetch,
-  nutritionIndex = loadLocalNutritionIndex()
+  nutritionIndex = loadLocalNutritionIndex(),
+  menuLibrary = loadLocalMenuLibrary(),
 }) {
   if (typeof fetchImpl !== "function") {
     throw new Error("当前 Node 环境缺少 fetch。");
@@ -158,18 +171,20 @@ export async function generatePlanWithDeepSeek({
     throw error;
   }
 
+  const menuRecipes = retrieveMenuLibraryRecipes(validation.profile, menuLibrary);
   const content = await requestCompatibleChatCompletion({
     provider,
     apiBaseUrl,
     model: model || defaultModelForProvider(provider),
-    messages: buildDeepSeekPayload(validation.profile, model, provider).messages,
+    messages: buildDeepSeekPayload(validation.profile, model, provider, menuRecipes).messages,
     temperature: 0.4,
     maxTokens: 9000,
     fetchImpl
   });
   const parsed = extractJsonObject(content);
   const normalized = normalizeMealPlan(parsed);
-  return applyIngredientGovernance(normalized, {
+  const recipeGrounded = groundPlanWithMenuLibrary(normalized, menuRecipes);
+  return applyIngredientGovernance(recipeGrounded, {
     nutritionIndex,
     pantry: validation.profile.pantry
   });

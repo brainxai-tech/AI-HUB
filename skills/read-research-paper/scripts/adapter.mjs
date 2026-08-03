@@ -16,8 +16,8 @@ export const adapter = {
     const paper = parsed?.paper;
     if (!paper?.meta || !Array.isArray(paper.sections)) throw validationError("论文解析结果不完整。");
     const model = await client.resolveModel("paper", input?.model);
-    const initialHits = selectParagraphs(paper, paper.meta.title || paper.rawText.slice(0, 500), 12);
-    const paperMap = await client.requestJson("paper", "/api/generate", {
+    const initialHits = selectParagraphs(paper, paper.meta.title || paper.rawText.slice(0, 500), 12, "", true);
+    const rawPaperMap = await client.requestJson("paper", "/api/generate", {
       method: "POST",
       body: buildCoachRequest({
         task: "paper_map",
@@ -28,6 +28,7 @@ export const adapter = {
         hits: initialHits,
       }),
     });
+    const paperMap = enforceEvidenceBoundary(rawPaperMap, initialHits);
     return {
       status: "waiting",
       step: "evidence-session",
@@ -70,13 +71,18 @@ export const adapter = {
     if (!TASKS.has(input?.task)) throw validationError("论文任务必须是 section_explain、qa 或 quiz。");
     const question = optionalText(input?.question, 2000);
     if (input.task === "qa" && !question) throw validationError("问答任务需要 question。");
+    const sectionId = optionalText(input?.sectionId, 160);
+    if (sectionId && !run.context.paper.sections.some((section) => section.id === sectionId)) {
+      throw validationError("选择的论文章节不存在。");
+    }
     const hits = selectParagraphs(
       run.context.paper,
       [question, input?.sectionId, input?.focus].filter(Boolean).join(" "),
       8,
-      optionalText(input?.sectionId, 160),
+      sectionId,
+      input.task !== "qa",
     );
-    const response = await client.requestJson("paper", "/api/generate", {
+    const rawResponse = await client.requestJson("paper", "/api/generate", {
       method: "POST",
       body: buildCoachRequest({
         task: input.task,
@@ -88,6 +94,7 @@ export const adapter = {
         question,
       }),
     });
+    const response = enforceEvidenceBoundary(rawResponse, hits);
     const session = {
       id: `session-${run.context.sessions.length + 1}`,
       at: now(),
@@ -135,18 +142,48 @@ function buildCoachRequest({ task, paper, model, userLevel, outputLanguage, hits
   };
 }
 
-function selectParagraphs(paper, query, limit, sectionId = "") {
+function selectParagraphs(paper, query, limit, sectionId = "", allowUnmatched = false) {
   const paragraphs = paper.sections.flatMap((section) => section.paragraphs || []);
   const scoped = sectionId ? paragraphs.filter((item) => item.sectionId === sectionId) : paragraphs;
   const queryTokens = tokens(query);
-  return scoped
+  const scored = scoped
     .map((paragraph) => ({
       paragraph,
       score: overlapScore(queryTokens, tokens(`${paragraph.sectionTitle} ${paragraph.summary} ${paragraph.text}`)),
     }))
-    .sort((a, b) => b.score - a.score || a.paragraph.index - b.paragraph.index)
+    .sort((a, b) => b.score - a.score || a.paragraph.index - b.paragraph.index);
+  const relevant = queryTokens.size ? scored.filter(({ score }) => score > 0) : scored;
+  return (relevant.length || !allowUnmatched ? relevant : scored)
     .slice(0, limit)
     .map(({ paragraph }) => paragraph);
+}
+
+function enforceEvidenceBoundary(response, hits) {
+  if (!response || typeof response !== "object") return response;
+  const allowed = new Set(hits.flatMap((paragraph) => [paragraph.id, paragraph.citation]).filter(Boolean));
+  const next = structuredClone(response);
+  const data = next.data;
+  if (!data || typeof data !== "object") return next;
+  let removedRefs = 0;
+  for (const key of ["blocks", "cards", "questions", "interviewQuestions"]) {
+    if (!Array.isArray(data[key])) continue;
+    for (const item of data[key]) {
+      if (!item || typeof item !== "object") continue;
+      const refs = Array.isArray(item.refs) ? item.refs.filter((ref) => typeof ref === "string") : [];
+      const safeRefs = refs.filter((ref) => allowed.has(ref));
+      removedRefs += refs.length - safeRefs.length;
+      item.refs = safeRefs;
+      if (item.evidence === "based_on_text" && !safeRefs.length) item.evidence = "uncertain";
+    }
+  }
+  if (!allowed.size || removedRefs) {
+    const uncertainty = Array.isArray(data.uncertainty) ? data.uncertainty : [];
+    const message = !allowed.size
+      ? "本次检索没有找到相关论文段落，回答不得声称由论文证据支持。"
+      : "模型返回的越界引用已移除，请只使用本次检索命中的段落。";
+    data.uncertainty = [...new Set([...uncertainty, message])];
+  }
+  return next;
 }
 
 function tokens(value) {
