@@ -10,22 +10,32 @@ PREVIOUS_LINK="$APP_ROOT/previous"
 DEPLOY_BACKUPS_DIR="$APP_ROOT/deploy-backups"
 ENV_DIR="/etc/ai-project-hub"
 ENV_FILE="$ENV_DIR/ai-project-hub.env"
+WORKFLOW_ENV_FILE="/etc/ai-project-hub/agent-workflow.env"
 LEGACY_ENV_FILE="/home/admin/apps/ai-project-hub/.env"
 PROJECT_TOKEN_REGISTRY="/var/lib/ai-project-hub/project-tokens.json"
 LEGACY_PROJECT_TOKEN_REGISTRY="/home/admin/apps/ai-project-hub/data/project-tokens.json"
-UNIT_FILE="/etc/systemd/system/ai-project-hub.service"
+WORKFLOW_DATA_DIR="/var/lib/ai-project-hub/workflow-runs"
+HUB_UNIT_FILE="/etc/systemd/system/ai-project-hub.service"
+WORKFLOW_UNIT_FILE="/etc/systemd/system/ai-hub-agent-workflow.service"
 NGINX_SITE="/etc/nginx/sites-available/idol-match-test"
 LOCK_FILE="/run/lock/ai-project-hub-deploy.lock"
 LOCAL_HEALTH_URL="http://127.0.0.1:4194/api/health"
 PUBLIC_HEALTH_URL="http://127.0.0.1/hub/api/health"
+WORKFLOW_HEALTH_URL="http://127.0.0.1:4196/health"
 RESTORE_LOCAL_HEALTH_URL="http://127.0.0.1:4194/api/health"
 RESTORE_PUBLIC_HEALTH_URL="http://127.0.0.1/hub/api/health"
 
 rollback_needed=0
 previous_target=""
 backup_dir=""
-had_unit=0
+had_hub_unit=0
+had_workflow_unit=0
 had_nginx=0
+hub_was_enabled=0
+hub_was_running=0
+workflow_was_enabled=0
+workflow_was_running=0
+target_has_workflow=0
 
 log() {
   printf '[ai-project-hub-deploy] %s\n' "$*"
@@ -63,17 +73,44 @@ atomic_link() {
   mv -Tf -- "$temporary" "$link"
 }
 
+read_workflow_token() {
+  awk -F= '$1 == "WORKFLOW_API_TOKEN" { print substr($0, index($0, "=") + 1); exit }' "$WORKFLOW_ENV_FILE"
+}
+
+prepare_workflow_secret() {
+  local temporary="$ENV_DIR/.agent-workflow.env.$$"
+  local token=""
+
+  if [[ ! -f "$WORKFLOW_ENV_FILE" ]]; then
+    command -v openssl >/dev/null || die "openssl is required to create the workflow API token"
+    token="$(openssl rand -hex 32)"
+    [[ "$token" =~ ^[0-9a-f]{64}$ ]] || die "could not create a strong workflow API token"
+    (umask 077 && printf 'WORKFLOW_API_TOKEN=%s\n' "$token" > "$temporary")
+    install -m 0640 -o root -g admin "$temporary" "$WORKFLOW_ENV_FILE"
+    rm -f -- "$temporary"
+    log "created the private workflow service environment"
+  fi
+
+  token="$(read_workflow_token)"
+  [[ "$token" =~ ^[A-Za-z0-9._~+/=-]{32,512}$ ]] || die "$WORKFLOW_ENV_FILE has no valid strong WORKFLOW_API_TOKEN"
+  chown root:admin "$WORKFLOW_ENV_FILE"
+  chmod 0640 "$WORKFLOW_ENV_FILE"
+}
+
 prepare_external_state() {
   install -d -m 0755 -o root -g root "$APP_ROOT" "$RELEASES_DIR"
   install -d -m 0700 -o root -g root "$DEPLOY_BACKUPS_DIR"
   install -d -m 0750 -o root -g admin "$ENV_DIR"
   install -d -m 0700 -o admin -g admin /var/lib/ai-project-hub /var/log/ai-project-hub
+  install -d -m 0700 -o admin -g admin "$WORKFLOW_DATA_DIR"
 
   if [[ ! -f "$ENV_FILE" ]]; then
     [[ -f "$LEGACY_ENV_FILE" ]] || die "missing $ENV_FILE and no legacy environment file is available"
     install -m 0640 -o root -g admin "$LEGACY_ENV_FILE" "$ENV_FILE"
     log "migrated the service environment outside the release directory"
   fi
+
+  prepare_workflow_secret
 
   if [[ ! -f "$PROJECT_TOKEN_REGISTRY" ]]; then
     [[ -f "$LEGACY_PROJECT_TOKEN_REGISTRY" ]] || die "missing project token registry"
@@ -95,16 +132,32 @@ validate_archive() {
 
 validate_release_tree() {
   local release="$1"
+  local require_workflow="${2:-1}"
+  local workflow_files=0
 
   [[ -f "$release/package.json" ]] || die "release is missing package.json"
   [[ -f "$release/server.mjs" ]] || die "release is missing server.mjs"
   [[ -f "$release/public/index.html" ]] || die "release is missing public/index.html"
-  [[ -f "$release/deploy/systemd/ai-project-hub.service" ]] || die "release is missing the systemd unit"
+  [[ -f "$release/deploy/systemd/ai-project-hub.service" ]] || die "release is missing the Hub systemd unit"
   [[ -f "$release/deploy/nginx/idol-match-test.conf" ]] || die "release is missing the Nginx site"
   [[ ! -e "$release/.env" ]] || die "release contains .env"
   [[ ! -e "$release/data" ]] || die "release contains data/"
   [[ ! -e "$release/backups" ]] || die "release contains backups/"
   [[ ! -e "$release/.git" ]] || die "release contains .git/"
+
+  [[ -f "$release/deploy/systemd/ai-hub-agent-workflow.service" ]] && workflow_files=$((workflow_files + 1))
+  [[ -f "$release/packages/agent-workflow-runtime/server.mjs" ]] && workflow_files=$((workflow_files + 1))
+  [[ -d "$release/skills" ]] && workflow_files=$((workflow_files + 1))
+  if [[ "$require_workflow" -eq 1 && "$workflow_files" -ne 3 ]]; then
+    die "release is missing the workflow runtime or systemd unit"
+  fi
+}
+
+release_has_workflow() {
+  local release="$1"
+  [[ -f "$release/deploy/systemd/ai-hub-agent-workflow.service" ]] &&
+    [[ -f "$release/packages/agent-workflow-runtime/server.mjs" ]] &&
+    [[ -d "$release/skills" ]]
 }
 
 package_release() {
@@ -143,24 +196,45 @@ save_operational_config() {
   backup_dir="$DEPLOY_BACKUPS_DIR/$(date -u +%Y%m%dT%H%M%SZ)-$$"
   install -d -m 0700 -o root -g root "$backup_dir"
 
-  if [[ -f "$UNIT_FILE" ]]; then
-    cp -a -- "$UNIT_FILE" "$backup_dir/ai-project-hub.service"
-    had_unit=1
+  if [[ -f "$HUB_UNIT_FILE" ]]; then
+    cp -a -- "$HUB_UNIT_FILE" "$backup_dir/ai-project-hub.service"
+    had_hub_unit=1
+  fi
+  if [[ -f "$WORKFLOW_UNIT_FILE" ]]; then
+    cp -a -- "$WORKFLOW_UNIT_FILE" "$backup_dir/ai-hub-agent-workflow.service"
+    had_workflow_unit=1
   fi
   if [[ -f "$NGINX_SITE" ]]; then
     cp -a -- "$NGINX_SITE" "$backup_dir/idol-match-test.conf"
     had_nginx=1
   fi
+
+  systemctl is-enabled --quiet ai-project-hub && hub_was_enabled=1 || true
+  systemctl is-active --quiet ai-project-hub && hub_was_running=1 || true
+  systemctl is-enabled --quiet ai-hub-agent-workflow && workflow_was_enabled=1 || true
+  systemctl is-active --quiet ai-hub-agent-workflow && workflow_was_running=1 || true
 }
 
 install_operational_config() {
   local release="$1"
-  local unit_candidate="${UNIT_FILE}.candidate.$$"
+  local hub_unit_candidate="${HUB_UNIT_FILE}.candidate.$$"
+  local workflow_unit_candidate="${WORKFLOW_UNIT_FILE}.candidate.$$"
   local nginx_candidate="${NGINX_SITE}.candidate.$$"
 
-  install -m 0644 -o root -g root "$release/deploy/systemd/ai-project-hub.service" "$unit_candidate"
+  install -m 0644 -o root -g root "$release/deploy/systemd/ai-project-hub.service" "$hub_unit_candidate"
   install -m 0644 -o root -g root "$release/deploy/nginx/idol-match-test.conf" "$nginx_candidate"
-  mv -Tf -- "$unit_candidate" "$UNIT_FILE"
+  if [[ "$target_has_workflow" -eq 1 ]]; then
+    install -m 0644 -o root -g root "$release/deploy/systemd/ai-hub-agent-workflow.service" "$workflow_unit_candidate"
+  else
+    systemctl disable --now ai-hub-agent-workflow >/dev/null 2>&1 || true
+  fi
+
+  mv -Tf -- "$hub_unit_candidate" "$HUB_UNIT_FILE"
+  if [[ "$target_has_workflow" -eq 1 ]]; then
+    mv -Tf -- "$workflow_unit_candidate" "$WORKFLOW_UNIT_FILE"
+  else
+    rm -f -- "$WORKFLOW_UNIT_FILE"
+  fi
   mv -Tf -- "$nginx_candidate" "$NGINX_SITE"
 }
 
@@ -177,11 +251,33 @@ wait_for_health() {
   return 1
 }
 
+wait_for_workflow_health() {
+  local attempt
+  local token
+
+  token="$(read_workflow_token)"
+  [[ -n "$token" ]] || return 1
+  for attempt in $(seq 1 20); do
+    if printf 'header = "Authorization: Bearer %s"\n' "$token" |
+      curl --fail --silent --max-time 2 --config - "$WORKFLOW_HEALTH_URL" >/dev/null; then
+      return 0
+    fi
+    sleep 1
+  done
+  return 1
+}
+
 restore_operational_config() {
-  if [[ "$had_unit" -eq 1 ]]; then
-    install -m 0644 -o root -g root "$backup_dir/ai-project-hub.service" "$UNIT_FILE"
+  if [[ "$had_hub_unit" -eq 1 ]]; then
+    install -m 0644 -o root -g root "$backup_dir/ai-project-hub.service" "$HUB_UNIT_FILE"
   else
-    rm -f -- "$UNIT_FILE"
+    rm -f -- "$HUB_UNIT_FILE"
+  fi
+
+  if [[ "$had_workflow_unit" -eq 1 ]]; then
+    install -m 0644 -o root -g root "$backup_dir/ai-hub-agent-workflow.service" "$WORKFLOW_UNIT_FILE"
+  else
+    rm -f -- "$WORKFLOW_UNIT_FILE"
   fi
 
   if [[ "$had_nginx" -eq 1 ]]; then
@@ -189,6 +285,29 @@ restore_operational_config() {
   else
     rm -f -- "$NGINX_SITE"
   fi
+}
+
+restore_service_state() {
+  local service="$1"
+  local was_enabled="$2"
+  local was_running="$3"
+
+  if [[ "$was_enabled" -eq 1 ]]; then
+    systemctl enable "$service"
+  else
+    systemctl disable "$service"
+  fi
+
+  if [[ "$was_running" -eq 1 ]]; then
+    systemctl restart "$service"
+  else
+    systemctl stop "$service"
+  fi
+}
+
+restore_service_states() {
+  restore_service_state ai-project-hub "$hub_was_enabled" "$hub_was_running"
+  restore_service_state ai-hub-agent-workflow "$workflow_was_enabled" "$workflow_was_running"
 }
 
 rollback_deployment() {
@@ -204,12 +323,15 @@ rollback_deployment() {
   restore_operational_config
   systemctl daemon-reload
   nginx -t
-  systemctl restart ai-project-hub
-  if ! wait_for_health "$RESTORE_LOCAL_HEALTH_URL"; then
+  restore_service_states
+  if [[ "$hub_was_running" -eq 1 ]] && ! wait_for_health "$RESTORE_LOCAL_HEALTH_URL"; then
     log "restored release did not pass the local health check" >&2
   fi
+  if [[ "$workflow_was_running" -eq 1 ]] && ! wait_for_workflow_health; then
+    log "restored workflow service did not pass its authenticated health check" >&2
+  fi
   systemctl reload nginx
-  if ! wait_for_health "$RESTORE_PUBLIC_HEALTH_URL"; then
+  if [[ "$hub_was_running" -eq 1 ]] && ! wait_for_health "$RESTORE_PUBLIC_HEALTH_URL"; then
     log "restored release did not pass the public health check" >&2
   fi
   set -e
@@ -230,9 +352,15 @@ on_error() {
 
 activate_release() {
   local release="$1"
+  local require_workflow="${2:-1}"
   local old_target
 
-  validate_release_tree "$release"
+  validate_release_tree "$release" "$require_workflow"
+  if release_has_workflow "$release"; then
+    target_has_workflow=1
+  else
+    target_has_workflow=0
+  fi
   old_target="$(readlink -f "$CURRENT_LINK" 2>/dev/null || true)"
   if [[ -e "$CURRENT_LINK" && ! -L "$CURRENT_LINK" ]]; then
     die "$CURRENT_LINK exists but is not a symbolic link"
@@ -244,11 +372,24 @@ activate_release() {
   install_operational_config "$release"
   atomic_link "$release" "$CURRENT_LINK"
 
-  systemd-analyze verify "$UNIT_FILE"
+  if [[ "$target_has_workflow" -eq 1 ]]; then
+    systemd-analyze verify "$HUB_UNIT_FILE" "$WORKFLOW_UNIT_FILE"
+  else
+    systemd-analyze verify "$HUB_UNIT_FILE"
+  fi
   nginx -t
   systemctl daemon-reload
+  if [[ "$target_has_workflow" -eq 1 ]]; then
+    systemctl enable ai-project-hub ai-hub-agent-workflow
+  else
+    systemctl enable ai-project-hub
+  fi
   systemctl restart ai-project-hub
   wait_for_health "$LOCAL_HEALTH_URL"
+  if [[ "$target_has_workflow" -eq 1 ]]; then
+    systemctl restart ai-hub-agent-workflow
+    wait_for_workflow_health
+  fi
   systemctl reload nginx
   wait_for_health "$PUBLIC_HEALTH_URL"
 
@@ -264,6 +405,7 @@ main() {
   local archive=""
   local commit=""
   local release=""
+  local require_workflow=1
 
   require_root
   command -v flock >/dev/null || die "flock is required"
@@ -287,9 +429,10 @@ main() {
   else
     release="$RELEASES_DIR/$commit"
     [[ -d "$release" ]] || die "release is not installed: $commit"
+    require_workflow=0
   fi
 
-  activate_release "$release"
+  activate_release "$release" "$require_workflow"
 }
 
 trap 'on_error $? $LINENO' ERR

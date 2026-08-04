@@ -18,7 +18,7 @@ Environment=AIHUB_WORKFLOW_DATA_DIR=/var/lib/ai-project-hub/workflow-runs
 Environment=AIHUB_SHARED_PROJECT_ORIGIN=http://127.0.0.1:4195
 Environment=AIHUB_ESSAY_ORIGIN=http://127.0.0.1:4204/essay/
 Environment=AIHUB_COURSE_TIMEOUT_MS=200000
-EnvironmentFile=-/etc/ai-project-hub/agent-workflow.env
+EnvironmentFile=/etc/ai-project-hub/agent-workflow.env
 ExecStart=/usr/bin/node /opt/ai-project-hub/current/packages/agent-workflow-runtime/server.mjs
 Restart=on-failure
 RestartSec=3

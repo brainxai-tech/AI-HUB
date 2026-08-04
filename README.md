@@ -86,7 +86,7 @@ npm run start:suite
 
 ## Agent Skill 与持久化工作流
 
-`agent-workflow-runtime` 在 `127.0.0.1:4196` 加载仓库 `skills/`，把项目原有 API 组合为可恢复的多步骤运行。当前首批覆盖作文、备餐、论文和课程四个项目，支持检查点、项目动作、失败重试、JSON 文件持久化和知识引用元数据。
+`agent-workflow-runtime` 在 `127.0.0.1:4196` 加载仓库 `skills/`，把项目原有 API 组合为可恢复的多步骤运行。当前首批覆盖作文、备餐、论文、课程、合同条款复核和 TraceSheet 六个项目，支持检查点、项目动作、失败重试、显式删除、30 天默认保留期、JSON 文件持久化和知识引用元数据。合同工作流是 `model-only`，不声称连接法规知识库；TraceSheet 只向服务端发送文件/工作表/字段/行数元数据，原始行与单元格始终留在浏览器。
 
 本地接口：
 
@@ -97,8 +97,17 @@ npm run start:suite
 - `POST /api/runs/<run-id>/resume`：提交当前检查点输入。
 - `POST /api/runs/<run-id>/actions/<action-id>`：执行不覆盖原结果的项目动作，例如临时换餐。
 - `POST /api/runs/<run-id>/retry`：重试保留的失败命令。
+- `DELETE /api/runs/<run-id>`：删除指定运行及其持久化内容。
 
-服务默认仅监听回环地址，不由生产 Nginx 公开。设置 `WORKFLOW_API_TOKEN` 后，所有接口都要求 `Authorization: Bearer ...`。生产运行数据写入 `/var/lib/ai-project-hub/workflow-runs`，不得进入 release 或日志。
+服务默认仅监听回环地址，不由生产 Nginx 公开。生产部署在 `/etc/ai-project-hub/agent-workflow.env` 生成独立强随机 `WORKFLOW_API_TOKEN`，Hub 与 workflow unit 同时读取它；浏览器不会收到该令牌。运行数据写入 mode `0700` 的 `/var/lib/ai-project-hub/workflow-runs`，不得进入 release 或日志。
+
+管理员工作流中心位于 `/hub/workflows/`。所有 `/hub/api/workflows/*` 请求先由 Hub 使用 `HUB_ADMIN_TOKEN` 鉴权，再由 Hub 在服务端注入内部 workflow 令牌。生产站点目前只有 HTTP，正式管理操作应通过 SSH 隧道访问，例如：
+
+```bash
+ssh -L 14194:127.0.0.1:4194 admin@server
+```
+
+随后在本机打开 `http://127.0.0.1:14194/hub/workflows/`。
 
 ## 验证
 
@@ -118,7 +127,7 @@ npm run e2e
 - `public/dice-estate/`：Dice Estate 的 Hub 静态游戏资源。
 - `packages/shared-project-runtime/`：共享页面服务和 API 适配层。
 - `packages/agent-workflow-runtime/`：加载仓库 Skill、保存工作流状态并调用现有项目 API。
-- `skills/`：作文、备餐、论文和课程四个首批 Skill 包；每个包包含 Skill 指令、机器清单、适配器和契约参考。
+- `skills/`：作文、备餐、论文、课程、合同复核和 TraceSheet 六个首批 Skill 包；每个包包含 Skill 指令、机器清单、适配器和契约参考。
 - `public/`：Hub 首页、Key 配置页、统一选择器和共享视觉资源。
 - `deploy/project-manifest.json`：33 个 `projects` 和 5 个 `games` 的唯一运行清单。
 - `scripts/local-suite.mjs`：完整套件的进程监督、项目凭证和 Pikafish 准备。
@@ -131,12 +140,20 @@ npm run e2e
 生产版本位于 `/opt/ai-project-hub/releases/<commit>`，`/opt/ai-project-hub/current` 只通过原子软链接切换。密钥与运行数据分别保存在 `/etc/ai-project-hub`、`/var/lib/ai-project-hub` 和 `/var/log/ai-project-hub`，不得打入 release。
 
 ```bash
-commit=$(git rev-parse --short HEAD)
+commit=$(git rev-parse HEAD)
 git archive --format=tar.gz --output="ai-project-hub-$commit.tar.gz" HEAD
 scp "ai-project-hub-$commit.tar.gz" admin@server:/home/admin/staging/releases/
 sudo /opt/ai-project-hub/current/deploy/deploy.sh \
   "/home/admin/staging/releases/ai-project-hub-$commit.tar.gz" "$commit"
 ```
+
+如果服务器当前仍使用不认识 workflow unit 的旧版部署脚本，第一次发布需在切换到新 release 后再执行一次新脚本的激活模式：
+
+```bash
+sudo /opt/ai-project-hub/current/deploy/deploy.sh --activate "$commit"
+```
+
+激活会原子安装 Hub 与 workflow 两个 unit，依次检查 4194、带令牌的回环 4196 和 Nginx 健康状态。任一步失败都会恢复旧 release、两个 unit 及其原启用/运行状态。回滚到不包含 workflow runtime 的旧 release 时会停用 4196。
 
 回滚：
 

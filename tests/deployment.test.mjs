@@ -126,6 +126,13 @@ test("release deployment is atomic, secret-free, and health checked", async () =
     'PROJECT_TOKEN_REGISTRY="/var/lib/ai-project-hub/project-tokens.json"',
     'LEGACY_PROJECT_TOKEN_REGISTRY="/home/admin/apps/ai-project-hub/data/project-tokens.json"',
     'install -m 0600 -o admin -g admin "$LEGACY_PROJECT_TOKEN_REGISTRY" "$PROJECT_TOKEN_REGISTRY"',
+    'WORKFLOW_ENV_FILE="/etc/ai-project-hub/agent-workflow.env"',
+    'WORKFLOW_DATA_DIR="/var/lib/ai-project-hub/workflow-runs"',
+    'WORKFLOW_HEALTH_URL="http://127.0.0.1:4196/health"',
+    'install -d -m 0700 -o admin -g admin "$WORKFLOW_DATA_DIR"',
+    'systemctl enable ai-project-hub ai-hub-agent-workflow',
+    'wait_for_workflow_health',
+    'restore_service_states',
   ]) {
     assert.match(script, new RegExp(requirement.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }

@@ -14,6 +14,7 @@ Environment=NODE_ENV=production
 Environment=HUB_PROJECT_TOKENS_PATH=/var/lib/ai-project-hub/project-tokens.json
 Environment=HUB_COURSE_UPSTREAM_TIMEOUT_MS=180000
 EnvironmentFile=/etc/ai-project-hub/ai-project-hub.env
+EnvironmentFile=-/etc/ai-project-hub/agent-workflow.env
 ExecStart=/usr/bin/node /opt/ai-project-hub/current/server.mjs
 Restart=on-failure
 RestartSec=3
