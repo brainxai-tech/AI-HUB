@@ -157,6 +157,12 @@ async function forwardSanitizedError(upstreamResponse, response, statusCode, api
     chunks.push(chunk);
   }
 
+  if (statusCode === 401) {
+    return sendJson(response, 502, {
+      error: { code: "WORKFLOW_UNAVAILABLE", message: "Workflow service is unavailable." },
+    });
+  }
+
   let payload;
   try {
     payload = JSON.parse(Buffer.concat(chunks).toString("utf8"));

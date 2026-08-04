@@ -49,6 +49,13 @@ test("workflow proxy strips browser credentials and injects only its internal to
       }));
       return;
     }
+    if (request.url.endsWith("/resume")) {
+      response.writeHead(401, { "content-type": "application/json; charset=utf-8" });
+      response.end(JSON.stringify({
+        error: { code: "UNAUTHORIZED", message: "internal-token was rejected" },
+      }));
+      return;
+    }
     response.writeHead(200, {
       "content-type": "application/json; charset=utf-8",
       authorization: "Bearer internal-token",
@@ -107,6 +114,15 @@ test("workflow proxy strips browser credentials and injects only its internal to
   assert.match(rejectedBody, /RETRY_REJECTED/);
   assert.equal(rejectedBody.includes("internal-token"), false);
   assert.equal(rejected.headers.get("x-internal-secret"), null);
+
+  const internalAuthFailure = await fetch(
+    `http://127.0.0.1:${gatewayPort}/api/workflows/runs/sample-run-00000001/resume`,
+    { method: "POST" },
+  );
+  const internalAuthBody = await internalAuthFailure.text();
+  assert.equal(internalAuthFailure.status, 502);
+  assert.match(internalAuthBody, /WORKFLOW_UNAVAILABLE/);
+  assert.equal(internalAuthBody.includes("internal-token"), false);
 });
 
 test("workflow proxy rejects unsupported methods and sanitizes unavailable upstream errors", async (t) => {
