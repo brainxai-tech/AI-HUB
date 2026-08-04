@@ -37,6 +37,8 @@ hub_was_running=0
 workflow_was_enabled=0
 workflow_was_running=0
 target_has_workflow=0
+package_temporary=""
+package_trusted=""
 
 log() {
   printf '[ai-project-hub-deploy] %s\n' "$*"
@@ -237,6 +239,23 @@ restore_trusted_release_files() {
   cp -a -- "$trusted/deploy" "$trusted/scripts" "$release/"
 }
 
+cleanup_package_workspace() {
+  local target basename
+
+  for target in "$package_temporary" "$package_trusted"; do
+    [[ -n "$target" ]] || continue
+    basename="${target#"$RELEASES_DIR/"}"
+    if [[ "$target" != "$RELEASES_DIR/"* || ! "$basename" =~ ^\.[0-9a-f]{7,40}\.(tmp|trusted)\.[0-9]+$ ]]; then
+      log "ERROR: refusing to clean unexpected package workspace: $target" >&2
+      return 1
+    fi
+    rm -rf -- "$target"
+  done
+
+  package_temporary=""
+  package_trusted=""
+}
+
 package_release() {
   local archive="$1"
   local commit="$2"
@@ -252,8 +271,10 @@ package_release() {
   fi
 
   validate_archive "$archive"
+  package_temporary="$temporary"
+  package_trusted="$trusted"
   install -d -m 0755 -o root -g root "$temporary"
-  trap 'rm -rf -- "$temporary" "$trusted"' RETURN
+  trap cleanup_package_workspace RETURN
   tar -xzf "$archive" -C "$temporary" --no-same-owner --no-same-permissions
   validate_release_tree "$temporary"
   require_build_space
@@ -277,6 +298,8 @@ package_release() {
   chown -R root:root "$temporary"
   mv -T -- "$temporary" "$release"
   rm -rf -- "$trusted"
+  package_temporary=""
+  package_trusted=""
   trap - RETURN
   printf '%s\n' "$release"
 }
@@ -452,6 +475,9 @@ on_error() {
 
   trap - ERR
   log "command failed at line $line" >&2
+  if ! cleanup_package_workspace; then
+    log "failed to clean the temporary package workspace" >&2
+  fi
   if [[ "$rollback_needed" -eq 1 ]]; then
     rollback_deployment "$status" || true
   fi
