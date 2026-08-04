@@ -171,6 +171,16 @@ require_build_space() {
     die "at least $MIN_BUILD_AVAILABLE_KB KiB must be available to build a release"
 }
 
+install_locked_dependencies() {
+  local release="$1"
+  local package_dir="$2"
+
+  require_build_space
+  log "installing locked dependencies for $package_dir" >&2
+  (cd "$release/$package_dir" && runuser -u admin -- env npm_config_cache="$release/.npm-cache" \
+    npm ci --no-audit --no-fund) >&2
+}
+
 prepare_release_dependencies() {
   local release="$1"
   local seed="$2"
@@ -205,6 +215,12 @@ prepare_release_dependencies() {
         cp -al -- "$resolved_modules" "$release/$package_dir/node_modules"
         [[ ! -L "$release/$package_dir/node_modules" ]] ||
           die "reused dependency directory for $package_dir must not be a symlink"
+        if ! (cd "$release/$package_dir" && runuser -u admin -- env npm_config_cache="$release/.npm-cache" \
+          npm ls --all --omit=optional --no-audit --no-fund >/dev/null 2>&1); then
+          rm -rf -- "$release/$package_dir/node_modules"
+          log "cached dependencies for $package_dir are incomplete; trying the next locked cache" >&2
+          continue
+        fi
         dependency_release="${resolved_modules#"$RELEASES_DIR/"}"
         printf '%s\n' "${dependency_release%%/*}" >> "$release/.dependency-releases"
         linked=1
@@ -213,10 +229,7 @@ prepare_release_dependencies() {
       fi
     done
     if [[ "$linked" -eq 0 ]]; then
-      require_build_space
-      log "installing locked dependencies for $package_dir" >&2
-      (cd "$release/$package_dir" && runuser -u admin -- env npm_config_cache="$release/.npm-cache" \
-        npm ci --no-audit --no-fund) >&2
+      install_locked_dependencies "$release" "$package_dir"
     fi
   done < <(find "$release" -path '*/node_modules' -prune -o -type f -name package-lock.json -print0)
 

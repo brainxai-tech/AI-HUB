@@ -57,6 +57,8 @@ test("agent workflow runtime is packaged, loopback-only, private, and activated 
   assert.match(deploy, /on_error\(\)[\s\S]*cleanup_package_workspace/);
   assert.match(deploy, /cp -al -- "\$resolved_modules" "\$release\/\$package_dir\/node_modules"/);
   assert.match(deploy, /\[\[ ! -L "\$release\/\$package_dir\/node_modules" \]\]/);
+  assert.match(deploy, /npm ls --all --omit=optional --no-audit --no-fund/);
+  assert.match(deploy, /cached dependencies for \$package_dir are incomplete; trying the next locked cache/);
   assert.match(deploy, /AIHUB_SCAN_ROOT="\$temporary"/);
   assert.match(deploy, /AIHUB_SCAN_MANIFEST="\$trusted\/deploy\/project-manifest\.json"/);
   assert.match(deploy, /node "\$trusted\/scripts\/security-scan\.mjs"/);
