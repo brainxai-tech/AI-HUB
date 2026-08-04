@@ -36,58 +36,74 @@ export class WorkflowRunner {
       events: [event("created", timestamp, { step: "start" })],
     };
     await this.store.save(run);
-    return this.#execute(run, adapter, run.pendingCommand);
+    return this.#withRunLock(run.id, () => this.#executeLocked(run, adapter, run.pendingCommand));
   }
 
   async get(id) {
     return this.store.get(id);
   }
 
+  async delete(id) {
+    return this.#withRunLock(id, async () => {
+      const deleted = await this.store.delete(id);
+      if (!deleted) {
+        throw new WorkflowError("RUN_NOT_FOUND", "没有找到这次工作流运行。", 404);
+      }
+      return true;
+    });
+  }
+
   async resume(id, input) {
-    const run = await this.store.get(id);
-    const adapter = await this.#compatibleAdapter(run);
-    if (run.status !== "waiting") {
-      throw new WorkflowError("RUN_NOT_WAITING", "当前工作流不在等待输入状态。", 409);
-    }
-    if (typeof adapter.resume !== "function") {
-      throw new WorkflowError("RESUME_NOT_SUPPORTED", "这个 Skill 不支持继续执行。", 409);
-    }
-    const command = {
-      type: "resume",
-      originStatus: run.status,
-      checkpointId: run.checkpoint?.id,
-      input: cloneJson(input ?? {}),
-    };
-    run.pendingCommand = command;
-    return this.#execute(run, adapter, command);
+    return this.#withRunLock(id, async () => {
+      const run = await this.store.get(id);
+      const adapter = await this.#compatibleAdapter(run);
+      if (run.status !== "waiting") {
+        throw new WorkflowError("RUN_NOT_WAITING", "当前工作流不在等待输入状态。", 409);
+      }
+      if (typeof adapter.resume !== "function") {
+        throw new WorkflowError("RESUME_NOT_SUPPORTED", "这个 Skill 不支持继续执行。", 409);
+      }
+      const command = {
+        type: "resume",
+        originStatus: run.status,
+        checkpointId: run.checkpoint?.id,
+        input: cloneJson(input ?? {}),
+      };
+      run.pendingCommand = command;
+      return this.#executeLocked(run, adapter, command);
+    });
   }
 
   async action(id, actionId, input) {
-    const run = await this.store.get(id);
-    const adapter = await this.#compatibleAdapter(run);
-    if (!new Set(["waiting", "completed"]).has(run.status)) {
-      throw new WorkflowError("ACTION_NOT_AVAILABLE", "当前工作流状态不能执行这个动作。", 409);
-    }
-    if (typeof adapter.action !== "function") {
-      throw new WorkflowError("ACTION_NOT_SUPPORTED", "这个 Skill 没有可调用动作。", 404);
-    }
-    const command = {
-      type: "action",
-      originStatus: run.status,
-      actionId,
-      input: cloneJson(input ?? {}),
-    };
-    run.pendingCommand = command;
-    return this.#execute(run, adapter, command);
+    return this.#withRunLock(id, async () => {
+      const run = await this.store.get(id);
+      const adapter = await this.#compatibleAdapter(run);
+      if (!new Set(["waiting", "completed"]).has(run.status)) {
+        throw new WorkflowError("ACTION_NOT_AVAILABLE", "当前工作流状态不能执行这个动作。", 409);
+      }
+      if (typeof adapter.action !== "function") {
+        throw new WorkflowError("ACTION_NOT_SUPPORTED", "这个 Skill 没有可调用动作。", 404);
+      }
+      const command = {
+        type: "action",
+        originStatus: run.status,
+        actionId,
+        input: cloneJson(input ?? {}),
+      };
+      run.pendingCommand = command;
+      return this.#executeLocked(run, adapter, command);
+    });
   }
 
   async retry(id) {
-    const run = await this.store.get(id);
-    const adapter = await this.#compatibleAdapter(run);
-    if (run.status !== "failed" || !run.pendingCommand) {
-      throw new WorkflowError("RUN_NOT_RETRYABLE", "当前工作流没有可重试的失败步骤。", 409);
-    }
-    return this.#execute(run, adapter, run.pendingCommand);
+    return this.#withRunLock(id, async () => {
+      const run = await this.store.get(id);
+      const adapter = await this.#compatibleAdapter(run);
+      if (run.status !== "failed" || !run.pendingCommand) {
+        throw new WorkflowError("RUN_NOT_RETRYABLE", "当前工作流没有可重试的失败步骤。", 409);
+      }
+      return this.#executeLocked(run, adapter, run.pendingCommand);
+    });
   }
 
   async #compatibleAdapter(run) {
@@ -109,68 +125,72 @@ export class WorkflowRunner {
     return this.registry.adapter(run.skillId);
   }
 
-  async #execute(run, adapter, command) {
-    if (this.lockedRuns.has(run.id)) {
+  async #withRunLock(id, operation) {
+    if (this.lockedRuns.has(id)) {
       throw new WorkflowError("RUN_BUSY", "这次工作流正在执行，请稍后再试。", 409);
     }
-    this.lockedRuns.add(run.id);
+    this.lockedRuns.add(id);
+    try {
+      return await operation();
+    } finally {
+      this.lockedRuns.delete(id);
+    }
+  }
+
+  async #executeLocked(run, adapter, command) {
     const adapterRun = cloneJson(run);
     adapterRun.status = command.originStatus || adapterRun.status;
     adapterRun.error = null;
 
+    const startedAt = this.now();
+    run.status = "running";
+    run.error = null;
+    run.updatedAt = startedAt;
+    run.events.push(event("command_started", startedAt, commandMetadata(command)));
     try {
-      const startedAt = this.now();
-      run.status = "running";
-      run.error = null;
-      run.updatedAt = startedAt;
-      run.events.push(event("command_started", startedAt, commandMetadata(command)));
-      try {
-        await this.store.save(run);
-      } catch (error) {
-        restoreRun(run, adapterRun);
-        throw error;
-      }
-      const runningRun = cloneJson(run);
+      await this.store.save(run);
+    } catch (error) {
+      restoreRun(run, adapterRun);
+      throw error;
+    }
+    const runningRun = cloneJson(run);
 
-      try {
-        const method = command.type === "start" ? "start" : command.type;
-        const transition = await adapter[method]({
-          run: adapterRun,
-          input: cloneJson(command.input),
-          actionId: command.actionId,
-          checkpointId: command.checkpointId,
-          client: this.client,
-          now: this.now,
-        });
-        validateTransition(transition);
-        applyTransition(run, transition);
-        run.pendingCommand = null;
-        run.updatedAt = this.now();
-        run.events.push(event("command_completed", run.updatedAt, {
-          command: command.type,
-          step: run.step,
-          status: run.status,
-        }));
-        await this.store.save(run);
-        return run;
-      } catch (error) {
-        restoreRun(run, runningRun);
-        const validation = isValidationError(error);
-        const correctable = validation && new Set(["resume", "action"]).has(command.type);
-        run.status = correctable ? adapterRun.status : "failed";
-        run.error = publicError(validation ? asValidationError(error) : error);
-        if (correctable) run.pendingCommand = null;
-        run.updatedAt = this.now();
-        run.events.push(event(correctable ? "command_rejected" : "command_failed", run.updatedAt, {
-          command: command.type,
-          step: run.step,
-          code: run.error.code,
-        }));
-        await this.store.save(run);
-        return run;
-      }
-    } finally {
-      this.lockedRuns.delete(run.id);
+    try {
+      const method = command.type === "start" ? "start" : command.type;
+      const transition = await adapter[method]({
+        run: adapterRun,
+        input: cloneJson(command.input),
+        actionId: command.actionId,
+        checkpointId: command.checkpointId,
+        client: this.client,
+        now: this.now,
+      });
+      validateTransition(transition);
+      applyTransition(run, transition);
+      run.pendingCommand = null;
+      run.updatedAt = this.now();
+      run.events.push(event("command_completed", run.updatedAt, {
+        command: command.type,
+        step: run.step,
+        status: run.status,
+      }));
+      await this.store.save(run);
+      return run;
+    } catch (error) {
+      restoreRun(run, runningRun);
+      const validation = isValidationError(error);
+      const correctable = validation && new Set(["resume", "action"]).has(command.type);
+      run.status = correctable ? adapterRun.status : "failed";
+      run.error = publicError(validation ? asValidationError(error) : error);
+      if (correctable) run.pendingCommand = null;
+      run.updatedAt = this.now();
+      run.events.push(event(correctable ? "command_rejected" : "command_failed", run.updatedAt, {
+        command: command.type,
+        step: run.step,
+        code: run.error.code,
+      }));
+      await this.store.save(run);
+      return run;
     }
   }
 }

@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 import { WorkflowError } from "./errors.mjs";
 
 const SKILL_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const WORKFLOW_ITEM_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export class SkillRegistry {
   constructor(skillsRoot) {
@@ -77,6 +78,21 @@ function validateManifest(manifest, directoryName) {
   }
   if (!manifest.workflow || typeof manifest.workflow.id !== "string" || !manifest.workflow.id.trim()) {
     throw new Error(`Skill ${manifest.id} is missing workflow metadata.`);
+  }
+  if (!Number.isInteger(manifest.workflow.version) || manifest.workflow.version < 1) {
+    throw new Error(`Skill ${manifest.id} workflow version must be a positive integer.`);
+  }
+  for (const field of ["steps", "checkpoints", "actions"]) {
+    validateWorkflowItems(manifest.id, field, manifest.workflow[field]);
+  }
+}
+
+function validateWorkflowItems(skillId, field, items) {
+  if (!Array.isArray(items)) {
+    throw new Error(`Skill ${skillId} workflow ${field} must be an array.`);
+  }
+  if (items.some((item) => typeof item !== "string" || !WORKFLOW_ITEM_PATTERN.test(item))) {
+    throw new Error(`Skill ${skillId} workflow ${field} must contain only kebab-case identifiers.`);
   }
 }
 

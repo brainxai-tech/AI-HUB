@@ -37,6 +37,12 @@ export function createWorkflowHttpServer({ runner, registry, apiToken = process.
       if (request.method === "GET" && runMatch) {
         return sendJson(response, 200, { run: await runner.get(runMatch[1]) });
       }
+      if (request.method === "DELETE" && runMatch) {
+        await runner.delete(runMatch[1]);
+        response.writeHead(204);
+        response.end();
+        return;
+      }
       const resumeMatch = pathname.match(/^\/api\/runs\/([a-z0-9-]+)\/resume$/i);
       if (request.method === "POST" && resumeMatch) {
         const body = await readJson(request);
@@ -100,6 +106,7 @@ function sendJson(response, status, body) {
 
 function setSecurityHeaders(response) {
   response.setHeader("cache-control", "no-store");
+  response.setHeader("access-control-allow-methods", "GET, POST, DELETE, OPTIONS");
   response.setHeader("x-content-type-options", "nosniff");
   response.setHeader("x-frame-options", "DENY");
   response.setHeader("referrer-policy", "no-referrer");

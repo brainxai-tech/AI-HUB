@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { workflowRetentionDays } from "./src/config.mjs";
 import { createWorkflowHttpServer } from "./src/http-api.mjs";
 import { ProjectClient } from "./src/project-client.mjs";
 import { FileRunStore } from "./src/run-store.mjs";
@@ -15,9 +16,10 @@ const dataRoot = path.resolve(
 );
 const host = process.env.HOST || "127.0.0.1";
 const port = Number(process.env.PORT || 4196);
+const retentionDays = workflowRetentionDays(process.env);
 
 const registry = await new SkillRegistry(skillsRoot).load();
-const store = new FileRunStore(dataRoot);
+const store = new FileRunStore(dataRoot, { retentionDays });
 await store.initialize();
 const runner = new WorkflowRunner({ registry, store, client: new ProjectClient() });
 const server = createWorkflowHttpServer({ runner, registry });

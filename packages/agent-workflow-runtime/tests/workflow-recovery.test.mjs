@@ -102,7 +102,9 @@ test("store initialization reconciles an interrupted running command into a retr
     events: [],
   });
 
-  const recoveredStore = new FileRunStore(directory);
+  const recoveredStore = new FileRunStore(directory, {
+    now: () => Date.parse("2026-08-04T00:00:00.000Z"),
+  });
   await recoveredStore.initialize();
   const recovered = await recoveredStore.get("sample-skill-00000000");
   assert.equal(recovered.status, "failed");
@@ -231,6 +233,64 @@ test("public errors never expose native filesystem paths or error codes", () => 
     code: "INTERNAL_ERROR",
     message: "工作流执行失败，请稍后重试。",
   });
+});
+
+test("runner deletion rejects unknown and actively executing runs", async (t) => {
+  let releaseAction;
+  let markActionStarted;
+  const actionStarted = new Promise((resolve) => { markActionStarted = resolve; });
+  const actionReleased = new Promise((resolve) => { releaseAction = resolve; });
+  const { runner } = await harness(t, {
+    async start() { return waitingTransition(); },
+    async action() {
+      markActionStarted();
+      await actionReleased;
+      return waitingTransition();
+    },
+  });
+
+  await assert.rejects(
+    () => runner.delete("unknown-run-00000001"),
+    { code: "RUN_NOT_FOUND", status: 404 },
+  );
+
+  const created = await runner.create("sample-skill", {});
+  const activeAction = runner.action(created.id, "adjust", {});
+  await actionStarted;
+  await assert.rejects(() => runner.delete(created.id), { code: "RUN_BUSY", status: 409 });
+  releaseAction();
+  await activeAction;
+
+  assert.equal(await runner.delete(created.id), true);
+  await assert.rejects(() => runner.get(created.id), { code: "RUN_NOT_FOUND", status: 404 });
+});
+
+test("run locking starts before state loading so deletion cannot race with resume", async (t) => {
+  let releaseAdapter;
+  let markAdapterRequested;
+  const adapterRequested = new Promise((resolve) => { markAdapterRequested = resolve; });
+  const adapterReleased = new Promise((resolve) => { releaseAdapter = resolve; });
+  const { runner } = await harness(t, {
+    async start() { return waitingTransition(); },
+    async resume() { return waitingTransition(); },
+  });
+  const created = await runner.create("sample-skill", {});
+  const loadAdapter = runner.registry.adapter.bind(runner.registry);
+  runner.registry.adapter = async (id) => {
+    markAdapterRequested();
+    await adapterReleased;
+    return loadAdapter(id);
+  };
+
+  const resumed = runner.resume(created.id, { approved: true });
+  await adapterRequested;
+  try {
+    await assert.rejects(() => runner.delete(created.id), { code: "RUN_BUSY", status: 409 });
+  } finally {
+    releaseAdapter();
+  }
+  await resumed;
+  assert.equal((await runner.get(created.id)).status, "waiting");
 });
 
 async function harness(t, adapter) {
