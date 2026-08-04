@@ -91,10 +91,10 @@ test("TraceSheet prepare rejects raw spreadsheet keys recursively but not matchi
     );
   }
 
-  assert.deepEqual(
-    await adapter.prepare({ type: "start", input: { label: "data", databaseName: "rows" } }),
-    { label: "data", databaseName: "rows" },
-  );
+  const allowedMetadata = structuredClone(metadataInput);
+  allowedMetadata.goal = "normalize data rows";
+  allowedMetadata.context.sources[0].name = "rows database";
+  assert.deepEqual(await adapter.prepare({ type: "start", input: allowedMetadata }), allowedMetadata);
 });
 
 test("forbidden TraceSheet input is rejected before any run file or pending command is persisted", async (t) => {
@@ -126,9 +126,23 @@ test("forbidden TraceSheet input is rejected before any run file or pending comm
   );
   assert.deepEqual(await readdir(directory), []);
 
-  const created = await runner.create("operate-trace-sheet", metadataInput);
+  const created = await runner.create("operate-trace-sheet", {
+    ...metadataInput,
+    records: [{ secret: "record-must-not-persist" }],
+    context: {
+      ...metadataInput.context,
+      sources: [{
+        ...metadataInput.context.sources[0],
+        samples: [{ secret: "sample-must-not-persist" }],
+        contentHash: "content-hash-must-not-persist",
+      }],
+    },
+  });
   const pathname = path.join(directory, `${created.id}.json`);
   const before = await readFile(pathname, "utf8");
+  assert.equal(before.includes("record-must-not-persist"), false);
+  assert.equal(before.includes("sample-must-not-persist"), false);
+  assert.equal(before.includes("content-hash-must-not-persist"), false);
   await assert.rejects(
     runner.action(created.id, "revise-plan", { goal: "继续去重", nested: { data: ["must-not-persist"] } }),
     (error) => error?.code === "VALIDATION_ERROR",

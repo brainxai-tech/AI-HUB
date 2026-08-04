@@ -3,6 +3,8 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { runWithTransientWindowsRetry } from "./workspace-process-policy.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const manifest = JSON.parse(readFileSync(path.join(root, "deploy/project-manifest.json"), "utf8"));
 const npmCommand = process.platform === "win32" ? process.execPath : "npm";
@@ -90,7 +92,12 @@ function projectEnvironment(item) {
 
 function run(executable, args, cwd, label, env = process.env) {
   console.log(`\n${label}`);
-  const result = spawnSync(executable, args, { cwd, env, stdio: "inherit", shell: false });
+  const result = runWithTransientWindowsRetry(
+    () => spawnSync(executable, args, { cwd, env, stdio: "inherit", shell: false }),
+    {
+      onRetry: () => console.warn(`${label} hit transient Windows process fast-fail 0xC0000409; retrying once.`),
+    },
+  );
   if (result.error) throw result.error;
   if (result.status !== 0) throw new Error(`${label} failed with exit code ${result.status}`);
 }

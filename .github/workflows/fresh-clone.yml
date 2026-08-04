@@ -7,6 +7,7 @@ on:
       - main
       - codex/unify-hub-routing
       - codex/unify-game-routing
+      - codex/aihub-workflow-skills
 
 concurrency:
   group: fresh-clone-${{ github.ref }}

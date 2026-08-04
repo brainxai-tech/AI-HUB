@@ -125,7 +125,14 @@ try {
   const workflowSkills = await fetchJson("http://127.0.0.1:4196/api/skills");
   assert.deepEqual(
     workflowSkills.skills.map(({ id }) => id),
-    ["build-course-pack", "coach-chinese-essay", "plan-weekly-meals", "read-research-paper"],
+    [
+      "build-course-pack",
+      "coach-chinese-essay",
+      "operate-trace-sheet",
+      "plan-weekly-meals",
+      "read-research-paper",
+      "review-legal-clause",
+    ],
   );
 
   const discovered = await fetchJson("http://127.0.0.1:4194/hub/api/provider-models", {

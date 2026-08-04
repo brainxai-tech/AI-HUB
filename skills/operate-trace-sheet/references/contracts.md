@@ -24,6 +24,7 @@ Submit only source metadata:
 ```
 
 Object keys named `rows`, `cells`, or `data` are rejected recursively. Values may contain those words. Source rows, cells, samples, hashes of cell contents, and exported workbooks remain in the browser.
+Only the fields shown in the start, action, approval, and receipt contracts are retained; unknown fields are discarded before a run or pending command is persisted.
 
 ## Checkpoint: `review-plan`
 

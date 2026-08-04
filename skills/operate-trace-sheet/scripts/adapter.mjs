@@ -6,7 +6,17 @@ const MAX_ROW_COUNT = 10_000_000_000;
 export const adapter = {
   async prepare(command) {
     rejectForbiddenKeys(command?.input);
-    return command?.input ?? {};
+    if (command?.type === "start") return validatePlanRequest(command.input);
+    if (command?.type === "action" && command.actionId === "revise-plan") {
+      return validateRevisionInput(command.input);
+    }
+    if (command?.type === "resume" && command.checkpointId === "review-plan") {
+      return validateApprovalInput(command.input);
+    }
+    if (command?.type === "resume" && command.checkpointId === "execution-receipt") {
+      return { receipt: validateReceipt(command.input?.receipt) };
+    }
+    throw validationError("未知的 TraceSheet 工作流命令。");
   },
 
   async start({ input, client, now }) {
@@ -25,8 +35,7 @@ export const adapter = {
     if (run.status !== "waiting" || run.checkpoint?.id !== "review-plan") {
       throw validationError("只有在计划审核阶段才能修订计划。");
     }
-    const goal = requiredText(input?.goal, "修订目标", 2_000);
-    const notes = optionalText(input?.notes, "修订原因", 2_000);
+    const { goal, notes } = validateRevisionInput(input);
     const activeSourceId = latestRevision(run.context).plan.sourceId;
     const request = validatePlanRequest({
       goal,
@@ -55,11 +64,11 @@ export const adapter = {
 
   async resume({ run, input, checkpointId, now }) {
     if (checkpointId === "review-plan") {
-      if (input?.approved !== true) throw validationError("必须明确批准计划后才能进入浏览器执行阶段。");
+      const approvedInput = validateApprovalInput(input);
       const approval = {
         decision: "approved",
         at: now(),
-        notes: optionalText(input?.notes, "审核备注", 2_000),
+        notes: approvedInput.notes,
       };
       const context = { ...run.context, approval, receipt: null };
       return {
@@ -157,6 +166,23 @@ function validatePlanRequest(value) {
   const activeSourceId = requiredText(contextInput.activeSourceId, "主数据源 ID", 160);
   if (!ids.has(activeSourceId)) throw validationError("主数据源 ID 不在数据源元数据中。");
   return { goal, context: { activeSourceId, sources } };
+}
+
+function validateRevisionInput(value) {
+  const input = requiredRecord(value, "TraceSheet 修订输入");
+  return {
+    goal: requiredText(input.goal, "修订目标", 2_000),
+    notes: optionalText(input.notes, "修订原因", 2_000),
+  };
+}
+
+function validateApprovalInput(value) {
+  const input = requiredRecord(value, "TraceSheet 审核输入");
+  if (input.approved !== true) throw validationError("必须明确批准计划后才能进入浏览器执行阶段。");
+  return {
+    approved: true,
+    notes: optionalText(input.notes, "审核备注", 2_000),
+  };
 }
 
 function validateSource(value, index) {

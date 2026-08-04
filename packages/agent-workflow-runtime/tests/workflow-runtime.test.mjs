@@ -13,6 +13,11 @@ import { WorkflowRunner } from "../src/workflow-runner.mjs";
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const repositoryRoot = path.resolve(packageRoot, "../..");
 const skillsRoot = path.join(repositoryRoot, "skills");
+const projectManifest = JSON.parse(await readFile(path.join(repositoryRoot, "deploy/project-manifest.json"), "utf8"));
+const projectIds = new Set([
+  ...projectManifest.projects.map(({ id }) => id),
+  ...projectManifest.games.map(({ id }) => id),
+]);
 
 test("registry loads the six staged AI HUB skills", async () => {
   const registry = await new SkillRegistry(skillsRoot).load();
@@ -22,7 +27,7 @@ test("registry loads the six staged AI HUB skills", async () => {
   );
   for (const skill of registry.list()) {
     assert.equal(skill.workflow.version, 1);
-    assert.ok(skill.projectId.startsWith("ai-"));
+    assert.ok(projectIds.has(skill.projectId), `${skill.id} references unknown project ${skill.projectId}`);
   }
 });
 
