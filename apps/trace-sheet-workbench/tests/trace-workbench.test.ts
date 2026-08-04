@@ -4,6 +4,7 @@ import {
   createSource,
   executePlan,
   formulaForExcelRow,
+  normalizePlanRisks,
   planContextFromSources,
   validatePlan,
   type TransformPlan,
@@ -97,6 +98,29 @@ describe("trace workbench", () => {
 
     expect(execution.finalVersion.rows).toHaveLength(2);
     expect(formulaForExcelRow("([销售额]-[成本])/[销售额]", ["销售额", "成本", "毛利率"], 2)).toBe('IFERROR((A2-B2)/A2,"")');
+  });
+
+  it("forces model-provided DEDUP steps to high risk without mutating the source plan", () => {
+    const plan: TransformPlan = {
+      id: "model-plan",
+      schemaVersion: "1.0",
+      goal: "按订单号去重",
+      sourceId: orders.id,
+      createdAt: new Date().toISOString(),
+      generatedBy: "AI",
+      steps: [{
+        id: "dedup",
+        title: "去重",
+        reason: "订单号应唯一",
+        risk: "LOW",
+        operation: { op: "DEDUP", keys: ["订单号"], keep: "FIRST" },
+      }],
+    };
+
+    const normalized = normalizePlanRisks(plan);
+
+    expect(normalized.steps[0].risk).toBe("HIGH");
+    expect(plan.steps[0].risk).toBe("LOW");
   });
 
   it("normalizes calendar dates without timezone shifts", () => {

@@ -33,6 +33,7 @@ import {
   createSource,
   executePlan,
   formulaForExcelRow,
+  normalizePlanRisks,
   planContextFromSources,
   previewPlan,
   sourceColumns,
@@ -232,12 +233,13 @@ export function TraceWorkbench() {
   }
 
   function applyGeneratedPlan(nextPlan: TransformPlan, nextNotice: string) {
-    const nextIssues = validatePlan(nextPlan, workingSources);
-    setPlan(nextPlan);
+    const normalizedPlan = normalizePlanRisks(nextPlan);
+    const nextIssues = validatePlan(normalizedPlan, workingSources);
+    setPlan(normalizedPlan);
     setIssues(nextIssues);
     setNotice(nextNotice);
     try {
-      setPreview(previewPlan(nextPlan, workingSources, currentVersion));
+      setPreview(previewPlan(normalizedPlan, workingSources, currentVersion));
     } catch (error) {
       setPreview(null);
       setErrorMessage(error instanceof Error ? error.message : "无法生成差异预览。" );

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "operate-trace-sheet",
+  "projectId": "ai-trace-sheet-workbench",
+  "title": "TraceSheet 数据操作审批",
+  "description": "只用表格元数据生成可复核计划，在浏览器本地执行后保存有限审计回执。",
+  "adapter": "scripts/adapter.mjs",
+  "workflow": {
+    "id": "trace-sheet-operation-v1",
+    "version": 1,
+    "steps": ["plan-metadata", "review-plan", "browser-execution", "execution-receipt", "complete-audit"],
+    "checkpoints": ["review-plan", "execution-receipt"],
+    "actions": ["revise-plan"]
+  },
+  "knowledge": {
+    "mode": "metadata-only",
+    "citationRequired": false,
+    "dataBoundary": "browser-local-rows-and-cells"
+  }
+}

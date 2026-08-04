@@ -160,6 +160,17 @@ export function planContextFromSources(sources: DataSource[], activeSourceId: st
   };
 }
 
+export function normalizePlanRisks(plan: TransformPlan): TransformPlan {
+  return {
+    ...plan,
+    steps: plan.steps.map((step) => (
+      step.operation.op === "DEDUP" && step.risk !== "HIGH"
+        ? { ...step, risk: "HIGH" }
+        : step
+    )),
+  };
+}
+
 export function createInitialVersion(source: DataSource): DatasetVersion {
   return {
     id: createId("version"),

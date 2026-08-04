@@ -1,0 +1,4 @@
+interface:
+  display_name: "TraceSheet 数据操作"
+  short_description: "用表格元数据生成可复核计划，并记录浏览器本地执行的有限审计回执"
+  default_prompt: "Use $operate-trace-sheet to plan this spreadsheet transformation without sending raw rows or cells to the server."

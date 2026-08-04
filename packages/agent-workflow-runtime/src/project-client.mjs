@@ -77,6 +77,7 @@ export function defaultServices(env = process.env) {
     paper: env.AIHUB_PAPER_ORIGIN || `${shared}/paper/`,
     course: env.AIHUB_COURSE_ORIGIN || `${shared}/course/`,
     legal: env.AIHUB_LEGAL_ORIGIN || `${shared}/legal/`,
+    tracesheet: env.AIHUB_TRACESHEET_ORIGIN || `${shared}/tracesheet/`,
   };
 }
 

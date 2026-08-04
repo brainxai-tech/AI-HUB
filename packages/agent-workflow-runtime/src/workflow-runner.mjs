@@ -15,6 +15,10 @@ export class WorkflowRunner {
   async create(skillId, input) {
     const skill = this.registry.get(skillId);
     const adapter = await this.registry.adapter(skillId);
+    const preparedInput = await this.#prepareInput(adapter, {
+      type: "start",
+      input: cloneJson(input ?? {}),
+    });
     const timestamp = this.now();
     const run = {
       id: `${skillId}-${this.createId()}`.toLowerCase(),
@@ -24,13 +28,13 @@ export class WorkflowRunner {
       projectId: skill.projectId,
       status: "created",
       step: "start",
-      input: cloneJson(input ?? {}),
+      input: cloneJson(preparedInput),
       context: {},
       checkpoint: null,
       result: null,
       lastAction: null,
       error: null,
-      pendingCommand: { type: "start", originStatus: "created", input: cloneJson(input ?? {}) },
+      pendingCommand: { type: "start", originStatus: "created", input: cloneJson(preparedInput) },
       createdAt: timestamp,
       updatedAt: timestamp,
       events: [event("created", timestamp, { step: "start" })],
@@ -63,11 +67,17 @@ export class WorkflowRunner {
       if (typeof adapter.resume !== "function") {
         throw new WorkflowError("RESUME_NOT_SUPPORTED", "这个 Skill 不支持继续执行。", 409);
       }
+      const preparedInput = await this.#prepareInput(adapter, {
+        type: "resume",
+        run: cloneJson(run),
+        input: cloneJson(input ?? {}),
+        checkpointId: run.checkpoint?.id,
+      });
       const command = {
         type: "resume",
         originStatus: run.status,
         checkpointId: run.checkpoint?.id,
-        input: cloneJson(input ?? {}),
+        input: cloneJson(preparedInput),
       };
       run.pendingCommand = command;
       return this.#executeLocked(run, adapter, command);
@@ -84,11 +94,17 @@ export class WorkflowRunner {
       if (typeof adapter.action !== "function") {
         throw new WorkflowError("ACTION_NOT_SUPPORTED", "这个 Skill 没有可调用动作。", 404);
       }
+      const preparedInput = await this.#prepareInput(adapter, {
+        type: "action",
+        run: cloneJson(run),
+        input: cloneJson(input ?? {}),
+        actionId,
+      });
       const command = {
         type: "action",
         originStatus: run.status,
         actionId,
-        input: cloneJson(input ?? {}),
+        input: cloneJson(preparedInput),
       };
       run.pendingCommand = command;
       return this.#executeLocked(run, adapter, command);
@@ -134,6 +150,16 @@ export class WorkflowRunner {
       return await operation();
     } finally {
       this.lockedRuns.delete(id);
+    }
+  }
+
+  async #prepareInput(adapter, command) {
+    if (typeof adapter.prepare !== "function") return command.input;
+    try {
+      return cloneJson(await adapter.prepare(cloneJson(command)));
+    } catch (error) {
+      if (isValidationError(error)) throw asValidationError(error);
+      throw error;
     }
   }
 

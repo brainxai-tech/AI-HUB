@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { buildLocalPlan, type PlanContext, type TransformPlan } from "@/lib/trace-workbench";
+import { buildLocalPlan, normalizePlanRisks, type PlanContext, type TransformPlan } from "@/lib/trace-workbench";
 import {
   callHubChat,
   getProviderCatalog,
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
   const { goal, context } = parsed.data;
   try {
     const modelPlan = await generateModelPlan(goal, context);
-    const plan: TransformPlan = {
+    const plan: TransformPlan = normalizePlanRisks({
       id: createId("plan"),
       schemaVersion: "1.0",
       goal: modelPlan.goal?.trim() || goal,
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       createdAt: new Date().toISOString(),
       generatedBy: "AI",
       steps: modelPlan.steps.map((step) => ({ ...step, id: createId("step") })),
-    };
+    });
     return NextResponse.json({ plan, mode: "AI" });
   } catch (error) {
     return NextResponse.json({
