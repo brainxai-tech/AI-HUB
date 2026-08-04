@@ -14,11 +14,11 @@ const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 const repositoryRoot = path.resolve(packageRoot, "../..");
 const skillsRoot = path.join(repositoryRoot, "skills");
 
-test("registry loads the four staged AI HUB skills", async () => {
+test("registry loads the five staged AI HUB skills", async () => {
   const registry = await new SkillRegistry(skillsRoot).load();
   assert.deepEqual(
     registry.list().map(({ id }) => id),
-    ["build-course-pack", "coach-chinese-essay", "plan-weekly-meals", "read-research-paper"],
+    ["build-course-pack", "coach-chinese-essay", "plan-weekly-meals", "read-research-paper", "review-legal-clause"],
   );
   for (const skill of registry.list()) {
     assert.equal(skill.workflow.version, 1);

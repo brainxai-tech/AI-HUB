@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "review-legal-clause",
+  "projectId": "ai-legal-clause-translator",
+  "title": "合同条款分阶段审阅",
+  "description": "复用法务条款项目进行版本化风险解释、证据复核和人工律师审阅交接。",
+  "adapter": "scripts/adapter.mjs",
+  "workflow": {
+    "id": "legal-clause-review-v1",
+    "version": 1,
+    "steps": ["analyze-clause", "analysis-review", "prepare-lawyer-review", "legal-review"],
+    "checkpoints": ["analysis-review", "legal-review"],
+    "actions": ["reanalyze"]
+  },
+  "knowledge": {
+    "mode": "model-only",
+    "citationRequired": false,
+    "plannedSources": ["versioned-jurisdiction-guidance"]
+  }
+}

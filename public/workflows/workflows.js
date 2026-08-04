@@ -150,10 +150,13 @@ const workflowForms = {
       submitLabel: "分析合同条款",
       fields: [
         textField("clauseText", "合同条款", { type: "textarea", required: true, wide: true }),
+        textField("userRole", "你在合同中的身份", { value: "合同接收方", required: true }),
         textField("contractType", "合同类型", { value: "通用条款" }),
         textField("jurisdiction", "适用地区 / 法域", { value: "中国大陆", required: true }),
+        textField("outputLanguage", "输出语言", { type: "select", options: [{ value: "zh-CN", label: "中文" }, { value: "en", label: "English" }], required: true }),
         textField("model", "指定 GPT 型号（可选）"),
         textField("reviewGoal", "本次关注点", { type: "textarea", wide: true }),
+        textField("reviewerNotes", "初始复核备注", { type: "textarea", wide: true }),
       ],
     },
     checkpoints: {
