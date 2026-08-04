@@ -199,11 +199,16 @@ prepare_release_dependencies() {
         resolved_modules="$(readlink -f "$candidate_modules")"
         [[ -d "$resolved_modules" && "$resolved_modules" == "$RELEASES_DIR/"* ]] ||
           die "dependency modules for $package_dir resolve outside the release store"
-        ln -s -- "$resolved_modules" "$release/$package_dir/node_modules"
+        # Turbopack refuses node_modules symlinks that resolve outside the
+        # release tree.  Keep reuse space-efficient while materializing a
+        # release-local directory of immutable hard links instead.
+        cp -al -- "$resolved_modules" "$release/$package_dir/node_modules"
+        [[ ! -L "$release/$package_dir/node_modules" ]] ||
+          die "reused dependency directory for $package_dir must not be a symlink"
         dependency_release="${resolved_modules#"$RELEASES_DIR/"}"
         printf '%s\n' "${dependency_release%%/*}" >> "$release/.dependency-releases"
         linked=1
-        log "reused locked dependencies for $package_dir" >&2
+        log "reused locked dependencies locally for $package_dir" >&2
         break
       fi
     done

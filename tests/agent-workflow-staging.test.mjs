@@ -55,6 +55,8 @@ test("agent workflow runtime is packaged, loopback-only, private, and activated 
   assert.match(deploy, /cleanup_package_workspace/);
   assert.match(deploy, /\^\\\.\[0-9a-f\]\{7,40\}\\\.\(tmp\|trusted\)\\\.\[0-9\]\+\$/);
   assert.match(deploy, /on_error\(\)[\s\S]*cleanup_package_workspace/);
+  assert.match(deploy, /cp -al -- "\$resolved_modules" "\$release\/\$package_dir\/node_modules"/);
+  assert.match(deploy, /\[\[ ! -L "\$release\/\$package_dir\/node_modules" \]\]/);
   assert.match(deploy, /AIHUB_SCAN_ROOT="\$temporary"/);
   assert.match(deploy, /AIHUB_SCAN_MANIFEST="\$trusted\/deploy\/project-manifest\.json"/);
   assert.match(deploy, /node "\$trusted\/scripts\/security-scan\.mjs"/);
