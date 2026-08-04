@@ -1,14 +1,39 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const tracked = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], { cwd: root })
-  .toString("utf8")
-  .split("\0")
-  .filter(Boolean);
+const defaultRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const root = path.resolve(process.env.AIHUB_SCAN_ROOT || defaultRoot);
+const hasGitMetadata = existsSync(path.join(root, ".git"));
+const tracked = hasGitMetadata ? listGitFiles(root) : walkArchiveFiles(root);
 const failures = [];
+
+function listGitFiles(scanRoot) {
+  return execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], { cwd: scanRoot })
+    .toString("utf8")
+    .split("\0")
+    .filter(Boolean);
+}
+
+function walkArchiveFiles(scanRoot) {
+  const files = [];
+  const skippedDirectories = new Set([".git", "node_modules", ".next", "coverage", ".local-runtime", ".npm-cache"]);
+
+  const visit = (directory, relativeDirectory = "") => {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const relative = relativeDirectory ? path.join(relativeDirectory, entry.name) : entry.name;
+      if (entry.isDirectory()) {
+        if (!skippedDirectories.has(entry.name)) visit(path.join(directory, entry.name), relative);
+      } else if (entry.isFile()) {
+        files.push(relative.split(path.sep).join("/"));
+      }
+    }
+  };
+
+  visit(scanRoot);
+  return files.sort();
+}
 
 const forbiddenPaths = [
   /(^|\/)node_modules\//,
@@ -42,7 +67,8 @@ for (const file of tracked) {
   }
 }
 
-const manifest = JSON.parse(readFileSync(path.join(root, "deploy/project-manifest.json"), "utf8"));
+const manifestPath = path.resolve(process.env.AIHUB_SCAN_MANIFEST || path.join(root, "deploy/project-manifest.json"));
+const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
 if (manifest.projects.length !== 33) failures.push(`manifest project count is ${manifest.projects.length}, expected 33`);
 if (manifest.games.length !== 5) failures.push(`manifest game count is ${manifest.games.length}, expected 5`);
 const entries = [...manifest.projects, ...manifest.games];
@@ -73,5 +99,6 @@ if (failures.length) {
   for (const failure of failures) console.error(`- ${failure}`);
   process.exitCode = 1;
 } else {
-  console.log(`Security scan passed: ${tracked.length} repository files, ${manifest.projects.length} tools, ${manifest.games.length} games, no committed secrets or dedicated direct-provider paths.`);
+  const source = hasGitMetadata ? "Git worktree" : "archive tree";
+  console.log(`Security scan passed: ${tracked.length} ${source} files, ${manifest.projects.length} tools, ${manifest.games.length} games, no committed secrets or dedicated direct-provider paths.`);
 }

@@ -68,6 +68,10 @@ test("fresh-clone CI installs, verifies, scans, and runs browser E2E", async () 
   assert.match(tasks, /process\.execPath/);
   assert.doesNotMatch(tasks, /spawnSync\([^\n]*npm\.cmd/);
   assert.match(scanner, /git.*ls-files/s);
+  assert.match(scanner, /AIHUB_SCAN_ROOT/);
+  assert.match(scanner, /AIHUB_SCAN_MANIFEST/);
+  assert.match(scanner, /readdirSync/);
+  assert.match(scanner, /existsSync\(path\.join\(root, "\.git"\)\)/);
   assert.match(scanner, /manifest\.games/);
   assert.doesNotMatch(scanner, /excludedGames/);
   assert.match(e2e, /manifest\.projects/);

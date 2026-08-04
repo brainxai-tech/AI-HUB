@@ -173,8 +173,11 @@ prepare_release_dependencies() {
   local release="$1"
   local seed="$2"
   local lock relative package_dir candidate_lock candidate_dir candidate_modules resolved_modules dependency_release linked
+  local -a candidate_locks
 
-  [[ -d "$seed" && "$seed" == "$RELEASES_DIR/"* ]] || die "current release is not a trusted dependency seed"
+  if [[ -n "$seed" ]]; then
+    [[ -d "$seed" && "$seed" == "$RELEASES_DIR/"* ]] || die "current release is not a trusted dependency seed"
+  fi
   if find "$release" -type d -name node_modules -print -quit | grep -q .; then
     die "source archive must not contain node_modules"
   fi
@@ -184,7 +187,10 @@ prepare_release_dependencies() {
     relative="${lock#"$release/"}"
     package_dir="${relative%/package-lock.json}"
     linked=0
-    for candidate_lock in "$seed/$relative" "$RELEASES_DIR"/*/"$relative"; do
+    candidate_locks=()
+    [[ -z "$seed" ]] || candidate_locks+=("$seed/$relative")
+    candidate_locks+=("$RELEASES_DIR"/*/"$relative")
+    for candidate_lock in "${candidate_locks[@]}"; do
       candidate_dir="${candidate_lock%/package-lock.json}"
       candidate_modules="$candidate_dir/node_modules"
       if [[ -f "$candidate_lock" && -d "$candidate_modules" ]] && cmp -s -- "$lock" "$candidate_lock"; then
@@ -202,11 +208,33 @@ prepare_release_dependencies() {
     if [[ "$linked" -eq 0 ]]; then
       require_build_space
       log "installing locked dependencies for $package_dir" >&2
-      (cd "$release/$package_dir" && npm ci --no-audit --no-fund) >&2
+      (cd "$release/$package_dir" && runuser -u admin -- env npm_config_cache="$release/.npm-cache" \
+        npm ci --no-audit --no-fund) >&2
     fi
   done < <(find "$release" -path '*/node_modules' -prune -o -type f -name package-lock.json -print0)
 
   sort -u -o "$release/.dependency-releases" "$release/.dependency-releases"
+}
+
+snapshot_trusted_release_files() {
+  local release="$1"
+  local trusted="$2"
+
+  install -d -m 0755 -o root -g root "$trusted"
+  cp -a -- "$release/deploy" "$release/scripts" "$trusted/"
+  chown -hR root:root "$trusted"
+  find "$trusted" -type d -exec chmod 0755 {} +
+  find "$trusted" -type f -exec chmod 0644 {} +
+}
+
+restore_trusted_release_files() {
+  local release="$1"
+  local trusted="$2"
+
+  chown root:root "$release"
+  chmod 0755 "$release"
+  rm -rf -- "$release/deploy" "$release/scripts"
+  cp -a -- "$trusted/deploy" "$trusted/scripts" "$release/"
 }
 
 package_release() {
@@ -214,6 +242,7 @@ package_release() {
   local commit="$2"
   local release="$RELEASES_DIR/$commit"
   local temporary="$RELEASES_DIR/.${commit}.tmp.$$"
+  local trusted="$RELEASES_DIR/.${commit}.trusted.$$"
 
   if [[ -d "$release" ]]; then
     validate_release_tree "$release"
@@ -224,26 +253,30 @@ package_release() {
 
   validate_archive "$archive"
   install -d -m 0755 -o root -g root "$temporary"
-  trap 'rm -rf -- "$temporary"' RETURN
+  trap 'rm -rf -- "$temporary" "$trusted"' RETURN
   tar -xzf "$archive" -C "$temporary" --no-same-owner --no-same-permissions
   validate_release_tree "$temporary"
   require_build_space
-  prepare_release_dependencies "$temporary" "$(readlink -f "$CURRENT_LINK" 2>/dev/null || true)"
-  printf '%s\n' "$commit" > "$temporary/.release-commit"
-
-  log "building and verifying release $commit before activation" >&2
+  snapshot_trusted_release_files "$temporary" "$trusted"
   chown -hR admin:admin "$temporary"
   install -d -m 0700 -o admin -g admin "$temporary/.npm-cache"
+  prepare_release_dependencies "$temporary" "$(readlink -f "$CURRENT_LINK" 2>/dev/null || true)"
+
+  log "building and verifying release $commit before activation" >&2
   (cd "$temporary" && runuser -u admin -- env npm_config_cache="$temporary/.npm-cache" \
     npm run workspace:build && runuser -u admin -- env npm_config_cache="$temporary/.npm-cache" \
-    npm run workspace:verify && runuser -u admin -- env npm_config_cache="$temporary/.npm-cache" \
-    npm run security:scan) >&2
+    npm run workspace:verify && runuser -u admin -- env AIHUB_SCAN_ROOT="$temporary" \
+    AIHUB_SCAN_MANIFEST="$trusted/deploy/project-manifest.json" \
+    node "$trusted/scripts/security-scan.mjs") >&2
   rm -rf -- "$temporary/.npm-cache"
+  restore_trusted_release_files "$temporary" "$trusted"
+  printf '%s\n' "$commit" > "$temporary/.release-commit"
   find "$temporary" -type d -exec chmod 0755 {} +
   find "$temporary" -type f -exec chmod 0644 {} +
   chmod 0755 "$temporary/deploy/deploy.sh" "$temporary/deploy/rollback.sh"
   chown -R root:root "$temporary"
   mv -T -- "$temporary" "$release"
+  rm -rf -- "$trusted"
   trap - RETURN
   printf '%s\n' "$release"
 }
@@ -271,6 +304,25 @@ save_operational_config() {
   systemctl is-active --quiet ai-hub-agent-workflow && workflow_was_running=1 || true
 }
 
+assert_workflow_inactive() {
+  if systemctl is-active --quiet ai-hub-agent-workflow; then
+    log "ERROR: workflow service is still active" >&2
+    return 1
+  fi
+}
+
+stop_workflow_service_if_present() {
+  local load_state
+
+  load_state="$(systemctl show --property=LoadState --value ai-hub-agent-workflow)"
+  if [[ "$load_state" == "not-found" ]]; then
+    return 0
+  fi
+
+  systemctl disable --now ai-hub-agent-workflow
+  assert_workflow_inactive
+}
+
 install_operational_config() {
   local release="$1"
   local hub_unit_candidate="${HUB_UNIT_FILE}.candidate.$$"
@@ -282,7 +334,7 @@ install_operational_config() {
   if [[ "$target_has_workflow" -eq 1 ]]; then
     install -m 0644 -o root -g root "$release/deploy/systemd/ai-hub-agent-workflow.service" "$workflow_unit_candidate"
   else
-    systemctl disable --now ai-hub-agent-workflow >/dev/null 2>&1 || true
+    stop_workflow_service_if_present
   fi
 
   mv -Tf -- "$hub_unit_candidate" "$HUB_UNIT_FILE"
@@ -445,6 +497,8 @@ activate_release() {
   if [[ "$target_has_workflow" -eq 1 ]]; then
     systemctl restart ai-hub-agent-workflow
     wait_for_workflow_health
+  else
+    assert_workflow_inactive
   fi
   systemctl reload nginx
   wait_for_health "$PUBLIC_HEALTH_URL"

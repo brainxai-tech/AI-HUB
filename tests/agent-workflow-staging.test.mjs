@@ -47,12 +47,25 @@ test("agent workflow runtime is packaged, loopback-only, private, and activated 
   assert.match(deploy, /prepare_release_dependencies/);
   assert.match(deploy, /cmp -s -- "\$lock" "\$candidate_lock"/);
   assert.match(deploy, /resolved_modules.*RELEASES_DIR/s);
-  assert.match(deploy, /npm ci --no-audit --no-fund/);
+  assert.match(deploy, /runuser -u admin -- env npm_config_cache="\$release\/\.npm-cache"[\s\\]*npm ci --no-audit --no-fund/);
   assert.match(deploy, /npm run workspace:build/);
   assert.match(deploy, /npm run workspace:verify/);
-  assert.match(deploy, /npm run security:scan/);
+  assert.match(deploy, /snapshot_trusted_release_files/);
+  assert.match(deploy, /restore_trusted_release_files/);
+  assert.match(deploy, /AIHUB_SCAN_ROOT="\$temporary"/);
+  assert.match(deploy, /AIHUB_SCAN_MANIFEST="\$trusted\/deploy\/project-manifest\.json"/);
+  assert.match(deploy, /node "\$trusted\/scripts\/security-scan\.mjs"/);
+  assert.match(deploy, /chown root:root "\$release"/);
+  assert.ok(
+    deploy.indexOf(`printf '%s\\n' "$commit" > "$temporary/.release-commit"`) > deploy.indexOf('restore_trusted_release_files "$temporary" "$trusted"'),
+    "release commit marker must be written only after the build-writable tree is returned to root control",
+  );
   assert.match(deploy, /\.dependency-releases/);
   assert.match(deploy, /chown -hR admin:admin "\$temporary"/);
   assert.match(deploy, /runuser -u admin -- env npm_config_cache=/);
+  assert.match(deploy, /if \[\[ -n "\$seed" \]\]/);
+  assert.match(deploy, /systemctl show --property=LoadState --value ai-hub-agent-workflow/);
+  assert.doesNotMatch(deploy, /systemctl disable --now ai-hub-agent-workflow[^\n]*\|\| true/);
+  assert.match(deploy, /systemctl is-active --quiet ai-hub-agent-workflow[\s\S]*workflow service is still active/);
   assert.doesNotMatch(nginx, /4196|agent-workflow/);
 });
