@@ -1,12 +1,21 @@
 import { WorkflowError } from "./errors.mjs";
 
 const DEFAULT_TIMEOUT_MS = 95_000;
+const DEFAULT_COURSE_TIMEOUT_MS = 170_000;
 
 export class ProjectClient {
-  constructor({ services = defaultServices(), fetchImpl = fetch, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
+  constructor({
+    services = defaultServices(),
+    fetchImpl = fetch,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    serviceTimeouts = defaultServiceTimeouts(),
+    timeoutSignal = (milliseconds) => AbortSignal.timeout(milliseconds),
+  } = {}) {
     this.services = services;
     this.fetchImpl = fetchImpl;
     this.timeoutMs = timeoutMs;
+    this.serviceTimeouts = { ...serviceTimeouts };
+    this.timeoutSignal = timeoutSignal;
   }
 
   async requestJson(serviceId, requestPath, { method = "GET", body, headers = {} } = {}) {
@@ -23,7 +32,7 @@ export class ProjectClient {
           ...headers,
         },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-        signal: AbortSignal.timeout(this.timeoutMs),
+        signal: this.timeoutSignal(Math.max(this.timeoutMs, this.serviceTimeouts[serviceId] || 0)),
         cache: "no-store",
       });
     } catch {
@@ -68,6 +77,17 @@ export function defaultServices(env = process.env) {
     paper: env.AIHUB_PAPER_ORIGIN || `${shared}/paper/`,
     course: env.AIHUB_COURSE_ORIGIN || `${shared}/course/`,
   };
+}
+
+export function defaultServiceTimeouts(env = process.env) {
+  return {
+    course: boundedTimeout(env.AIHUB_COURSE_TIMEOUT_MS, DEFAULT_COURSE_TIMEOUT_MS),
+  };
+}
+
+function boundedTimeout(value, fallback) {
+  const parsed = Number.parseInt(value || String(fallback), 10) || fallback;
+  return Math.min(Math.max(parsed, 1_000), 300_000);
 }
 
 function normalizeRequestPath(requestPath) {

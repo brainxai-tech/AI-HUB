@@ -43,6 +43,28 @@ test("project client preserves project base paths and resolves only configured G
   assert.equal(requests[1], "http://127.0.0.1:4195/paper/api/providers");
 });
 
+test("project client gives course generation more time than ordinary project calls", async () => {
+  const timeoutCalls = [];
+  const client = new ProjectClient({
+    services: {
+      course: "http://127.0.0.1:4195/course/",
+      essay: "http://127.0.0.1:4204/essay/",
+    },
+    timeoutMs: 95_000,
+    serviceTimeouts: { course: 170_000 },
+    timeoutSignal(milliseconds) {
+      timeoutCalls.push(milliseconds);
+      return new AbortController().signal;
+    },
+    fetchImpl: async () => new Response(JSON.stringify({ ok: true })),
+  });
+
+  await client.requestJson("course", "/api/teaching-bundles", { method: "POST", body: {} });
+  await client.requestJson("essay", "/api/providers");
+
+  assert.deepEqual(timeoutCalls, [170_000, 95_000]);
+});
+
 test("essay workflow persists two checkpoints and completes the selected outline", async (t) => {
   const harness = await createHarness(t);
   const created = await harness.runner.create("coach-chinese-essay", {

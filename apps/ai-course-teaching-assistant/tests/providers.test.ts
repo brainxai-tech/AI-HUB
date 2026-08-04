@@ -104,6 +104,7 @@ describe("Hub provider contracts", () => {
 
   it("calls Hub chat proxy only after provider is configured", async () => {
     const originalFetch = globalThis.fetch;
+    const originalTimeout = AbortSignal.timeout;
     const originalConfigUrl = process.env.HUB_MODEL_CONFIG_URL;
     const originalChatUrl = process.env.HUB_CHAT_COMPLETIONS_URL;
     const originalToken = process.env.HUB_PROJECT_TOKEN;
@@ -112,6 +113,11 @@ describe("Hub provider contracts", () => {
     process.env.HUB_PROJECT_TOKEN = "project-token";
 
     const calls: Array<{ url: string; options?: RequestInit }> = [];
+    const timeoutCalls: number[] = [];
+    AbortSignal.timeout = (milliseconds) => {
+      timeoutCalls.push(milliseconds);
+      return new AbortController().signal;
+    };
     globalThis.fetch = async (url, options) => {
       calls.push({ url: String(url), options });
       if (String(url).endsWith("/models")) {
@@ -139,8 +145,10 @@ describe("Hub provider contracts", () => {
       assert.equal(bundle.model, "gpt-5.4");
       assert.equal(calls[1].url, "http://hub.test/chat");
       assert.equal((calls[1].options?.headers as Record<string, string>)["x-hub-project-token"], "project-token");
+      assert.deepEqual(timeoutCalls, [10_000, 160_000]);
     } finally {
       globalThis.fetch = originalFetch;
+      AbortSignal.timeout = originalTimeout;
       process.env.HUB_MODEL_CONFIG_URL = originalConfigUrl;
       process.env.HUB_CHAT_COMPLETIONS_URL = originalChatUrl;
       process.env.HUB_PROJECT_TOKEN = originalToken;

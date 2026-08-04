@@ -60,6 +60,13 @@ const pptUpstreamTimeoutMs = Math.min(
   ),
   300000,
 );
+const courseUpstreamTimeoutMs = Math.min(
+  Math.max(
+    Number.parseInt(process.env.HUB_COURSE_UPSTREAM_TIMEOUT_MS || "150000", 10) || 150000,
+    upstreamTimeoutMs,
+  ),
+  300000,
+);
 const modelProbeTimeoutMs = Math.min(
   Math.max(
     Number.parseInt(process.env.HUB_MODEL_PROBE_TIMEOUT_MS || "30000", 10) || 30000,
@@ -1276,6 +1283,8 @@ export function parseDiceDecisionResponse(payload, request) {
 export function resolveUpstreamTimeoutForProject(projectId, options = {}) {
   const defaultTimeoutMs = options.defaultTimeoutMs || upstreamTimeoutMs;
   const dedicatedPptTimeoutMs = options.pptTimeoutMs || pptUpstreamTimeoutMs;
+  const dedicatedCourseTimeoutMs = options.courseTimeoutMs || courseUpstreamTimeoutMs;
+  if (projectId === "ai-course-teaching-assistant") return dedicatedCourseTimeoutMs;
   return projectId === "ai-ppt-report-coach" ? dedicatedPptTimeoutMs : defaultTimeoutMs;
 }
 

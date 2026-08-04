@@ -44,7 +44,10 @@ export class ProviderError extends Error {
   }
 }
 
-const REQUEST_TIMEOUT_MS = 90_000;
+const REQUEST_TIMEOUT_MS = Math.min(
+  Math.max(Number.parseInt(process.env.HUB_COURSE_REQUEST_TIMEOUT_MS || "160000", 10) || 160_000, 1_000),
+  300_000,
+);
 const CONFIG_TIMEOUT_MS = 10_000;
 const DEFAULT_HUB_CHAT_URL = "http://127.0.0.1:4194/hub/api/v1/chat/completions";
 const supportedProviders: ProviderId[] = ["openai"];
