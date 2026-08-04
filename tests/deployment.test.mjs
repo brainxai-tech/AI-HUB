@@ -2,6 +2,13 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+test("release shell scripts are exported with Unix line endings", async () => {
+  const attributes = await readFile(new URL("../.gitattributes", import.meta.url), "utf8");
+
+  assert.match(attributes, /^apps\/idol-match-test\/data\/idol-profiles\.generated\.ts text eol=lf$/m);
+  assert.match(attributes, /^\*\.sh text eol=lf$/m);
+});
+
 test("systemd unit limits writes and restart storms", async () => {
   const unit = await readFile(new URL("../deploy/systemd/ai-project-hub.service", import.meta.url), "utf8");
 
