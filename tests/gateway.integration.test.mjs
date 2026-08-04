@@ -60,6 +60,7 @@ before(async () => {
       HUB_PROJECT_TOKENS_PATH: path.join(temporaryDirectory, "project-tokens.json"),
       HUB_OBSERVABILITY_LOG_PATH: observabilityLogPath,
       HUB_TRACK_RATE_LIMIT_PER_MINUTE: "2",
+      HUB_WORKFLOW_RATE_LIMIT_PER_MINUTE: "2",
     },
   });
   await waitUntilReady(baseUrl);
@@ -182,6 +183,31 @@ test("AI Routing model discovery requires administrator access and an API Key", 
   });
   assert.equal(missingKey.status, 400);
   assert.equal((await missingKey.json()).error.code, "API_KEY_REQUIRED");
+});
+
+test("workflow routes require administrator access and apply a per-client rate limit", async () => {
+  const unauthorized = await fetch(`${baseUrl}/hub/api/workflows/skills`);
+  assert.equal(unauthorized.status, 401);
+
+  for (let index = 0; index < 2; index += 1) {
+    const unavailable = await fetch(`${baseUrl}/hub/api/workflows/skills`, {
+      headers: {
+        "x-hub-admin-token": adminToken,
+        "x-real-ip": "192.0.2.55",
+      },
+    });
+    assert.equal(unavailable.status, 503);
+    assert.equal((await unavailable.json()).error.code, "WORKFLOW_PROXY_NOT_CONFIGURED");
+  }
+
+  const limited = await fetch(`${baseUrl}/hub/api/workflows/skills`, {
+    headers: {
+      "x-hub-admin-token": adminToken,
+      "x-real-ip": "192.0.2.55",
+    },
+  });
+  assert.equal(limited.status, 429);
+  assert.equal((await limited.json()).error.code, "REQUEST_RATE_LIMITED");
 });
 
 test("model configuration stores one AI Routing provider without exposing its Key", async () => {

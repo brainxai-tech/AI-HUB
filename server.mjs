@@ -14,6 +14,7 @@ import {
 import { RequestGovernor, requestedTokenLimit, validateChatPayload } from "./request-policy.mjs";
 import { createLocalGameStatic } from "./local-game-static.mjs";
 import { createLocalProjectProxy } from "./local-project-proxy.mjs";
+import { createWorkflowProxy } from "./workflow-proxy.mjs";
 import {
   buildObservabilitySummary,
   createAnonymousEventLimiter,
@@ -99,6 +100,21 @@ const authorizeProject = createProjectAuthorizer({
 const scopedProjectCount = Object.keys(projectTokenRegistry.projects).length;
 const projectAuthRequired = scopedProjectCount > 0 || Boolean(projectToken && allowLegacyProjectToken);
 const requestGovernor = new RequestGovernor();
+const workflowProxy = createWorkflowProxy({
+  origin: process.env.AIHUB_WORKFLOW_ORIGIN || "http://127.0.0.1:4196",
+  apiToken: process.env.WORKFLOW_API_TOKEN || "",
+});
+const workflowRequestLimits = {
+  requestsPerMinute: Math.min(
+    Math.max(Number.parseInt(process.env.HUB_WORKFLOW_RATE_LIMIT_PER_MINUTE || "60", 10) || 60, 1),
+    600,
+  ),
+  maxConcurrent: Math.min(
+    Math.max(Number.parseInt(process.env.HUB_WORKFLOW_MAX_CONCURRENT || "8", 10) || 8, 1),
+    20,
+  ),
+  dailyTokenBudget: 1_000,
+};
 const trackRateLimitPerMinute = Math.min(
   Math.max(Number.parseInt(process.env.HUB_TRACK_RATE_LIMIT_PER_MINUTE || "30", 10) || 30, 1),
   1000,
@@ -1665,6 +1681,31 @@ async function handleApi(request, response, pathname) {
   sendJson(response, 404, { error: "API route not found." });
 }
 
+async function handleWorkflowApi(request, response, pathname) {
+  if (!hasAdminAccess(request)) {
+    sendJson(response, 401, { error: "Admin token is required." });
+    return;
+  }
+
+  const requestLease = requestGovernor.acquire(
+    `workflow:${trackingClientKey(request)}`,
+    workflowRequestLimits,
+    0,
+  );
+  if (!requestLease.ok) {
+    sendJson(response, requestLease.statusCode, requestLease.body);
+    return;
+  }
+
+  try {
+    if (!await workflowProxy.handle(request, response, pathname)) {
+      sendJson(response, 404, { error: "Workflow API route not found." });
+    }
+  } finally {
+    requestLease.release();
+  }
+}
+
 const server = createServer(async (request, response) => {
   try {
     const rawUrl = new URL(request.url || "/", `http://${request.headers.host || "127.0.0.1"}`);
@@ -1675,6 +1716,11 @@ const server = createServer(async (request, response) => {
       return;
     }
     const { pathname } = normalizePath(request.url || "/", request.headers.host);
+
+    if (pathname === "/api/workflows" || pathname.startsWith("/api/workflows/")) {
+      await handleWorkflowApi(request, response, pathname);
+      return;
+    }
 
     if (pathname.startsWith("/api/")) {
       if (remoteGatewayOrigin) {
