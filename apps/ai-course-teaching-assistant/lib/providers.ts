@@ -45,7 +45,7 @@ export class ProviderError extends Error {
 }
 
 const REQUEST_TIMEOUT_MS = Math.min(
-  Math.max(Number.parseInt(process.env.HUB_COURSE_REQUEST_TIMEOUT_MS || "160000", 10) || 160_000, 1_000),
+  Math.max(Number.parseInt(process.env.HUB_COURSE_REQUEST_TIMEOUT_MS || "190000", 10) || 190_000, 1_000),
   300_000,
 );
 const CONFIG_TIMEOUT_MS = 10_000;

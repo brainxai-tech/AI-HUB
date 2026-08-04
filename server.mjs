@@ -62,7 +62,7 @@ const pptUpstreamTimeoutMs = Math.min(
 );
 const courseUpstreamTimeoutMs = Math.min(
   Math.max(
-    Number.parseInt(process.env.HUB_COURSE_UPSTREAM_TIMEOUT_MS || "150000", 10) || 150000,
+    Number.parseInt(process.env.HUB_COURSE_UPSTREAM_TIMEOUT_MS || "180000", 10) || 180000,
     upstreamTimeoutMs,
   ),
   300000,

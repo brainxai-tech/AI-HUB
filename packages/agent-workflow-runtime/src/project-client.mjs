@@ -1,7 +1,7 @@
 import { WorkflowError } from "./errors.mjs";
 
 const DEFAULT_TIMEOUT_MS = 95_000;
-const DEFAULT_COURSE_TIMEOUT_MS = 170_000;
+const DEFAULT_COURSE_TIMEOUT_MS = 200_000;
 
 export class ProjectClient {
   constructor({

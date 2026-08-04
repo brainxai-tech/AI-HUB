@@ -51,7 +51,7 @@ test("project client gives course generation more time than ordinary project cal
       essay: "http://127.0.0.1:4204/essay/",
     },
     timeoutMs: 95_000,
-    serviceTimeouts: { course: 170_000 },
+    serviceTimeouts: { course: 200_000 },
     timeoutSignal(milliseconds) {
       timeoutCalls.push(milliseconds);
       return new AbortController().signal;
@@ -62,7 +62,7 @@ test("project client gives course generation more time than ordinary project cal
   await client.requestJson("course", "/api/teaching-bundles", { method: "POST", body: {} });
   await client.requestJson("essay", "/api/providers");
 
-  assert.deepEqual(timeoutCalls, [170_000, 95_000]);
+  assert.deepEqual(timeoutCalls, [200_000, 95_000]);
 });
 
 test("essay workflow persists two checkpoints and completes the selected outline", async (t) => {

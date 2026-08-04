@@ -145,7 +145,7 @@ describe("Hub provider contracts", () => {
       assert.equal(bundle.model, "gpt-5.4");
       assert.equal(calls[1].url, "http://hub.test/chat");
       assert.equal((calls[1].options?.headers as Record<string, string>)["x-hub-project-token"], "project-token");
-      assert.deepEqual(timeoutCalls, [10_000, 160_000]);
+      assert.deepEqual(timeoutCalls, [10_000, 190_000]);
     } finally {
       globalThis.fetch = originalFetch;
       AbortSignal.timeout = originalTimeout;
