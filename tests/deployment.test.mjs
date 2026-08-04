@@ -115,7 +115,9 @@ test("release deployment is atomic, secret-free, and health checked", async () =
     'APP_ROOT="/opt/ai-project-hub"',
     'RELEASES_DIR="$APP_ROOT/releases"',
     'CURRENT_LINK="$APP_ROOT/current"',
-    "npm run verify",
+    "npm run workspace:build",
+    "npm run workspace:verify",
+    "npm run security:scan",
     "mv -Tf",
     "curl --fail",
     "rollback_deployment",
@@ -143,6 +145,9 @@ test("release deployment is atomic, secret-free, and health checked", async () =
   assert.match(script, /\^data\(\/\|\$\)/);
   assert.match(script, /\^backups\(\/\|\$\)/);
   assert.doesNotMatch(script, /\(\^\|\/\)data\(\/\|\$\)/);
+  assert.match(script, /MIN_BUILD_AVAILABLE_KB=2097152/);
+  assert.match(script, /source archive must not contain node_modules/);
+  assert.match(script, /prepare_release_dependencies/);
 });
 
 test("TraceSheet uses the shared API and an immutable static application route", async () => {

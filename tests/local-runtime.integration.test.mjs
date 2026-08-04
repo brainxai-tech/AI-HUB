@@ -114,6 +114,10 @@ test("local mode stores configuration locally without an admin token", async (t)
 
   const verifyResponse = await fetch(`${baseUrl}/hub/api/admin/verify`, { method: "POST" });
   assert.equal(verifyResponse.status, 200);
+
+  const workflowResponse = await fetch(`${baseUrl}/hub/api/workflows/skills`);
+  assert.equal(workflowResponse.status, 401);
+  assert.equal((await workflowResponse.json()).error, "Admin token is required.");
 });
 
 test("local runtime proxies Hub APIs to the central gateway", async (t) => {

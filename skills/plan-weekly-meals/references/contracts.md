@@ -11,18 +11,18 @@ Submit `profile` using the fields already accepted by AI 备餐教练. At minimu
     "familySize": 2,
     "targetCalories": 1800,
     "allergies": ["花生"],
-    "availableIngredients": ["鸡蛋", "番茄"]
+    "pantry": ["鸡蛋", "番茄"]
   }
 }
 ```
 
 ## Action: `adjust-meal`
 
-Submit `mealKey`, `reason`, and optional `constraints`. The adapter always attaches the immutable original plan.
+Submit `mealKey`, `reason`, and optional text or JSON `constraints`. The adapter converts constraints to bounded text and always attaches the immutable original plan.
 
 ## Checkpoint: `weekly-execution`
 
-Submit `executionState` and optional `feedback`. The project returns a review containing wins, frictions, next-week adjustments, and prompt hints.
+Submit `executionState` and optional `feedback`. Only the bounded `planId`, `selectedDayIndex`, `shopping`, `prep`, `meals`, and normalized `replacements` fields are persisted. The project returns a review containing wins, frictions, next-week adjustments, and prompt hints.
 
 ## Grounding
 

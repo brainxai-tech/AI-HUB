@@ -99,28 +99,81 @@ test("essay workflow persists two checkpoints and completes the selected outline
 });
 
 test("meal workflow preserves its plan, records adjustments, citations, and review", async (t) => {
-  const harness = await createHarness(t);
+  const requests = [];
+  const harness = await createHarness(t, fakeClient({
+    beforeRequest(service, requestPath, options) {
+      if (service === "cooking") requests.push({ requestPath, body: structuredClone(options.body) });
+    },
+  }));
   const created = await harness.runner.create("plan-weekly-meals", {
-    profile: { days: 3, familySize: 2, targetCalories: 1600 },
+    profile: {
+      days: 3,
+      familySize: 2,
+      targetCalories: 1600,
+      allergies: ["花生", "牛奶"],
+      availableIngredients: ["鸡蛋", "番茄"],
+      ignoredPrivateField: "must-not-persist",
+    },
   });
   assert.equal(created.status, "waiting");
   assert.equal(created.context.ragCitations[0].name, "豆腐");
+  assert.deepEqual(requests[0].body.profile, {
+    days: 3,
+    familySize: 2,
+    targetCalories: 1600,
+    allergies: "花生, 牛奶",
+    pantry: "鸡蛋, 番茄",
+  });
+  assert.deepEqual(created.context.profile, requests[0].body.profile);
 
   const adjusted = await harness.runner.action(created.id, "adjust-meal", {
     mealKey: "day0-meal0",
     reason: "没有鸡胸肉",
-    constraints: "只有豆腐",
+    constraints: { ingredients: ["豆腐"], spicy: false },
   });
   assert.equal(adjusted.status, "waiting");
   assert.equal(adjusted.context.adjustments.length, 1);
   assert.equal(adjusted.lastAction.response.adjustment.replacementName, "豆腐饭");
+  assert.equal(requests[1].body.constraints, '{"ingredients":["豆腐"],"spicy":false}');
 
   const completed = await harness.runner.resume(created.id, {
-    executionState: { meals: { "day0-meal0": "cooked" } },
+    executionState: {
+      planId: "plan-safe",
+      selectedDayIndex: 0,
+      shopping: [[true, false]],
+      prep: [true],
+      meals: { "day0-meal0": "cooked" },
+      replacements: [{
+        mealKey: "day0-meal0",
+        reason: "临时调整",
+        originalName: "鸡胸肉饭",
+        replacement: { name: "豆腐饭", nutritionDelta: "蛋白质估算接近", raw: "drop" },
+        unknown: "drop",
+      }],
+      rows: [{ secret: "must-not-persist" }],
+    },
     feedback: "希望更多变化",
   });
   assert.equal(completed.status, "completed");
   assert.equal(completed.result.review.review.summary, "执行稳定");
+  assert.deepEqual(requests[2].body.executionState, {
+    planId: "plan-safe",
+    selectedDayIndex: 0,
+    shopping: [[true, false]],
+    prep: [true],
+    meals: { "day0-meal0": "cooked" },
+    replacements: [{
+      mealKey: "day0-meal0",
+      reason: "临时调整",
+      originalName: "鸡胸肉饭",
+      replacementName: "豆腐饭",
+      nutritionDelta: "蛋白质估算接近",
+      createdAt: "",
+    }],
+  });
+  const persisted = await readFile(path.join(harness.directory, `${completed.id}.json`), "utf8");
+  assert.equal(persisted.includes("must-not-persist"), false);
+  assert.equal(persisted.includes('"rows"'), false);
 });
 
 test("paper workflow retrieves paragraph citations for every evidence task", async (t) => {

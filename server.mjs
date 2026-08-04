@@ -325,6 +325,10 @@ function hasAdminAccess(request) {
     return true;
   }
 
+  return hasConfiguredAdminAccess(request);
+}
+
+function hasConfiguredAdminAccess(request) {
   const token = request.headers["x-hub-admin-token"] || getBearerToken(request);
   if (!adminToken || typeof token !== "string") {
     return false;
@@ -1682,7 +1686,7 @@ async function handleApi(request, response, pathname) {
 }
 
 async function handleWorkflowApi(request, response, pathname) {
-  if (!hasAdminAccess(request)) {
+  if (!hasConfiguredAdminAccess(request)) {
     sendJson(response, 401, { error: "Admin token is required." });
     return;
   }

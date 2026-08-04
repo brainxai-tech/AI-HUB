@@ -1,6 +1,7 @@
 import { spawn, spawnSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
-import { mkdir, rm } from "node:fs/promises";
+import { chmod, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -13,6 +14,7 @@ const manifestPath = path.join(root, "deploy/project-manifest.json");
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
 const registryPath = path.join(runtimeDirectory, "project-tokens.json");
 const sharedCredentialsPath = path.join(runtimeDirectory, "shared-project-credentials.json");
+const workflowCredentialsPath = path.join(runtimeDirectory, "workflow-credentials.json");
 const stopSignalPath = path.join(runtimeDirectory, "suite.stop");
 const children = [];
 let stopping = false;
@@ -24,6 +26,7 @@ await mkdir(runtimeDirectory, { recursive: true });
 await rm(stopSignalPath, { force: true });
 await provisionLocalAccess({ manifestPath, registryPath, sharedPath: sharedCredentialsPath });
 const credentials = JSON.parse(readFileSync(sharedCredentialsPath, "utf8"));
+const workflowCredentials = await provisionWorkflowCredentials(workflowCredentialsPath);
 const pikafishPath = process.env.PIKAFISH_PATH?.trim() || (
   await provisionPikafish({ runtimeDirectory: path.join(runtimeDirectory, "engines") })
 ).enginePath;
@@ -45,7 +48,8 @@ startChild("hub", root, ["server.mjs"], {
   HUB_OBSERVABILITY_LOG_PATH: path.join(runtimeDirectory, "observability-events.jsonl"),
   HUB_PROJECT_TOKENS_PATH: registryPath,
   HUB_REMOTE_GATEWAY_ORIGIN: "",
-  HUB_ADMIN_TOKEN: "",
+  HUB_ADMIN_TOKEN: workflowCredentials.adminToken,
+  WORKFLOW_API_TOKEN: workflowCredentials.apiToken,
 });
 
 startChild("shared-runtime", path.join(root, manifest.sharedApi.package), ["server.mjs"], {
@@ -64,6 +68,7 @@ startChild("agent-workflow-runtime", path.join(root, manifest.workflowApi.packag
   AIHUB_WORKFLOW_DATA_DIR: path.join(runtimeDirectory, "workflow-runs"),
   AIHUB_SHARED_PROJECT_ORIGIN: sharedOrigin,
   AIHUB_ESSAY_ORIGIN: "http://127.0.0.1:4204/essay/",
+  WORKFLOW_API_TOKEN: workflowCredentials.apiToken,
 });
 
 for (const project of dedicatedProjects) {
@@ -106,7 +111,9 @@ try {
   await Promise.all([
     waitForJson(`${hubOrigin}/hub/api/health`),
     waitForJson(`${sharedOrigin}/health`),
-    waitForJson(`${workflowOrigin}/health`),
+    waitForJson(`${workflowOrigin}/health`, {
+      headers: { authorization: `Bearer ${workflowCredentials.apiToken}` },
+    }),
     ...dedicatedProjects.map((project) =>
       waitForJson(`http://127.0.0.1:${project.port}${project.route}api/providers`),
     ),
@@ -151,15 +158,15 @@ function startChild(name, cwd, args, additions) {
   return child;
 }
 
-async function waitForJson(url) {
-  return waitForContentType(url, /application\/json/i);
+async function waitForJson(url, init) {
+  return waitForContentType(url, /application\/json/i, init);
 }
 
 async function waitForHtml(url) {
   return waitForContentType(url, /text\/html/i);
 }
 
-async function waitForContentType(url, contentTypePattern) {
+async function waitForContentType(url, contentTypePattern, init = {}) {
   const deadline = Date.now() + Number(process.env.AIHUB_SUITE_START_TIMEOUT_MS || 120_000);
   while (Date.now() < deadline) {
     if (existsSync(stopSignalPath)) throw new Error("Local suite stop requested during startup");
@@ -174,7 +181,7 @@ async function waitForContentType(url, contentTypePattern) {
       );
     }
     try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(1_500), cache: "no-store" });
+      const response = await fetch(url, { ...init, signal: AbortSignal.timeout(1_500), cache: "no-store" });
       if (response.ok && contentTypePattern.test(response.headers.get("content-type") || "")) return;
     } catch {
       // Keep polling within the bounded startup deadline.
@@ -182,6 +189,39 @@ async function waitForContentType(url, contentTypePattern) {
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
   throw new Error(`Timed out waiting for ${url}`);
+}
+
+async function provisionWorkflowCredentials(credentialsPath) {
+  try {
+    return validateWorkflowCredentials(JSON.parse(await readFile(credentialsPath, "utf8")));
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw new Error(`Invalid local workflow credentials: ${error.message}`);
+  }
+
+  const credentials = {
+    adminToken: randomBytes(32).toString("hex"),
+    apiToken: randomBytes(32).toString("hex"),
+  };
+  await writeFile(credentialsPath, `${JSON.stringify(credentials, null, 2)}\n`, {
+    encoding: "utf8",
+    flag: "wx",
+    mode: 0o600,
+  });
+  await chmod(credentialsPath, 0o600);
+  return credentials;
+}
+
+function validateWorkflowCredentials(value) {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    !/^[a-f0-9]{64}$/.test(value.adminToken || "") ||
+    !/^[a-f0-9]{64}$/.test(value.apiToken || "") ||
+    value.adminToken === value.apiToken
+  ) {
+    throw new Error("expected distinct 64-character admin and internal tokens");
+  }
+  return { adminToken: value.adminToken, apiToken: value.apiToken };
 }
 
 function waitForStopOrFailure() {

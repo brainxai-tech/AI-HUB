@@ -44,5 +44,15 @@ test("agent workflow runtime is packaged, loopback-only, private, and activated 
   assert.match(deploy, /Authorization: Bearer/);
   assert.match(deploy, /backup_dir\/ai-hub-agent-workflow\.service/);
   assert.match(deploy, /restore_service_states/);
+  assert.match(deploy, /prepare_release_dependencies/);
+  assert.match(deploy, /cmp -s -- "\$lock" "\$candidate_lock"/);
+  assert.match(deploy, /resolved_modules.*RELEASES_DIR/s);
+  assert.match(deploy, /npm ci --no-audit --no-fund/);
+  assert.match(deploy, /npm run workspace:build/);
+  assert.match(deploy, /npm run workspace:verify/);
+  assert.match(deploy, /npm run security:scan/);
+  assert.match(deploy, /\.dependency-releases/);
+  assert.match(deploy, /chown -hR admin:admin "\$temporary"/);
+  assert.match(deploy, /runuser -u admin -- env npm_config_cache=/);
   assert.doesNotMatch(nginx, /4196|agent-workflow/);
 });

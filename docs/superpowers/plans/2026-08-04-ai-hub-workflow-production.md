@@ -202,7 +202,7 @@
   Run:
 
   ```powershell
-  python "C:\Users\Michael Song\.codex\skills\.system\skill-creator\scripts\quick_validate.py" skills/review-legal-clause
+  python "$env:USERPROFILE\.codex\skills\.system\skill-creator\scripts\quick_validate.py" skills/review-legal-clause
   npm test --prefix packages/agent-workflow-runtime
   npm test --prefix apps/ai-legal-clause-translator
   ```
@@ -271,7 +271,7 @@
   Run:
 
   ```powershell
-  python "C:\Users\Michael Song\.codex\skills\.system\skill-creator\scripts\quick_validate.py" skills/operate-trace-sheet
+  python "$env:USERPROFILE\.codex\skills\.system\skill-creator\scripts\quick_validate.py" skills/operate-trace-sheet
   npm test --prefix packages/agent-workflow-runtime
   npm test --prefix apps/trace-sheet-workbench
   ```
@@ -335,7 +335,7 @@
 **Files:**
 - Modify: `README.md`
 - Modify: `.github/workflows/fresh-clone.yml`
-- Local install target: `C:\Users\Michael Song\.codex\skills\<six-skill-id>`
+- Local install target: `$env:USERPROFILE\.codex\skills\<six-skill-id>`
 
 - [ ] **Step 1: Make CI run for this branch and cover workflow packages**
 
@@ -343,7 +343,7 @@
 
 - [ ] **Step 2: Install and validate all six Codex Skills locally**
 
-  Copy each tracked Skill directory without deleting unrelated user Skills. Validate each installed `SKILL.md` with `quick_validate.py` and confirm all six names appear under `C:\Users\Michael Song\.codex\skills`.
+  Copy each tracked Skill directory without deleting unrelated user Skills. Validate each installed `SKILL.md` with `quick_validate.py` and confirm all six names appear under `$env:USERPROFILE\.codex\skills`.
 
 - [ ] **Step 3: Run complete local verification**
 
@@ -391,13 +391,16 @@
 
   Create the archive with `git archive HEAD`, calculate SHA-256 locally, upload it, calculate SHA-256 remotely, and stop if hashes differ.
 
-- [ ] **Step 3: Perform the first two-stage activation**
+- [ ] **Step 3: Build and activate with the deploy script from the verified archive**
 
-  The first command uses the old deploy script to unpack and switch the release. The second command uses the newly activated deploy script to install and start the workflow unit:
+  Extract the deploy script from the hash-verified archive so an older current release cannot omit the workflow unit or reproducible build. The script reuses dependencies only when package locks match byte-for-byte, installs unmatched locked packages, then runs the complete workspace build, verification, and security scan before switching:
 
   ```bash
-  sudo /opt/ai-project-hub/current/deploy/deploy.sh /home/admin/staging/releases/ai-project-hub-<commit>.tar.gz <commit>
-  sudo /opt/ai-project-hub/current/deploy/deploy.sh --activate <commit>
+  archive=/home/admin/staging/releases/ai-project-hub-<commit>.tar.gz
+  bootstrap=/home/admin/staging/releases/deploy-<commit>.sh
+  tar -xOf "$archive" deploy/deploy.sh > "$bootstrap"
+  chmod 0700 "$bootstrap"
+  sudo "$bootstrap" "$archive" <commit>
   ```
 
 - [ ] **Step 4: Verify production without printing secrets**

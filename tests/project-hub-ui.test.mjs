@@ -39,6 +39,11 @@ test("workflow center supports all six forms and the complete run lifecycle", as
   for (const operation of ["createRun", "getRun", "resumeRun", "retryRun", "actionRun", "deleteRun"]) {
     assert.match(script, new RegExp(`function ${operation}|const ${operation}`));
   }
+  assert.match(script, /textField\("profile\.pantry"/);
+  assert.doesNotMatch(script, /profile\.availableIngredients/);
+  assert.doesNotMatch(script, /textField\("constraints"[^\n]*transform: "json"/);
+  assert.match(script, /await loadAvailableSkills\(\)/);
+  assert.doesNotMatch(script, /hubRequest\("\/hub\/api\/admin\/verify"/);
   assert.match(script, /sessionStorage\.setItem\(RECENT_RUNS_KEY/);
   assert.match(script, /\.textContent\s*=/);
   assert.doesNotMatch(script, /\.innerHTML\s*=/);

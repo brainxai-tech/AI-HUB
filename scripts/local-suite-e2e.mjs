@@ -110,10 +110,18 @@ try {
     windowsHide: true,
   });
   const supervisorOutput = collectOutput(supervisor);
+  const workflowCredentials = await waitForWorkflowCredentials(
+    path.join(runtimeDirectory, "workflow-credentials.json"),
+    supervisor,
+    30_000,
+  );
+  const workflowAuthorization = `Bearer ${workflowCredentials.apiToken}`;
   await Promise.all([
     waitUntilReady("http://127.0.0.1:4194/hub/api/health", supervisor, 240_000),
     waitUntilReady("http://127.0.0.1:4195/health", supervisor, 240_000),
-    waitUntilReady("http://127.0.0.1:4196/health", supervisor, 240_000),
+    waitUntilReady("http://127.0.0.1:4196/health", supervisor, 240_000, {
+      headers: { authorization: workflowAuthorization },
+    }),
     ...manifest.projects.filter(({ api }) => api === "dedicated").map((project) =>
       waitUntilReady(`http://127.0.0.1:${project.port}${project.route}api/providers`, supervisor, 240_000),
     ),
@@ -122,7 +130,13 @@ try {
     ),
   ]);
 
-  const workflowSkills = await fetchJson("http://127.0.0.1:4196/api/skills");
+  const directWorkflowWithoutToken = await fetch("http://127.0.0.1:4196/api/skills");
+  assert.equal(directWorkflowWithoutToken.status, 401);
+  const hubWorkflowWithoutAdmin = await fetch("http://127.0.0.1:4194/hub/api/workflows/skills");
+  assert.equal(hubWorkflowWithoutAdmin.status, 401);
+  const workflowSkills = await fetchJson("http://127.0.0.1:4194/hub/api/workflows/skills", {
+    headers: { "x-hub-admin-token": workflowCredentials.adminToken },
+  });
   assert.deepEqual(
     workflowSkills.skills.map(({ id }) => id),
     [
@@ -431,12 +445,12 @@ function collectOutput(child) {
   return () => output;
 }
 
-async function waitUntilReady(url, child, timeoutMs) {
+async function waitUntilReady(url, child, timeoutMs, init = {}) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     if (child.exitCode !== null) throw new Error(`Local suite supervisor exited with ${child.exitCode}`);
     try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
+      const response = await fetch(url, { ...init, signal: AbortSignal.timeout(1_500) });
       if (response.ok) return;
     } catch {
       // Retry within the bounded startup deadline.
@@ -444,6 +458,24 @@ async function waitUntilReady(url, child, timeoutMs) {
     await new Promise((resolve) => setTimeout(resolve, 300));
   }
   throw new Error(`Timed out waiting for ${url}`);
+}
+
+async function waitForWorkflowCredentials(credentialsPath, child, timeoutMs) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (child.exitCode !== null) throw new Error(`Local suite supervisor exited with ${child.exitCode}`);
+    try {
+      const value = JSON.parse(await readFile(credentialsPath, "utf8"));
+      assert.match(value.adminToken, /^[a-f0-9]{64}$/);
+      assert.match(value.apiToken, /^[a-f0-9]{64}$/);
+      assert.notEqual(value.adminToken, value.apiToken);
+      return value;
+    } catch (error) {
+      if (error?.code !== "ENOENT" && !(error instanceof SyntaxError)) throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error("Timed out waiting for local workflow credentials");
 }
 
 async function fetchJson(url, init) {

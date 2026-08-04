@@ -31,6 +31,11 @@ test("one-click suite owns every documented tool and game port", async () => {
   assert.match(supervisor, /game\.id === "ai-xiangqi-duel"/);
   assert.match(supervisor, /AIHUB_SERVE_PROJECT_UI/);
   assert.match(supervisor, /HUB_PROJECT_TOKEN: token/);
+  assert.match(supervisor, /workflow-credentials\.json/);
+  assert.match(supervisor, /randomBytes\(32\)/);
+  assert.match(supervisor, /HUB_ADMIN_TOKEN: workflowCredentials\.adminToken/);
+  assert.match(supervisor, /WORKFLOW_API_TOKEN: workflowCredentials\.apiToken/);
+  assert.match(supervisor, /authorization: `Bearer \$\{workflowCredentials\.apiToken\}`/);
   assert.match(supervisor, /suiteStartError/);
   assert.match(supervisor, /signalCode/);
   assert.doesNotMatch(supervisor, /console\.log\([^\n]*token/i);

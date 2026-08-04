@@ -51,10 +51,10 @@ const workflowForms = {
       submitLabel: "生成本周计划",
       fields: [
         textField("profile.days", "计划天数", { type: "number", value: 7, min: 1, max: 14, required: true }),
-        textField("profile.familySize", "用餐人数", { type: "number", value: 2, min: 1, max: 20, required: true }),
-        textField("profile.targetCalories", "每日目标热量", { type: "number", value: 1800, min: 800, max: 6000 }),
+        textField("profile.familySize", "用餐人数", { type: "number", value: 2, min: 1, max: 8, required: true }),
+        textField("profile.targetCalories", "每日目标热量", { type: "number", value: 1800, min: 1000, max: 3200 }),
         textField("profile.allergies", "过敏原", { transform: "csv", placeholder: "花生, 牛奶" }),
-        textField("profile.availableIngredients", "现有食材", { transform: "csv", placeholder: "鸡蛋, 番茄", wide: true }),
+        textField("profile.pantry", "现有食材", { transform: "csv", placeholder: "鸡蛋, 番茄", wide: true }),
       ],
     },
     checkpoints: {
@@ -76,7 +76,7 @@ const workflowForms = {
         fields: [
           textField("mealKey", "餐次标识 mealKey", { required: true }),
           textField("reason", "调整原因", { required: true }),
-          textField("constraints", "附加约束 JSON", { type: "textarea", transform: "json", value: "{}", wide: true }),
+          textField("constraints", "附加约束", { type: "textarea", placeholder: "例如：只用豆腐，不要辛辣", wide: true }),
         ],
       },
     },
@@ -285,12 +285,11 @@ async function unlockWorkspace(event) {
   elements.adminTokenInput.value = "";
   adminToken = candidate;
   try {
-    await hubRequest("/hub/api/admin/verify", { method: "POST" });
+    await loadAvailableSkills();
     elements.unlockPanel.hidden = true;
     elements.workspace.hidden = false;
     setStatus(elements.unlockStatus, "");
     setStatus(elements.workspaceStatus, "管理员身份已验证。", "success");
-    await loadAvailableSkills();
   } catch (error) {
     adminToken = "";
     setStatus(elements.unlockStatus, error.message || "管理员口令验证失败。", "error");
@@ -299,18 +298,11 @@ async function unlockWorkspace(event) {
 }
 
 async function loadAvailableSkills() {
-  try {
-    const payload = await workflowRequest("/skills");
-    availableSkillIds = new Set((payload.skills || []).map((skill) => skill.id));
-    renderSkillList();
-    selectSkill(activeSkillId);
-    setStatus(elements.workspaceStatus, `已发现 ${availableSkillIds.size} 个可运行 Skill。`, "success");
-  } catch (error) {
-    availableSkillIds = new Set();
-    renderSkillList();
-    selectSkill(activeSkillId);
-    setStatus(elements.workspaceStatus, error.message, "error");
-  }
+  const payload = await workflowRequest("/skills");
+  availableSkillIds = new Set((payload.skills || []).map((skill) => skill.id));
+  renderSkillList();
+  selectSkill(activeSkillId);
+  setStatus(elements.workspaceStatus, `已发现 ${availableSkillIds.size} 个可运行 Skill。`, "success");
 }
 
 function renderSkillList() {

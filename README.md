@@ -23,6 +23,8 @@ npm run start:suite
 
 打开 `http://127.0.0.1:4194/hub/`，再进入 `http://127.0.0.1:4194/hub/key-config/` 配置自己的 AI Routing API Key。Hub 只接受并展示 `gpt-*` 型号，所有模型感知工具和游戏都通过项目级服务端凭证调用 Hub；浏览器中没有供应商 Key、项目令牌或共享令牌。
 
+本地工作流中心位于 `http://127.0.0.1:4194/hub/workflows/`。一键套件会在 `.local-runtime/workflow-credentials.json` 创建并复用互不相同的管理员令牌和内部 workflow 令牌，文件不进入 Git，也不会打印到日志。只把其中的 `adminToken` 粘贴到工作流中心；内部 `apiToken` 只由 Hub 和 4196 进程使用。
+
 停止完整套件：
 
 ```powershell
@@ -143,15 +145,14 @@ npm run e2e
 commit=$(git rev-parse HEAD)
 git archive --format=tar.gz --output="ai-project-hub-$commit.tar.gz" HEAD
 scp "ai-project-hub-$commit.tar.gz" admin@server:/home/admin/staging/releases/
-sudo /opt/ai-project-hub/current/deploy/deploy.sh \
-  "/home/admin/staging/releases/ai-project-hub-$commit.tar.gz" "$commit"
+archive="/home/admin/staging/releases/ai-project-hub-$commit.tar.gz"
+bootstrap="/home/admin/staging/releases/deploy-$commit.sh"
+tar -xOf "$archive" deploy/deploy.sh > "$bootstrap"
+chmod 0700 "$bootstrap"
+sudo "$bootstrap" "$archive" "$commit"
 ```
 
-如果服务器当前仍使用不认识 workflow unit 的旧版部署脚本，第一次发布需在切换到新 release 后再执行一次新脚本的激活模式：
-
-```bash
-sudo /opt/ai-project-hub/current/deploy/deploy.sh --activate "$commit"
-```
+首次发布也从已校验归档中提取同一提交的部署脚本执行，不调用旧 release 的脚本。部署脚本只在 `package-lock.json` 逐字节一致时复用 release 存储中的只读 `node_modules`；找不到匹配依赖时只对该包执行 `npm ci`。新 release 必须在切换前完成完整工作区构建、验证和安全扫描。
 
 激活会原子安装 Hub 与 workflow 两个 unit，依次检查 4194、带令牌的回环 4196 和 Nginx 健康状态。任一步失败都会恢复旧 release、两个 unit 及其原启用/运行状态。回滚到不包含 workflow runtime 的旧 release 时会停用 4196。
 

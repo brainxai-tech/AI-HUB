@@ -24,6 +24,7 @@ PUBLIC_HEALTH_URL="http://127.0.0.1/hub/api/health"
 WORKFLOW_HEALTH_URL="http://127.0.0.1:4196/health"
 RESTORE_LOCAL_HEALTH_URL="http://127.0.0.1:4194/api/health"
 RESTORE_PUBLIC_HEALTH_URL="http://127.0.0.1/hub/api/health"
+MIN_BUILD_AVAILABLE_KB=2097152
 
 rollback_needed=0
 previous_target=""
@@ -160,6 +161,54 @@ release_has_workflow() {
     [[ -d "$release/skills" ]]
 }
 
+require_build_space() {
+  local available_kb
+  available_kb="$(df -Pk "$RELEASES_DIR" | awk 'NR == 2 { print $4 }')"
+  [[ "$available_kb" =~ ^[0-9]+$ ]] || die "could not determine release disk availability"
+  (( available_kb >= MIN_BUILD_AVAILABLE_KB )) ||
+    die "at least $MIN_BUILD_AVAILABLE_KB KiB must be available to build a release"
+}
+
+prepare_release_dependencies() {
+  local release="$1"
+  local seed="$2"
+  local lock relative package_dir candidate_lock candidate_dir candidate_modules resolved_modules dependency_release linked
+
+  [[ -d "$seed" && "$seed" == "$RELEASES_DIR/"* ]] || die "current release is not a trusted dependency seed"
+  if find "$release" -type d -name node_modules -print -quit | grep -q .; then
+    die "source archive must not contain node_modules"
+  fi
+  : > "$release/.dependency-releases"
+
+  while IFS= read -r -d '' lock; do
+    relative="${lock#"$release/"}"
+    package_dir="${relative%/package-lock.json}"
+    linked=0
+    for candidate_lock in "$seed/$relative" "$RELEASES_DIR"/*/"$relative"; do
+      candidate_dir="${candidate_lock%/package-lock.json}"
+      candidate_modules="$candidate_dir/node_modules"
+      if [[ -f "$candidate_lock" && -d "$candidate_modules" ]] && cmp -s -- "$lock" "$candidate_lock"; then
+        resolved_modules="$(readlink -f "$candidate_modules")"
+        [[ -d "$resolved_modules" && "$resolved_modules" == "$RELEASES_DIR/"* ]] ||
+          die "dependency modules for $package_dir resolve outside the release store"
+        ln -s -- "$resolved_modules" "$release/$package_dir/node_modules"
+        dependency_release="${resolved_modules#"$RELEASES_DIR/"}"
+        printf '%s\n' "${dependency_release%%/*}" >> "$release/.dependency-releases"
+        linked=1
+        log "reused locked dependencies for $package_dir" >&2
+        break
+      fi
+    done
+    if [[ "$linked" -eq 0 ]]; then
+      require_build_space
+      log "installing locked dependencies for $package_dir" >&2
+      (cd "$release/$package_dir" && npm ci --no-audit --no-fund) >&2
+    fi
+  done < <(find "$release" -path '*/node_modules' -prune -o -type f -name package-lock.json -print0)
+
+  sort -u -o "$release/.dependency-releases" "$release/.dependency-releases"
+}
+
 package_release() {
   local archive="$1"
   local commit="$2"
@@ -178,15 +227,22 @@ package_release() {
   trap 'rm -rf -- "$temporary"' RETURN
   tar -xzf "$archive" -C "$temporary" --no-same-owner --no-same-permissions
   validate_release_tree "$temporary"
+  require_build_space
+  prepare_release_dependencies "$temporary" "$(readlink -f "$CURRENT_LINK" 2>/dev/null || true)"
   printf '%s\n' "$commit" > "$temporary/.release-commit"
 
+  log "building and verifying release $commit before activation" >&2
+  chown -hR admin:admin "$temporary"
+  install -d -m 0700 -o admin -g admin "$temporary/.npm-cache"
+  (cd "$temporary" && runuser -u admin -- env npm_config_cache="$temporary/.npm-cache" \
+    npm run workspace:build && runuser -u admin -- env npm_config_cache="$temporary/.npm-cache" \
+    npm run workspace:verify && runuser -u admin -- env npm_config_cache="$temporary/.npm-cache" \
+    npm run security:scan) >&2
+  rm -rf -- "$temporary/.npm-cache"
   find "$temporary" -type d -exec chmod 0755 {} +
   find "$temporary" -type f -exec chmod 0644 {} +
   chmod 0755 "$temporary/deploy/deploy.sh" "$temporary/deploy/rollback.sh"
   chown -R root:root "$temporary"
-
-  log "verifying release $commit before activation" >&2
-  (cd "$temporary" && npm run verify) >&2
   mv -T -- "$temporary" "$release"
   trap - RETURN
   printf '%s\n' "$release"
@@ -409,6 +465,7 @@ main() {
 
   require_root
   command -v flock >/dev/null || die "flock is required"
+  command -v runuser >/dev/null || die "runuser is required"
   exec 9>"$LOCK_FILE"
   flock -n 9 || die "another deployment is already running"
   prepare_external_state
