@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>API 控制台 · AI HUB</title>
+    <meta name="description" content="管理 AI HUB 中转服务账户、API Key、余额和调用记录。" />
+    <link rel="stylesheet" href="/hub/styles.css?v=20260805-relay5" />
+    <link rel="stylesheet" href="/hub/suite-theme.css?v=20260731-layout1" />
+    <link rel="stylesheet" href="/hub/relay-console/styles.css?v=20260805-relay1" />
+    <script defer src="/hub/relay-console/app.js?v=20260805-relay1"></script>
+  </head>
+  <body class="relay-console-page">
+    <main class="relay-console-shell">
+      <header class="relay-console-topbar">
+        <a class="relay-console-brand" href="/hub/">
+          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          <span><small>AI HUB</small><strong>API 控制台</strong></span>
+        </a>
+        <nav class="relay-console-nav" aria-label="控制台导航">
+          <a href="/hub/#provider-service">返回中转服务</a>
+          <button id="logoutButton" type="button" hidden>退出登录</button>
+        </nav>
+      </header>
+
+      <section class="relay-console-intro" aria-labelledby="consoleTitle">
+        <div>
+          <span class="eyebrow">RELAY API</span>
+          <h1 id="consoleTitle">用一枚 Key，按实际用量调用模型</h1>
+          <p>这里管理账户、余额和调用 Key。价格以已核验的模型配置为准，充值通道开放前不会产生任何扣款。</p>
+        </div>
+        <div id="accountSummary" class="relay-account-summary" hidden>
+          <span>当前余额</span>
+          <strong id="balanceValue">¥0.00</strong>
+          <small id="accountEmail"></small>
+        </div>
+      </section>
+
+      <section id="authSection" class="relay-auth-card" aria-labelledby="authTitle">
+        <div class="relay-auth-card__copy">
+          <span class="eyebrow">ACCOUNT</span>
+          <h2 id="authTitle">登录 API 控制台</h2>
+          <p id="authHint">注册后可以创建自己的 API Key；当前充值仍需等待支付通道配置。</p>
+        </div>
+        <form id="authForm" class="relay-auth-form" novalidate>
+          <label><span>邮箱</span><input id="authEmail" type="email" autocomplete="email" required /></label>
+          <label><span>密码</span><input id="authPassword" type="password" autocomplete="current-password" minlength="8" required /></label>
+          <button id="authSubmit" class="action-button" type="submit">登录</button>
+          <button id="authModeToggle" class="text-button" type="button">没有账户？注册</button>
+        </form>
+        <p id="authStatus" class="relay-console-status" role="status" aria-live="polite"></p>
+      </section>
+
+      <div id="dashboard" hidden>
+        <section class="relay-console-grid" aria-label="账户概览">
+          <article class="relay-console-card relay-console-card--balance">
+            <div class="relay-card-heading"><span class="eyebrow">WALLET</span><h2>余额</h2></div>
+            <strong id="walletBalance" class="relay-balance">¥0.00</strong>
+            <p>按输入和输出 Token 分开计费。当前充值通道尚未配置。</p>
+            <button id="topupButton" class="action-button action-button--secondary" type="button">充值（即将开放）</button>
+          </article>
+          <article class="relay-console-card">
+            <div class="relay-card-heading"><span class="eyebrow">PRICING</span><h2>销售价</h2></div>
+            <p>只展示管理员已核验并开放销售的模型。倍率相对上游成本计算。</p>
+            <a class="text-link" href="/hub/#provider-service">查看中转站比价</a>
+          </article>
+        </section>
+
+        <section class="relay-console-card relay-keys-card" aria-labelledby="keysTitle">
+          <div class="relay-section-heading">
+            <div><span class="eyebrow">API KEYS</span><h2 id="keysTitle">API Key</h2><p>创建后完整 Key 只显示一次，请保存到密码管理器。</p></div>
+            <button id="createKeyButton" class="action-button" type="button">新建 Key</button>
+          </div>
+          <div id="keyReveal" class="relay-key-reveal" hidden>
+            <strong>请立即复制这枚 Key</strong>
+            <code id="newKeyValue"></code>
+            <button id="copyKeyButton" class="text-button" type="button">复制</button>
+          </div>
+          <div id="keyList" class="relay-key-list" aria-live="polite"></div>
+        </section>
+
+        <section class="relay-console-card" aria-labelledby="pricingTitle">
+          <div class="relay-section-heading"><div><span class="eyebrow">MODEL PRICING</span><h2 id="pricingTitle">模型销售价</h2><p>价格按每百万 tokens 展示，最终扣费以接口返回 usage 为准。</p></div></div>
+          <div class="relay-table-wrap"><table class="relay-table"><thead><tr><th>模型</th><th>输入</th><th>输出</th><th>倍率</th><th>状态</th></tr></thead><tbody id="pricingBody"></tbody></table></div>
+        </section>
+
+        <section class="relay-console-card" aria-labelledby="usageTitle">
+          <div class="relay-section-heading"><div><span class="eyebrow">USAGE</span><h2 id="usageTitle">最近消费</h2><p>账本按时间倒序展示最近 100 条记录。</p></div></div>
+          <div id="usageList" class="relay-usage-list" aria-live="polite"></div>
+        </section>
+
+        <section class="relay-console-card relay-docs-card" aria-labelledby="docsTitle">
+          <div class="relay-section-heading"><div><span class="eyebrow">QUICK START</span><h2 id="docsTitle">调用示例</h2><p>将新建的 Key 放在 Authorization 头中；请勿提交到前端代码或公开仓库。</p></div></div>
+          <pre><code>curl -X POST "https://your-domain.example/hub/api/relay/v1/chat/completions" \
+  -H "Authorization: Bearer ahub_你的_API_Key" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-5.5","messages":[{"role":"user","content":"你好"}]}'</code></pre>
+          <p id="docsNotice" class="relay-console-status">当前环境仍需管理员配置真实上游 Key、模型价格和支付通道。</p>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

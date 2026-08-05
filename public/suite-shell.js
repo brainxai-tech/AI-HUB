@@ -2,6 +2,7 @@
   const script = document.currentScript;
   const projectName = script?.dataset?.suiteProject || document.title || "AI Project";
   const hubHref = script?.dataset?.suiteHub || "/hub/";
+  const hideTopbar = script?.dataset?.suiteHideTopbar === "true";
   const projectId = script?.dataset?.suiteId || inferProjectId(projectName, window.location.pathname);
   const projectApiBase = script?.dataset?.suiteApi || inferProjectApiBase(window.location.pathname);
   const gameProjectIds = new Set([
@@ -48,6 +49,10 @@
 
     const existingSkip = document.querySelector(".suite-skip-link");
     if (existingSkip && firstMain) existingSkip.href = `#${firstMain.id}`;
+    if (hideTopbar) {
+      document.querySelector(".suite-topbar")?.remove();
+      return;
+    }
     if (document.querySelector(".suite-topbar")) return;
 
     let skip = null;
@@ -343,6 +348,7 @@
       }
 
       for (const select of document.querySelectorAll("select:not(.suite-model-select)")) {
+        if (select.matches("[data-suite-preserve]") || select.closest("[data-suite-preserve]")) continue;
         const selectOptions = Array.from(select.options);
         const labelText = associatedLabelText(select);
         const signature = [
@@ -376,7 +382,7 @@
       }
 
       for (const input of document.querySelectorAll("input:not([type='hidden']):not([type='radio']):not([type='checkbox'])")) {
-        if (input.closest(".suite-model-backdrop, [data-user-content], [contenteditable='true']")) continue;
+        if (input.matches("[data-suite-preserve]") || input.closest("[data-suite-preserve], .suite-model-backdrop, [data-user-content], [contenteditable='true']")) continue;
         const labelText = associatedLabelText(input);
         const signature = [
           input.id,

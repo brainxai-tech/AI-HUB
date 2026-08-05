@@ -100,17 +100,15 @@ test("imported products use hardened release-scoped services and dedicated route
   }
 });
 
-test("Nginx exposes centralized administration while application token auth protects writes", async () => {
+test("Nginx no longer exposes the removed legacy administration page", async () => {
   const config = await readFile(new URL("../deploy/nginx/idol-match-test.conf", import.meta.url), "utf8");
   const modelConfigStart = config.indexOf("location = /hub/api/model-config {");
-  const adminStart = config.indexOf("location ^~ /hub/admin/ {");
   const modelConfigEnd = config.indexOf("\n    location ", modelConfigStart + 1);
-  const adminEnd = config.indexOf("\n    location ", adminStart + 1);
 
   assert.ok(modelConfigStart > -1, "model configuration proxy is missing");
-  assert.ok(adminStart > -1, "administrator UI location is missing");
   assert.doesNotMatch(config.slice(modelConfigStart, modelConfigEnd), /limit_except GET/);
-  assert.doesNotMatch(config.slice(adminStart, adminEnd), /deny all/);
+  assert.doesNotMatch(config, /location = \/hub\/admin\b/);
+  assert.doesNotMatch(config, /location \^~ \/hub\/admin\//);
   assert.match(config, /HUB_ADMIN_TOKEN can authorize them centrally/);
   assert.match(config, /configuration write[\s\S]*protected by HUB_ADMIN_TOKEN/);
 });

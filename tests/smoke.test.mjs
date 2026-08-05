@@ -226,8 +226,8 @@ test("html loads project data before the app", async () => {
   assert.match(html, /\/hub\/capabilities\.js\?v=20260710-capabilities/);
   assert.match(html, /\/hub\/projects\.js\?v=20260728-gpt-only1/);
   assert.match(html, /\/hub\/cover-manifest\.js\?v=20260727-image2-office-hub-style-v2/);
-  assert.match(html, /\/hub\/styles\.css\?v=20260731-layout1/);
-  assert.match(html, /\/hub\/app\.js\?v=20260731-layout1/);
+  assert.match(html, /\/hub\/styles\.css\?v=20260805-relay4/);
+  assert.match(html, /\/hub\/app\.js\?v=20260805-relay7/);
   assert.match(html, /rel="icon" href="data:image\/svg\+xml/);
 });
 
@@ -235,6 +235,7 @@ test("Hub shell transfer stays below 1.5 MiB before lazy cover loading", async (
   const files = [
     "public/index.html",
     "public/styles.css",
+    "public/model-guide.css",
     "public/suite-theme.css",
     "public/suite-tool-foundation.css",
     "public/suite-shell.js",
@@ -449,8 +450,8 @@ test("model guide compares only GPT models with transparent scoring and pricing"
   }
   assert.match(guideHtml, /每 100 万输入\/输出 Token/);
   assert.match(guideHtml, /80 万输入 \+ 20 万输出/);
-  assert.match(guideHtml, /能力分数来自 LiveBench 与 Artificial Analysis 国际第三方测评/);
-  assert.match(guideHtml, /真实可用型号仍以当前 AI Routing API Key 的检测结果为准/);
+  assert.doesNotMatch(guideHtml, /能力分数来自 LiveBench 与 Artificial Analysis 国际第三方测评/);
+  assert.doesNotMatch(guideHtml, /真实可用型号仍以当前 AI Routing API Key 的检测结果为准/);
   assert.match(guideHtml, /每组数据都有对应来源/);
   assert.match(guideHtml, /型号名称、上下文、输入输出模态、工具与 Token 单价/);
   assert.match(guideHtml, /未收录型号显示“暂无第三方测评”/);
@@ -507,31 +508,23 @@ test("public Hub exposes the scoped API Key entry without embedding administrati
   assert.match(app, /projectLaunchStatus/);
 });
 
-test("token-protected admin page owns centralized model settings", async () => {
-  const html = await readProjectFile("public/admin/index.html");
+test("legacy administration page is removed while the workflow center remains available", async () => {
+  await assert.rejects(
+    stat(new URL("public/admin/index.html", root)),
+    (error) => error?.code === "ENOENT",
+  );
+  const workflowHtml = await readProjectFile("public/workflows/index.html");
+  assert.match(workflowHtml, /宸ヤ綔娴佹帶鍒跺彴/);
+});
 
-  for (const id of [
-    "adminAccessGate",
-    "adminUnlockButton",
-    "modelsPage",
-    "adminSaveNotice",
-    "adminTokenInput",
-    "defaultProviderSelect",
-    "providerList",
-    "cozeIntegration",
-    "saveModelConfigButton",
-  ]) {
-    assert.match(html, new RegExp(`id="${id}"`));
-  }
-  assert.match(html, /noindex,nofollow/);
-  assert.match(html, /HUB_ADMIN_TOKEN/);
+/*
   assert.match(html, /管理员口令/);
-  assert.match(html, /AI Routing/);
   assert.match(html, /HTTPS 或 SSH 隧道/);
   assert.match(html, /id="modelsPage"[^>]*hidden/);
   assert.doesNotMatch(html, /仅允许从服务器本机或 SSH 隧道访问/);
   assert.match(html, /\/hub\/app\.js/);
 });
+*/
 
 test("administrator token can be verified before management controls are revealed", async () => {
   const server = await readProjectFile("server.mjs");
@@ -549,12 +542,14 @@ test("project status is derived from live capability readiness", async () => {
 
   assert.match(app, /function getProjectAvailability/);
   assert.match(app, /missingCapabilities\(project\.requiredCapabilities/);
-  assert.match(app, /维护中/);
+  assert.match(app, /需配置模型/);
+  assert.doesNotMatch(app, /availability\s*===\s*["']unavailable/);
   assert.match(app, /状态未知/);
   assert.match(app, /data-availability=/);
+  assert.match(app, /pill--stage/);
   assert.match(app, /refreshProjectViews/);
   assert.match(styles, /pill--availability/);
-  assert.match(styles, /data-state="unavailable"/);
+  assert.match(styles, /data-state="setup"/);
 });
 
 test("Hub and shared project shell maintain a local recent-use trail", async () => {

@@ -14,6 +14,10 @@
     purpose: "all",
     sort: "updated",
     page: "projects",
+    providerRelayQuery: "",
+    providerRelayStatus: "all",
+    providerRelayModel: "",
+    providerRelayId: "",
   };
 
   const featuredProjectIds = [
@@ -43,6 +47,7 @@
     GPT: ["复杂推理", "结构化输出"],
   };
   const recentProjectsStorageKey = "aiHub.recentProjects.v1";
+  const sidebarCollapsedStorageKey = "aiHub.sidebarCollapsed.v1";
   const trustProfiles = {
     "ai-legal-clause-translator": {
       data: "合同条款",
@@ -70,6 +75,17 @@
     projects: [],
     adminToken: "",
     adminVerified: false,
+  };
+  const modelAtlasState = {
+    loaded: false,
+    loading: null,
+  };
+  const providerRelayState = {
+    loaded: false,
+    loading: null,
+    error: null,
+    providers: [],
+    priceCatalog: { models: [], offers: [] },
   };
 
   const elements = {
@@ -110,6 +126,34 @@
     adminUnlock: document.querySelector("#adminUnlockButton"),
     adminAccessStatus: document.querySelector("#adminAccessStatus"),
     adminNav: document.querySelector("#adminNav"),
+    modelAtlas: document.querySelector("#modelAtlas"),
+    providerRelayListView: document.querySelector("#providerRelayListView"),
+    providerRelayDetailView: document.querySelector("#providerRelayDetailView"),
+    providerRelayGrid: document.querySelector("#providerRelayGrid"),
+    providerRelayListStatus: document.querySelector("#providerRelayListStatus"),
+    providerRelaySearch: document.querySelector("#providerRelaySearch"),
+    providerRelayStatusFilter: document.querySelector("#providerRelayStatusFilter"),
+    providerRelayModelFilter: document.querySelector("#providerRelayModelFilter"),
+    providerRelayComparisonStatus: document.querySelector("#providerRelayComparisonStatus"),
+    providerRelayPriceTableBody: document.querySelector("#providerRelayPriceTableBody"),
+    providerRelayBack: document.querySelector("#providerRelayBack"),
+    providerRelayDetailKind: document.querySelector("#providerRelayDetailKind"),
+    providerRelayDetailTitle: document.querySelector("#providerRelayDetailTitle"),
+    providerRelayDetailSummary: document.querySelector("#providerRelayDetailSummary"),
+    providerRelayDetailStatus: document.querySelector("#providerRelayDetailStatus"),
+    providerRelayDetailModels: document.querySelector("#providerRelayDetailModels"),
+    providerRelayDetailPricing: document.querySelector("#providerRelayDetailPricing"),
+    providerRelayDetailOffers: document.querySelector("#providerRelayDetailOffers"),
+    providerRelayDetailApi: document.querySelector("#providerRelayDetailApi"),
+    providerRelayDetailExample: document.querySelector("#providerRelayDetailExample"),
+    providerRelayDetailConcurrency: document.querySelector("#providerRelayDetailConcurrency"),
+    providerRelayDetailUsage: document.querySelector("#providerRelayDetailUsage"),
+    providerRelayDetailVerified: document.querySelector("#providerRelayDetailVerified"),
+    providerRelayDetailCta: document.querySelector("#providerRelayDetailCta"),
+    sidebar: document.querySelector("#hubTaskSidebar"),
+    sidebarToggle: document.querySelector("#hubSidebarToggle"),
+    mobileMenuToggle: document.querySelector("#hubMobileMenuToggle"),
+    sidebarMask: document.querySelector("#hubSidebarMask"),
   };
 
   const projectTemplate = `window.AI_PROJECTS = [
@@ -195,9 +239,66 @@
 
   function getPageFromHash() {
     const isAdminPage = window.location.pathname.indexOf("/hub/admin/") === 0;
-    return window.location.hash === "#models" || (isAdminPage && !window.location.hash)
-      ? "models"
-      : "projects";
+    const hasModelIntro = elements.pagePanels.some((panel) => panel.dataset.pagePanel === "model-intro");
+    const providerRelayHash = window.location.hash.match(/^#provider-service\/([a-z0-9][a-z0-9-]{1,79})$/i);
+    state.providerRelayId = providerRelayHash ? providerRelayHash[1].toLowerCase() : "";
+    const hashPages = {
+      "#models": hasModelIntro ? "model-intro" : "models",
+      "#projects": "projects",
+      "#provider-service": "provider-service",
+    };
+
+    return providerRelayHash
+      ? "provider-service"
+      : hashPages[window.location.hash] || (isAdminPage && !window.location.hash ? "models" : "projects");
+  }
+
+  function isMobileSidebarViewport() {
+    return typeof window.matchMedia === "function" && window.matchMedia("(max-width: 760px)").matches;
+  }
+
+  function setSidebarCollapsed(collapsed, options = {}) {
+    const nextValue = Boolean(collapsed) && !isMobileSidebarViewport();
+    document.body.classList.toggle("hub-sidebar-collapsed", nextValue);
+    if (elements.sidebarToggle) {
+      elements.sidebarToggle.setAttribute("aria-expanded", String(!nextValue));
+      elements.sidebarToggle.setAttribute("aria-label", nextValue ? "展开菜单" : "收起菜单");
+      elements.sidebarToggle.title = nextValue ? "展开菜单" : "收起菜单";
+      const icon = elements.sidebarToggle.querySelector("[aria-hidden='true']");
+      if (icon) {
+        icon.textContent = nextValue ? "›" : "‹";
+      }
+    }
+    if (options.persist !== false && !isMobileSidebarViewport()) {
+      try {
+        window.localStorage.setItem(sidebarCollapsedStorageKey, String(nextValue));
+      } catch {
+        // Sidebar preference is optional and should never block navigation.
+      }
+    }
+  }
+
+  function setMobileSidebarOpen(open) {
+    const nextValue = Boolean(open) && isMobileSidebarViewport();
+    document.body.classList.toggle("hub-sidebar-mobile-open", nextValue);
+    if (elements.sidebarMask) {
+      elements.sidebarMask.hidden = !nextValue;
+    }
+    if (elements.mobileMenuToggle) {
+      elements.mobileMenuToggle.setAttribute("aria-expanded", String(nextValue));
+      elements.mobileMenuToggle.setAttribute("aria-label", nextValue ? "关闭 AI HUB 菜单" : "打开 AI HUB 菜单");
+    }
+  }
+
+  function initSidebarState() {
+    let collapsed = false;
+    try {
+      collapsed = window.localStorage.getItem(sidebarCollapsedStorageKey) === "true";
+    } catch {
+      collapsed = false;
+    }
+    setSidebarCollapsed(collapsed, { persist: false });
+    setMobileSidebarOpen(false);
   }
 
   function setPage(page) {
@@ -208,8 +309,8 @@
       return;
     }
 
-    const supportsModelPage = elements.pagePanels.some((panel) => panel.dataset.pagePanel === "models");
-    state.page = page === "models" && supportsModelPage ? "models" : "projects";
+    const supportsPage = elements.pagePanels.some((panel) => panel.dataset.pagePanel === page);
+    state.page = supportsPage ? page : "projects";
 
     for (const tab of elements.pageTabs) {
       if (tab.dataset.pageTarget === state.page) {
@@ -223,9 +324,439 @@
       panel.hidden = panel.dataset.pagePanel !== state.page;
     }
 
+    if (state.page === "model-intro") {
+      loadModelAtlas();
+    }
+
     if (state.page === "models" && !modelState.loaded) {
       loadModelConfig();
     }
+
+    if (state.page === "provider-service") {
+      loadProviderRelays();
+    }
+  }
+
+  function loadAtlasScript(src, id) {
+    if (document.querySelector(`[data-model-atlas-script="${id}"]`)) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = src;
+      script.async = false;
+      script.dataset.modelAtlasScript = id;
+      script.addEventListener("load", resolve, { once: true });
+      script.addEventListener("error", reject, { once: true });
+      document.body.appendChild(script);
+    });
+  }
+
+  function loadModelAtlas() {
+    if (!elements.modelAtlas || modelAtlasState.loaded) {
+      return Promise.resolve();
+    }
+    if (modelAtlasState.loading) {
+      return modelAtlasState.loading;
+    }
+
+    modelAtlasState.loading = (async () => {
+      try {
+        const response = await fetch("/hub/models.html", { credentials: "same-origin" });
+        if (!response.ok) {
+          throw new Error("Model atlas could not be loaded.");
+        }
+
+        const sourceDocument = new DOMParser().parseFromString(await response.text(), "text/html");
+        const source = sourceDocument.querySelector(".model-guide-shell");
+        if (!source) {
+          throw new Error("Model atlas content is unavailable.");
+        }
+
+        elements.modelAtlas.innerHTML = source.innerHTML;
+        await loadAtlasScript("/hub/model-guide-data.js?v=20260728-gpt-only1", "data");
+        await loadAtlasScript("/hub/model-guide.js?v=20260730-comparison1", "app");
+        elements.modelAtlas.removeAttribute("aria-busy");
+        modelAtlasState.loaded = true;
+      } catch {
+        elements.modelAtlas.removeAttribute("aria-busy");
+        elements.modelAtlas.innerHTML = `
+          <div class="hub-model-atlas__error" role="status">
+            <span class="eyebrow">模型图鉴</span>
+            <h2 id="compareTitle">模型图鉴暂时无法加载</h2>
+            <p>请刷新页面后重试，或在独立页面查看模型资料。</p>
+            <a class="action-button" href="/hub/models.html">打开模型图鉴</a>
+          </div>
+        `;
+      } finally {
+        modelAtlasState.loading = null;
+      }
+    })();
+
+    return modelAtlasState.loading;
+  }
+
+  const providerRelayKindLabels = {
+    internal: "当前通道",
+    aggregator: "聚合代理",
+    relay: "代理商服务",
+  };
+
+  const providerRelayStatusMeta = {
+    connected: { label: "已接入", tone: "connected" },
+    trial: { label: "可试用", tone: "trial" },
+    maintenance: { label: "维护中", tone: "maintenance" },
+    pending: { label: "待核验", tone: "pending" },
+  };
+
+  function providerRelayStatus(status) {
+    return providerRelayStatusMeta[status] || providerRelayStatusMeta.pending;
+  }
+
+  function providerRelayVerifiedLabel(value) {
+    if (!value) return "最后核验时间：尚未核验";
+    return `最后核验时间：${formatDate(value)}`;
+  }
+
+  const providerRelayPriceStatusMeta = {
+    verified: { label: "已核验", tone: "verified" },
+    estimated: { label: "估算", tone: "estimated" },
+    pending: { label: "待核验", tone: "pending" },
+  };
+
+  function providerRelayPriceStatus(status) {
+    return providerRelayPriceStatusMeta[status] || providerRelayPriceStatusMeta.pending;
+  }
+
+  function formatPriceNumber(value) {
+    if (typeof value !== "number" || !Number.isFinite(value)) return "待核验";
+    return new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 6 }).format(value);
+  }
+
+  function formatOfferPrice(offer, field) {
+    if (typeof offer[field] !== "number" || !Number.isFinite(offer[field])) return "待核验";
+    const prefix = offer.currency ? `${offer.currency} ` : "";
+    return `${prefix}${formatPriceNumber(offer[field])}`;
+  }
+
+  function formatOfferMultiplier(offer) {
+    return typeof offer.multiplier === "number" && Number.isFinite(offer.multiplier)
+      ? `${formatPriceNumber(offer.multiplier)}×`
+      : "待核验";
+  }
+
+  function providerRelayPriceSummary(provider) {
+    const verified = (provider.modelOffers || [])
+      .filter((offer) => typeof offer.multiplier === "number" && offer.status === "verified")
+      .map((offer) => offer.multiplier);
+    if (verified.length === 0) return provider.pricing.summary;
+    return `最低 ${formatPriceNumber(Math.min(...verified))}× · ${provider.pricing.summary}`;
+  }
+
+  function renderProviderRelayModelOptions() {
+    if (!elements.providerRelayModelFilter) return;
+    const models = providerRelayState.priceCatalog.models || [];
+    const selected = models.includes(state.providerRelayModel) ? state.providerRelayModel : "";
+    state.providerRelayModel = selected;
+    elements.providerRelayModelFilter.innerHTML = [
+      '<option value="" disabled>请选择模型</option>',
+      ...models.map((model) => `<option value="${escapeHtml(model)}">${escapeHtml(model)}</option>`),
+    ].join("");
+    elements.providerRelayModelFilter.value = selected;
+  }
+
+  function renderProviderRelayComparison() {
+    if (!elements.providerRelayPriceTableBody) return;
+    const selectedModel = state.providerRelayModel.toLowerCase();
+    if (!selectedModel) {
+      elements.providerRelayPriceTableBody.innerHTML = `
+        <tr><td colspan="6" class="provider-relay-price-table__empty">先选择一个模型，系统会列出提供该模型的代理商。</td></tr>
+      `;
+      if (elements.providerRelayComparisonStatus) {
+        elements.providerRelayComparisonStatus.textContent = "请选择模型后查看代理商报价。";
+      }
+      return;
+    }
+    const offers = (providerRelayState.priceCatalog.offers || []).filter((offer) =>
+      offer.model.toLowerCase() === selectedModel,
+    );
+    if (!offers.length) {
+      elements.providerRelayPriceTableBody.innerHTML = `
+        <tr><td colspan="6" class="provider-relay-price-table__empty">暂无公开价格倍率。请先选择其他模型，或等待管理员完成平台价格核验。</td></tr>
+      `;
+    } else {
+      elements.providerRelayPriceTableBody.innerHTML = offers.map((offer) => {
+        const priceStatus = providerRelayPriceStatus(offer.status);
+        const providerStatus = providerRelayStatus(offer.providerStatus);
+        return `
+          <tr>
+            <th scope="row"><strong>${escapeHtml(offer.label || offer.model)}</strong><small>${escapeHtml(offer.model)}</small></th>
+            <td><strong>${escapeHtml(offer.providerName)}</strong><small>${escapeHtml(providerStatus.label)} · ${escapeHtml(offer.speed.label)}</small></td>
+            <td><strong class="provider-relay-multiplier provider-relay-multiplier--${priceStatus.tone}">${escapeHtml(formatOfferMultiplier(offer))}</strong><small>${escapeHtml(priceStatus.label)}</small></td>
+            <td><span>入 ${escapeHtml(formatOfferPrice(offer, "inputPrice"))}</span><small>出 ${escapeHtml(formatOfferPrice(offer, "outputPrice"))} · ${escapeHtml(offer.unit)}</small></td>
+            <td><span class="provider-relay-status-badge provider-relay-status-badge--${providerStatus.tone}">${escapeHtml(providerStatus.label)}</span><small>${escapeHtml(priceStatus.label)}</small></td>
+            <td><a class="action-button action-button--secondary" href="#provider-service/${encodeURIComponent(offer.providerId)}">查看</a></td>
+          </tr>
+        `;
+      }).join("");
+    }
+    if (elements.providerRelayComparisonStatus) {
+      const label = state.providerRelayModel || "当前模型";
+      elements.providerRelayComparisonStatus.textContent = `${label} · ${offers.length} 条代理商报价 · 倍率和价格仅展示已公开或待核验资料`;
+    }
+  }
+
+  function renderProviderRelayDetailOffers(provider) {
+    if (!elements.providerRelayDetailOffers) return;
+    const offers = provider.modelOffers || [];
+    if (!offers.length) {
+      elements.providerRelayDetailOffers.innerHTML = '<p class="provider-relay-muted">该平台尚未提交具体模型倍率或价格资料。</p>';
+      return;
+    }
+    elements.providerRelayDetailOffers.innerHTML = `
+      <div class="provider-relay-detail-offer-list">
+        ${offers.map((offer) => {
+          const status = providerRelayPriceStatus(offer.status);
+          return `
+            <article class="provider-relay-detail-offer">
+              <div><strong>${escapeHtml(offer.label || offer.model)}</strong><small>${escapeHtml(offer.model)}</small></div>
+              <div><span class="provider-relay-detail-offer__label">倍率</span><strong class="provider-relay-multiplier provider-relay-multiplier--${status.tone}">${escapeHtml(formatOfferMultiplier(offer))}</strong></div>
+              <div><span class="provider-relay-detail-offer__label">输入 / 输出</span><span>${escapeHtml(formatOfferPrice(offer, "inputPrice"))} / ${escapeHtml(formatOfferPrice(offer, "outputPrice"))}</span></div>
+              <div><span class="provider-relay-detail-offer__label">核验</span><span>${escapeHtml(status.label)} · ${escapeHtml(providerRelayVerifiedLabel(offer.lastVerifiedAt).replace("最后核验时间：", ""))}</span></div>
+            </article>
+          `;
+        }).join("")}
+      </div>
+      <p class="provider-relay-muted">倍率参考平台公开价格或管理员核验记录；实际扣费以平台账单和计费单位为准。</p>
+    `;
+  }
+
+  function renderProviderRelayAction(provider, compact = false) {
+    const active = ["connected", "trial"].includes(provider.status);
+    const detailHref = `#provider-service/${encodeURIComponent(provider.id)}`;
+    const detail = `<a class="action-button action-button--secondary" href="${detailHref}" data-provider-relay-open>${compact ? "查看" : "查看详情"}</a>`;
+    if (provider.kind === "internal") {
+      return `${detail}<a class="action-button" href="/hub/key-config/">配置当前 Hub API</a>`;
+    }
+    if (!active) {
+      return `${detail}<button class="action-button provider-relay-action--disabled" type="button" disabled>${compact ? "待接入" : "暂未开放"}</button>`;
+    }
+    if (provider.docsUrl) {
+      return `${detail}<a class="action-button" href="${escapeHtml(provider.docsUrl)}">立即获取 API</a>`;
+    }
+    return `${detail}<button class="action-button provider-relay-action--disabled" type="button" disabled>开通链接待补充</button>`;
+  }
+
+  function renderProviderRelayCard(provider) {
+    const status = providerRelayStatus(provider.status);
+    const modelSummary = provider.models.slice(0, 4).map((model) => `<span>${escapeHtml(model)}</span>`).join("");
+    return `
+      <article class="provider-relay-card" data-provider-relay-id="${escapeHtml(provider.id)}">
+        <div class="provider-relay-card__topline">
+          <span class="provider-relay-kind">${escapeHtml(providerRelayKindLabels[provider.kind] || "中转站")}</span>
+          <span class="provider-relay-status-badge provider-relay-status-badge--${status.tone}">${escapeHtml(status.label)}</span>
+        </div>
+        <h3>${escapeHtml(provider.name)}</h3>
+        <p class="provider-relay-card__summary">${escapeHtml(provider.summary)}</p>
+        <div class="provider-relay-card__models" aria-label="支持的模型">${modelSummary || "<span>模型资料待补充</span>"}</div>
+        <dl class="provider-relay-card__metrics">
+          <div><dt>价格倍率</dt><dd>${escapeHtml(providerRelayPriceSummary(provider))}</dd></div>
+          <div><dt>速度</dt><dd>${escapeHtml(provider.speed.label)}</dd></div>
+          <div><dt>稳定性</dt><dd>${escapeHtml(provider.stability.label)}</dd></div>
+          <div><dt>充值</dt><dd>${provider.supportsRecharge ? "支持" : "待确认"}</dd></div>
+        </dl>
+        <div class="provider-relay-card__footer">
+          <span>${escapeHtml(providerRelayVerifiedLabel(provider.lastVerifiedAt))}</span>
+          <div class="provider-relay-card__actions">${renderProviderRelayAction(provider, true)}</div>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderProviderRelayGrid() {
+    if (!elements.providerRelayGrid) return;
+    const filterToolbar = elements.providerRelaySearch?.closest(".provider-relay-toolbar");
+    if (!state.providerRelayModel) {
+      if (filterToolbar) filterToolbar.hidden = true;
+      elements.providerRelayGrid.innerHTML = `
+        <div class="provider-relay-empty" role="status">
+          <strong>先选择模型</strong>
+          <p>选择模型后，这里只会展示支持该模型的代理商服务。</p>
+        </div>
+      `;
+      if (elements.providerRelayListStatus) {
+        elements.providerRelayListStatus.textContent = "请选择模型后查看支持它的代理商。";
+      }
+      return;
+    }
+    if (filterToolbar) filterToolbar.hidden = false;
+    const query = state.providerRelayQuery.toLowerCase();
+    const selectedModel = state.providerRelayModel.toLowerCase();
+    const filtered = providerRelayState.providers.filter((provider) => {
+      const matchesStatus = state.providerRelayStatus === "all" || provider.status === state.providerRelayStatus;
+      const matchesModel = provider.models.some((item) => item.toLowerCase() === selectedModel) ||
+        provider.modelOffers.some((offer) => offer.model.toLowerCase() === selectedModel);
+      const searchable = [provider.name, provider.summary, ...provider.models].join(" ").toLowerCase();
+      return matchesModel && matchesStatus && (!query || searchable.includes(query));
+    });
+    elements.providerRelayGrid.innerHTML = filtered.length
+      ? filtered.map(renderProviderRelayCard).join("")
+      : `
+        <div class="provider-relay-empty" role="status">
+          <strong>没有符合条件的中转站</strong>
+          <p>可以清空筛选，或等待更多平台资料完成核验。</p>
+          <button class="action-button action-button--secondary" type="button" data-provider-relay-reset>清空筛选</button>
+        </div>
+      `;
+    if (elements.providerRelayListStatus) {
+      elements.providerRelayListStatus.textContent = `${state.providerRelayModel} · 找到 ${filtered.length} 个支持该模型的代理商`;
+    }
+  }
+
+  function renderProviderRelayPricing(provider) {
+    const plans = provider.pricing.plans || [];
+    if (plans.length === 0) {
+      return `<p class="provider-relay-muted">${escapeHtml(provider.pricing.summary)}。${escapeHtml(provider.pricing.unit)}。</p>`;
+    }
+    return `
+      <p class="provider-relay-pricing-summary">${escapeHtml(provider.pricing.summary)}</p>
+      <div class="provider-relay-plan-list">
+        ${plans.map((plan) => `
+          <div class="provider-relay-plan">
+            <strong>${escapeHtml(plan.name)}</strong>
+            <span>${escapeHtml(plan.price)}</span>
+            <small>${escapeHtml(plan.included || provider.pricing.unit)}</small>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function renderProviderRelayDetail(provider) {
+    if (!elements.providerRelayDetailView) return;
+    if (!provider) {
+      elements.providerRelayDetailKind.textContent = "中转站详情";
+      elements.providerRelayDetailTitle.textContent = "没有找到这个中转站";
+      elements.providerRelayDetailSummary.textContent = "平台可能已下线，或资料尚未公开。";
+      elements.providerRelayDetailStatus.textContent = "未找到";
+      elements.providerRelayDetailStatus.dataset.state = "pending";
+      elements.providerRelayDetailModels.innerHTML = "";
+      elements.providerRelayDetailPricing.innerHTML = "<p class=\"provider-relay-muted\">暂无公开资料。</p>";
+      if (elements.providerRelayDetailOffers) elements.providerRelayDetailOffers.innerHTML = "";
+      elements.providerRelayDetailApi.textContent = "";
+      elements.providerRelayDetailExample.querySelector("code").textContent = "暂未开放 API 调用。";
+      elements.providerRelayDetailConcurrency.textContent = "暂无资料";
+      elements.providerRelayDetailUsage.textContent = "请返回目录选择已公开的平台。";
+      elements.providerRelayDetailVerified.textContent = "资料未找到";
+      elements.providerRelayDetailCta.innerHTML = "";
+      return;
+    }
+
+    const status = providerRelayStatus(provider.status);
+    elements.providerRelayDetailKind.textContent = providerRelayKindLabels[provider.kind] || "中转站详情";
+    elements.providerRelayDetailTitle.textContent = provider.name;
+    elements.providerRelayDetailSummary.textContent = provider.summary;
+    elements.providerRelayDetailStatus.textContent = status.label;
+    elements.providerRelayDetailStatus.dataset.state = status.tone;
+    elements.providerRelayDetailModels.innerHTML = provider.models.length
+      ? provider.models.map((model) => `<span>${escapeHtml(model)}</span>`).join("")
+      : "<span>模型资料待补充</span>";
+    elements.providerRelayDetailPricing.innerHTML = renderProviderRelayPricing(provider);
+    renderProviderRelayDetailOffers(provider);
+    elements.providerRelayDetailApi.textContent = provider.apiBaseUrl || "待平台资料核验";
+    const apiBase = provider.apiBaseUrl || "/api/v1";
+    const exampleModel = provider.modelOffers?.[0]?.model || provider.models.find((model) => !/^(GPT 系列|待补充平台资料)$/i.test(model)) || "model-id";
+    const example = provider.apiBaseUrl
+      ? `curl ${window.location.origin}${apiBase}/chat/completions -H "Authorization: Bearer \${PROVIDER_API_KEY}" -H "Content-Type: application/json" -d '{"model":"${exampleModel}","messages":[{"role":"user","content":"Hello"}]}'`
+      : "平台公开 API 地址待补充，暂不提供可复制调用示例。";
+    elements.providerRelayDetailExample.querySelector("code").textContent = example;
+    elements.providerRelayDetailConcurrency.textContent = provider.concurrency;
+    elements.providerRelayDetailUsage.textContent = `${provider.usage} ${provider.docs}`;
+    elements.providerRelayDetailVerified.textContent = providerRelayVerifiedLabel(provider.lastVerifiedAt);
+    elements.providerRelayDetailCta.innerHTML = renderProviderRelayAction(provider);
+  }
+
+  function renderProviderRelayView() {
+    if (!elements.providerRelayListView || !elements.providerRelayDetailView) return;
+    const detail = state.providerRelayId
+      ? providerRelayState.providers.find((provider) => provider.id === state.providerRelayId)
+      : null;
+    const showDetail = Boolean(state.providerRelayId);
+    elements.providerRelayListView.hidden = showDetail;
+    elements.providerRelayDetailView.hidden = !showDetail;
+    if (showDetail && providerRelayState.loaded) {
+      renderProviderRelayDetail(detail);
+    }
+    if (!showDetail && providerRelayState.loaded) {
+      renderProviderRelayModelOptions();
+      renderProviderRelayComparison();
+      renderProviderRelayGrid();
+    }
+  }
+
+  function buildLocalProviderModelPrices(providers) {
+    const models = Array.from(new Set(providers.flatMap((provider) => provider.modelOffers?.map((offer) => offer.model) || [])))
+      .sort((left, right) => left.localeCompare(right, "zh-CN"));
+    const offers = providers.flatMap((provider) => (provider.modelOffers || []).map((offer) => ({
+      providerId: provider.id,
+      providerName: provider.name,
+      providerKind: provider.kind,
+      providerStatus: provider.status,
+      providerStatusLabel: provider.statusLabel,
+      model: offer.model,
+      label: offer.label,
+      status: offer.status,
+      statusLabel: offer.statusLabel,
+      multiplier: offer.multiplier,
+      inputPrice: offer.inputPrice,
+      outputPrice: offer.outputPrice,
+      currency: offer.currency,
+      unit: offer.unit,
+      billing: offer.billing,
+      notes: offer.notes,
+      sourceUrl: offer.sourceUrl,
+      lastVerifiedAt: offer.lastVerifiedAt,
+      speed: provider.speed,
+      stability: provider.stability,
+    })));
+    return { models, offers };
+  }
+
+  async function loadProviderRelays() {
+    if (!elements.providerRelayGrid) return;
+    renderProviderRelayView();
+    if (providerRelayState.loaded) return providerRelayState.providers;
+    if (providerRelayState.loading) return providerRelayState.loading;
+
+    providerRelayState.loading = (async () => {
+      try {
+        const response = await requestJson("/api/provider-relays?pageSize=50");
+        const providers = Array.isArray(response.data) ? response.data : [];
+        providerRelayState.providers = providers;
+        try {
+          const priceResponse = await requestJson("/api/provider-model-prices");
+          providerRelayState.priceCatalog = priceResponse.data && typeof priceResponse.data === "object"
+            ? priceResponse.data
+            : buildLocalProviderModelPrices(providers);
+        } catch {
+          providerRelayState.priceCatalog = buildLocalProviderModelPrices(providers);
+        }
+        providerRelayState.loaded = true;
+        providerRelayState.error = null;
+        renderProviderRelayView();
+        return providers;
+      } catch (error) {
+        providerRelayState.error = error;
+        if (elements.providerRelayListStatus) {
+          elements.providerRelayListStatus.innerHTML = `目录读取失败：${escapeHtml(error.message)} <button class="inline-button" type="button" data-provider-relay-retry>重试</button>`;
+        }
+        return [];
+      } finally {
+        providerRelayState.loading = null;
+      }
+    })();
+    return providerRelayState.loading;
   }
 
   function isSafeUrl(value) {
@@ -328,14 +859,14 @@
       return "checking";
     }
     const missing = capabilityGate.missingCapabilities(project.requiredCapabilities, modelState.config);
-    return missing.length > 0 ? "unavailable" : "ready";
+    return missing.length > 0 ? "setup" : "ready";
   }
 
   function availabilityLabel(availability) {
     return {
       ready: "可使用",
       checking: "检查中",
-      unavailable: "维护中",
+      setup: "需配置模型",
       unknown: "状态未知",
     }[availability];
   }
@@ -427,10 +958,14 @@
 
     if (modelState.loaded || modelState.loadFailed) {
       const readyCount = projects.filter((project) => getProjectAvailability(project) === "ready").length;
-      const unavailableCount = projects.length - readyCount;
-      elements.count.textContent = unavailableCount > 0
-        ? `${readyCount} 可用 · ${unavailableCount} 维护`
-        : `${readyCount} 个项目可用`;
+      const setupCount = projects.filter((project) => getProjectAvailability(project) === "setup").length;
+      const unknownCount = projects.filter((project) => getProjectAvailability(project) === "unknown").length;
+      const liveCount = projects.filter((project) => project.stage === "live").length;
+      elements.count.textContent = setupCount > 0
+        ? `${liveCount} 已上线 · ${setupCount} 需配置模型`
+        : unknownCount > 0
+          ? `${liveCount} 已上线 · 状态待确认`
+          : `${readyCount} 个项目可用`;
     } else {
       elements.count.textContent = `${projects.length} 个项目`;
     }
@@ -467,13 +1002,14 @@
       : "";
     const image = renderProjectImage(project);
     const featuredAttr = isFeatured ? ` data-featured="true"` : "";
-    const linkDisabledAttr = availability === "unavailable" || availability === "unknown"
+    const linkDisabledAttr = availability === "setup" || availability === "unknown"
       ? ` aria-disabled="true"`
       : "";
     const trustBadge = project.trust
       ? `<span class="pill pill--trust" title="将处理：${escapeHtml(project.trust.data)}；${escapeHtml(project.trust.boundary)}">隐私提醒</span>`
       : "";
     const featuredBadge = isFeatured ? `<span class="pill pill--featured">精选</span>` : "";
+    const stageBadge = `<span class="pill pill--stage" data-stage="${escapeHtml(project.stage)}">${escapeHtml(fieldLabel(project.stage))}</span>`;
     const availabilityBadge = availability === "ready"
       ? ""
       : `<span class="pill pill--availability" data-state="${availability}">${availabilityLabel(availability)}</span>`;
@@ -518,6 +1054,7 @@
           <span class="project-meta">
             ${featuredBadge}
             <span class="pill">${escapeHtml(project.category)}</span>
+            ${stageBadge}
             ${availabilityBadge}
             ${trustBadge}
           </span>
@@ -540,7 +1077,7 @@
     const gateAttrs = requiresCapabilities
       ? ` data-required-capabilities="${escapeHtml(project.requiredCapabilities.join(" "))}"`
       : "";
-    const linkDisabledAttr = availability === "unavailable" || availability === "unknown"
+    const linkDisabledAttr = availability === "setup" || availability === "unknown"
       ? ` aria-disabled="true"`
       : "";
     const usedAt = new Intl.DateTimeFormat("zh-CN", { month: "2-digit", day: "2-digit" }).format(
@@ -1054,17 +1591,106 @@
   function bindPageEvents() {
     for (const tab of elements.pageTabs) {
       tab.addEventListener("click", () => {
-        const page = tab.dataset.pageTarget === "models" ? "models" : "projects";
-        const nextHash = page === "models" ? "#models" : "#projects";
+        const page = tab.dataset.pageTarget || "projects";
+        const nextHash =
+          page === "model-intro"
+            ? "#models"
+            : page === "provider-service"
+              ? "#provider-service"
+              : page === "models"
+                ? "#models"
+                : "#projects";
         if (window.location.hash !== nextHash) {
           window.location.hash = nextHash;
         } else {
           setPage(page);
         }
+        setMobileSidebarOpen(false);
       });
     }
 
     window.addEventListener("hashchange", () => setPage(getPageFromHash()));
+  }
+
+  function bindSidebarEvents() {
+    initSidebarState();
+
+    elements.sidebarToggle?.addEventListener("click", () => {
+      if (isMobileSidebarViewport()) {
+        setMobileSidebarOpen(false);
+        return;
+      }
+      setSidebarCollapsed(!document.body.classList.contains("hub-sidebar-collapsed"));
+    });
+
+    elements.mobileMenuToggle?.addEventListener("click", () => {
+      setMobileSidebarOpen(!document.body.classList.contains("hub-sidebar-mobile-open"));
+    });
+
+    elements.sidebarMask?.addEventListener("click", () => setMobileSidebarOpen(false));
+    elements.sidebar?.addEventListener("click", (event) => {
+      if (event.target.closest("a")) {
+        setMobileSidebarOpen(false);
+      }
+    });
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        setMobileSidebarOpen(false);
+      }
+    });
+    window.addEventListener("resize", () => {
+      if (!isMobileSidebarViewport()) {
+        setMobileSidebarOpen(false);
+      }
+    });
+  }
+
+  function bindProviderRelayEvents() {
+    if (!elements.providerRelayGrid) {
+      return;
+    }
+
+    elements.providerRelaySearch?.addEventListener("input", (event) => {
+      state.providerRelayQuery = event.target.value.trim();
+      renderProviderRelayGrid();
+    });
+
+    elements.providerRelayStatusFilter?.addEventListener("change", (event) => {
+      state.providerRelayStatus = event.target.value || "all";
+      renderProviderRelayGrid();
+    });
+
+    elements.providerRelayModelFilter?.addEventListener("change", (event) => {
+      state.providerRelayModel = event.target.value || "";
+      renderProviderRelayComparison();
+      renderProviderRelayGrid();
+    });
+
+    elements.providerRelayBack?.addEventListener("click", () => {
+      window.location.hash = "#provider-service";
+    });
+
+    elements.providerRelayGrid.addEventListener("click", (event) => {
+      const reset = event.target.closest("[data-provider-relay-reset]");
+      if (reset) {
+        state.providerRelayQuery = "";
+        state.providerRelayStatus = "all";
+        state.providerRelayModel = "";
+        if (elements.providerRelaySearch) elements.providerRelaySearch.value = "";
+        if (elements.providerRelayStatusFilter) elements.providerRelayStatusFilter.value = "all";
+        if (elements.providerRelayModelFilter) elements.providerRelayModelFilter.value = "";
+        renderProviderRelayComparison();
+        renderProviderRelayGrid();
+        elements.providerRelaySearch?.focus();
+        return;
+      }
+
+      const retry = event.target.closest("[data-provider-relay-retry]");
+      if (retry) {
+        providerRelayState.loaded = false;
+        loadProviderRelays();
+      }
+    });
   }
 
   function bindModelEvents() {
@@ -1168,6 +1794,8 @@
 
   function bindEvents(projects) {
     bindPageEvents();
+    bindSidebarEvents();
+    bindProviderRelayEvents();
 
     elements.purposeNav?.addEventListener("click", (event) => {
       const button = event.target.closest("[data-purpose]");

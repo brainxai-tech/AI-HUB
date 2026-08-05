@@ -10,12 +10,25 @@
     />
     <meta name="theme-color" content="#f3f6fa" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='Arial' font-size='30' font-weight='700' fill='white'%3EAI%3C/text%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="/hub/styles.css?v=20260731-layout1" />
+    <link rel="stylesheet" href="/hub/styles.css?v=20260805-relay4" />
     <link rel="stylesheet" href="/hub/suite-theme.css?v=20260731-layout1" />
+    <link rel="stylesheet" href="/hub/model-guide.css?v=20260730-comparison1" />
   </head>
   <body >
     <main class="app-shell">
       <header class="topbar">
+        <button
+          id="hubMobileMenuToggle"
+          class="hub-mobile-menu-toggle"
+          type="button"
+          aria-label="打开 AI HUB 菜单"
+          aria-controls="hubTaskSidebar"
+          aria-expanded="false"
+        >
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </button>
         <a class="brand" href="./index.html">
           <span class="brand-mark" aria-hidden="true">
             <span></span>
@@ -36,21 +49,130 @@
 
       <p id="projectLaunchStatus" class="action-status" role="status" aria-live="polite"></p>
 
-      <section id="projectsPage" class="page-panel" data-page-panel="projects">
-        <section class="discovery-hero" aria-labelledby="discoveryTitle">
-          <div class="discovery-hero__copy">
-            <span class="eyebrow">快速开始</span>
-            <h2 id="discoveryTitle">今天想用 AI 做什么？</h2>
-            <p>搜索项目，或按任务类型快速缩小范围。找到后直接打开，不需要先理解模型配置。</p>
+      <div id="hubSidebarMask" class="hub-sidebar-mask" hidden></div>
+
+      <div class="hub-workspace">
+        <aside id="hubTaskSidebar" class="hub-task-sidebar" aria-label="AI HUB 主菜单">
+          <div class="hub-task-sidebar__brand-row">
+            <a class="hub-sidebar-brand" href="./index.html" aria-label="AI HUB 首页">
+              <span class="brand-mark" aria-hidden="true">
+                <span></span>
+              </span>
+              <span class="hub-sidebar-brand__copy">
+                <strong>AI HUB</strong>
+                <small>项目工作台</small>
+              </span>
+            </a>
+            <button
+              id="hubSidebarToggle"
+              class="hub-sidebar-toggle"
+              type="button"
+              aria-label="收起菜单"
+              aria-controls="hubTaskSidebar"
+              aria-expanded="true"
+              title="收起菜单"
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
           </div>
-          <nav id="purposeNav" class="purpose-nav" aria-label="按使用目的浏览">
-            <button type="button" data-purpose="all" aria-pressed="true">全部项目</button>
-            <button type="button" data-purpose="work" aria-pressed="false">处理工作</button>
-            <button type="button" data-purpose="learning" aria-pressed="false">学习成长</button>
-            <button type="button" data-purpose="entertainment" aria-pressed="false">轻松一下</button>
-            <button type="button" data-purpose="games" aria-pressed="false">玩一局</button>
-          </nav>
-        </section>
+          <div class="hub-task-sidebar__header">
+            <span class="eyebrow">AI HUB</span>
+            <h2>工作台导航</h2>
+            <p>从模型选择到具体项目，一步进入对应工作区。</p>
+          </div>
+          <div class="hub-task-sidebar__section">
+            <span class="hub-task-sidebar__section-title">浏览</span>
+            <nav class="hub-task-nav" aria-label="AI HUB 功能分区">
+            <button
+              id="modelIntroTab"
+              class="hub-task-nav__item"
+              type="button"
+              data-page-target="model-intro"
+              aria-controls="modelIntroPage"
+            >
+              <span class="hub-task-nav__icon" aria-hidden="true">✦</span>
+              <span class="hub-task-nav__index" aria-hidden="true">01</span>
+              <span class="hub-task-nav__copy">
+                <strong>模型图鉴</strong>
+                <small>能力、速度与成本</small>
+              </span>
+              <span class="hub-task-nav__arrow" aria-hidden="true">→</span>
+            </button>
+            <button
+              id="projectsTab"
+              class="hub-task-nav__item"
+              type="button"
+              data-page-target="projects"
+              aria-controls="projectsPage"
+              aria-current="page"
+            >
+              <span class="hub-task-nav__icon" aria-hidden="true">▦</span>
+              <span class="hub-task-nav__index" aria-hidden="true">02</span>
+              <span class="hub-task-nav__copy">
+                <strong>AI 项目</strong>
+                <small>筛选并打开全部工具</small>
+              </span>
+              <span class="hub-task-nav__arrow" aria-hidden="true">→</span>
+            </button>
+            <button
+              id="providerServiceTab"
+              class="hub-task-nav__item"
+              type="button"
+              data-page-target="provider-service"
+              aria-controls="providerServicePage"
+            >
+              <span class="hub-task-nav__icon" aria-hidden="true">↗</span>
+              <span class="hub-task-nav__index" aria-hidden="true">03</span>
+              <span class="hub-task-nav__copy">
+                <strong>模型中转商服务</strong>
+                <small>接入服务正在准备</small>
+              </span>
+              <span class="hub-task-nav__arrow" aria-hidden="true">→</span>
+            </button>
+            </nav>
+          </div>
+          <div class="hub-task-sidebar__section hub-task-sidebar__section--secondary">
+            <span class="hub-task-sidebar__section-title">管理</span>
+            <a class="hub-task-sidebar__link" href="/hub/workflows/">
+              <span class="hub-task-sidebar__link-icon" aria-hidden="true">⌘</span>
+              <span class="hub-task-sidebar__link-copy">
+                <strong>工作流控制台</strong>
+                <small>创建与运行工作流</small>
+              </span>
+            </a>
+            <a class="hub-task-sidebar__link" href="/hub/key-config/">
+              <span class="hub-task-sidebar__link-icon" aria-hidden="true">⚙</span>
+              <span class="hub-task-sidebar__link-copy">
+                <strong>模型调用配置</strong>
+                <small>管理 API Key 与模型</small>
+              </span>
+            </a>
+          </div>
+          <div class="hub-task-sidebar__footer">
+            <span class="hub-task-sidebar__footer-dot" aria-hidden="true"></span>
+            <span>本地工作区</span>
+          </div>
+        </aside>
+
+        <div class="hub-content">
+          <section id="modelIntroPage" class="page-panel" data-page-panel="model-intro" aria-labelledby="compareTitle" hidden>
+            <div id="modelAtlas" class="model-guide-shell hub-model-atlas" aria-busy="true">
+              <div class="hub-model-atlas__loading" role="status">
+                <span class="eyebrow">模型图鉴</span>
+                <h2 id="compareTitle">正在加载模型图鉴</h2>
+                <p>正在准备能力、速度、成本和第三方测评数据。</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="projectsPage" class="page-panel" data-page-panel="projects" aria-labelledby="projectListTitle">
+        <nav id="purposeNav" class="purpose-nav" aria-label="按使用目的浏览">
+          <button type="button" data-purpose="all" aria-pressed="true">全部项目</button>
+          <button type="button" data-purpose="work" aria-pressed="false">处理工作</button>
+          <button type="button" data-purpose="learning" aria-pressed="false">学习成长</button>
+          <button type="button" data-purpose="entertainment" aria-pressed="false">轻松一下</button>
+          <button type="button" data-purpose="games" aria-pressed="false">玩一局</button>
+        </nav>
 
         <section class="tool-band" aria-label="项目筛选">
             <label class="search-field" for="searchInput">
@@ -171,14 +293,137 @@
             </article>
           </div>
         </section>
-      </section>
+          </section>
+
+          <section id="providerServicePage" class="page-panel" data-page-panel="provider-service" aria-labelledby="providerRelayComparisonTitle" hidden>
+            <div class="provider-relay-shell">
+              <div id="providerRelayListView" class="provider-relay-view">
+                <section class="provider-relay-howto" aria-labelledby="providerRelayHowtoTitle">
+                  <div class="provider-relay-howto__intro">
+                    <span class="eyebrow">使用流程</span>
+                    <h3 id="providerRelayHowtoTitle">3 步找到合适的代理商</h3>
+                    <a class="action-button action-button--secondary provider-relay-console-link" href="/hub/relay-console/">已有 API Key？进入控制台</a>
+                  </div>
+                  <ol class="provider-relay-howto__steps">
+                    <li><strong>选择模型</strong><span>例如 gpt-5.5</span></li>
+                    <li><strong>筛选代理商</strong><span>看价格、状态和稳定性</span></li>
+                    <li><strong>查看详情</strong><span>按代理商说明接入</span></li>
+                  </ol>
+                </section>
+
+                <section class="provider-relay-comparison" aria-labelledby="providerRelayComparisonTitle">
+                  <div class="provider-relay-comparison__head">
+                    <div>
+                      <span class="eyebrow">第一步 · 选择模型</span>
+                      <h3 id="providerRelayComparisonTitle">你想调用哪个模型？</h3>
+                      <p>选定模型后，下面的代理商列表和价格明细会自动收窄到可用服务。</p>
+                    </div>
+                    <label class="provider-relay-model-filter" data-suite-preserve>
+                      <span>模型</span>
+                      <select id="providerRelayModelFilter" aria-label="按模型查看价格倍率" data-suite-preserve>
+                        <option value="" selected disabled>请选择模型</option>
+                      </select>
+                    </label>
+                  </div>
+                  <p id="providerRelayComparisonStatus" class="provider-relay-status" role="status" aria-live="polite">请选择模型后查看代理商报价。</p>
+                  <div class="provider-relay-price-table-wrap">
+                    <table class="provider-relay-price-table">
+                      <caption class="sr-only">各模型中转站价格倍率比较</caption>
+                      <thead>
+                        <tr>
+                          <th scope="col">模型</th>
+                          <th scope="col">中转站</th>
+                          <th scope="col">倍率</th>
+                          <th scope="col">输入 / 输出</th>
+                          <th scope="col">状态</th>
+                          <th scope="col">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody id="providerRelayPriceTableBody"></tbody>
+                    </table>
+                  </div>
+                </section>
+
+                <section class="provider-relay-toolbar" aria-label="代理商筛选">
+                  <label class="provider-relay-search" data-suite-preserve>
+                    <span>搜索平台或模型</span>
+                    <input id="providerRelaySearch" type="search" autocomplete="off" placeholder="例如 GPT-5.5、OpenAI 兼容" data-suite-preserve />
+                  </label>
+                  <label class="provider-relay-filter">
+                    <span>服务状态</span>
+                    <select id="providerRelayStatusFilter" aria-label="按服务状态筛选">
+                      <option value="all">全部状态</option>
+                      <option value="connected">已接入</option>
+                      <option value="trial">可试用</option>
+                      <option value="maintenance">维护中</option>
+                      <option value="pending">待核验</option>
+                    </select>
+                  </label>
+                </section>
+
+                <p id="providerRelayListStatus" class="provider-relay-status" role="status" aria-live="polite">请选择模型后查看支持它的代理商。</p>
+                <div id="providerRelayGrid" class="provider-relay-grid" aria-live="polite"></div>
+              </div>
+
+              <div id="providerRelayDetailView" class="provider-relay-detail" hidden>
+                <button id="providerRelayBack" class="provider-relay-back" type="button">← 返回中转站目录</button>
+                <div class="provider-relay-detail__head">
+                  <div>
+                    <span id="providerRelayDetailKind" class="eyebrow">中转站详情</span>
+                    <h2 id="providerRelayDetailTitle">正在加载平台详情</h2>
+                    <p id="providerRelayDetailSummary">正在读取公开资料…</p>
+                  </div>
+                  <span id="providerRelayDetailStatus" class="provider-relay-status-badge">待核验</span>
+                </div>
+                <div class="provider-relay-detail__grid">
+                  <section class="provider-relay-detail__card" aria-labelledby="providerRelayModelsTitle">
+                    <span class="eyebrow">模型</span>
+                    <h3 id="providerRelayModelsTitle">支持的模型</h3>
+                    <div id="providerRelayDetailModels" class="provider-relay-chip-list"></div>
+                  </section>
+                  <section class="provider-relay-detail__card" aria-labelledby="providerRelayPricingTitle">
+                    <span class="eyebrow">价格</span>
+                    <h3 id="providerRelayPricingTitle">价格套餐</h3>
+                    <div id="providerRelayDetailPricing"></div>
+                  </section>
+                  <section class="provider-relay-detail__card provider-relay-detail__card--wide" aria-labelledby="providerRelayDetailOffersTitle">
+                    <span class="eyebrow">模型价格倍率</span>
+                    <h3 id="providerRelayDetailOffersTitle">各模型价格明细</h3>
+                    <div id="providerRelayDetailOffers" class="provider-relay-detail-offers"></div>
+                  </section>
+                  <section class="provider-relay-detail__card provider-relay-detail__card--wide" aria-labelledby="providerRelayApiTitle">
+                    <span class="eyebrow">开发者</span>
+                    <h3 id="providerRelayApiTitle">API 地址与调用示例</h3>
+                    <code id="providerRelayDetailApi" class="provider-relay-api-url"></code>
+                    <pre id="providerRelayDetailExample" class="provider-relay-code"><code></code></pre>
+                  </section>
+                  <section class="provider-relay-detail__card" aria-labelledby="providerRelayLimitTitle">
+                    <span class="eyebrow">限制</span>
+                    <h3 id="providerRelayLimitTitle">并发限制</h3>
+                    <p id="providerRelayDetailConcurrency"></p>
+                  </section>
+                  <section class="provider-relay-detail__card" aria-labelledby="providerRelayUsageTitle">
+                    <span class="eyebrow">说明</span>
+                    <h3 id="providerRelayUsageTitle">使用说明</h3>
+                    <p id="providerRelayDetailUsage"></p>
+                  </section>
+                </div>
+                <div class="provider-relay-detail__footer">
+                  <p id="providerRelayDetailVerified"></p>
+                  <div id="providerRelayDetailCta" class="provider-relay-detail__actions"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
 
     </main>
 
     <script src="/hub/capabilities.js?v=20260710-capabilities"></script>
     <script src="/hub/projects.js?v=20260728-gpt-only1"></script>
     <script src="/hub/cover-manifest.js?v=20260727-image2-office-hub-style-v2"></script>
-    <script src="/hub/app.js?v=20260731-layout1"></script>
-    <script defer src="/hub/suite-shell.js?v=20260730-signal-routing1" data-suite-project="AI 项目汇集库" data-suite-hub="/hub/"></script>
+    <script src="/hub/app.js?v=20260805-relay7"></script>
+    <script defer src="/hub/suite-shell.js?v=20260730-signal-routing2" data-suite-project="AI 项目汇集库" data-suite-hub="/hub/" data-suite-hide-topbar="true"></script>
   </body>
 </html>

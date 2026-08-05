@@ -7,7 +7,7 @@
     "start": "node server.mjs",
     "dev": "node server.mjs",
     "test": "node --test tests/*.test.mjs",
-    "verify": "node --check server.mjs && node --check local-project-proxy.mjs && node --check workflow-proxy.mjs && node --check public/app.js && node --check public/key-config/key-config.js && node --check public/workflows/workflows.js && node --check public/model-guide-data.js && node --check public/model-guide.js && node --test tests/*.test.mjs",
+    "verify": "node --check server.mjs && node --check local-project-proxy.mjs && node --check workflow-proxy.mjs && node --check relay-commerce.mjs && node --check public/app.js && node --check public/relay-console/app.js && node --check public/key-config/key-config.js && node --check public/workflows/workflows.js && node --check public/model-guide-data.js && node --check public/model-guide.js && node --test tests/*.test.mjs",
     "workspace:install": "node scripts/workspace-tasks.mjs install",
     "workspace:build": "node scripts/workspace-tasks.mjs build",
     "workspace:verify": "node scripts/workspace-tasks.mjs verify",
