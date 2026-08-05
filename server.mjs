@@ -1168,7 +1168,7 @@ function cozeRuntimeConfig(config) {
   };
 }
 
-function getProviderSelection(config, payload) {
+function getProviderSelection(config, payload, projectRoute = null) {
   const providerId = providerCatalog[payload.provider] ? payload.provider : config.defaultProvider;
   const providerConfig = config.providers[providerId];
   const providerMeta = providerCatalog[providerId];
@@ -1212,6 +1212,8 @@ function getProviderSelection(config, payload) {
       apiKey,
     },
     model: requestedModel,
+    relayId: projectRoute?.relayId || "",
+    relayName: projectRoute?.relayName || "",
   };
 }
 
