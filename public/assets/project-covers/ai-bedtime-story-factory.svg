@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-label="AI 睡前故事工厂封面">
+  <rect width="1200" height="760" fill="#f6f7f4"/>
+  <rect x="90" y="90" width="1020" height="580" rx="28" fill="#26324a"/>
+  <circle cx="906" cy="210" r="78" fill="#d89b2b"/>
+  <path d="M218 446c96 72 278 72 374 0 26 94-42 170-187 170S191 540 218 446Z" fill="#d86447"/>
+  <path d="M420 190l72 256-190-152Z" fill="#fff8e8"/>
+  <circle cx="747" cy="300" r="10" fill="#ffffff"/>
+  <circle cx="822" cy="430" r="7" fill="#d89b2b"/>
+  <text x="110" y="122" fill="#ffffff" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="30" font-weight="700">AI · 睡前故事工厂</text>
+  <text x="110" y="635" fill="#ffffff" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="42" font-weight="800">故事 · 朗读稿 · 晚安分享卡</text>
+</svg>

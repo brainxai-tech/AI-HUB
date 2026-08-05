@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-label="AI English Theater">
+  <rect width="960" height="540" fill="#f4f7f2"/>
+  <rect x="64" y="70" width="832" height="400" rx="28" fill="#123f42"/>
+  <path d="M96 130h768v270H96z" fill="#fffdf7"/>
+  <path d="M158 170h280" stroke="#126d6d" stroke-width="18" stroke-linecap="round"/>
+  <path d="M158 224h430" stroke="#d55c3d" stroke-width="14" stroke-linecap="round"/>
+  <path d="M158 270h360" stroke="#5f8f7a" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="712" cy="254" r="86" fill="#e7b84b"/>
+  <path d="M668 255c28-36 62-36 88 0-28 36-62 36-88 0z" fill="#123f42"/>
+  <text x="96" y="438" fill="#fffdf7" font-family="Arial, sans-serif" font-size="44" font-weight="700">AI English Theater</text>
+</svg>

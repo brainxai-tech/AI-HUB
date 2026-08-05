@@ -1,0 +1,4 @@
+interface:
+  display_name: "Course Pack Builder"
+  short_description: "Create and verify grounded lectures, quizzes, and activities"
+  default_prompt: "Use $build-course-pack to generate a source-grounded teaching bundle and pause for teacher review."

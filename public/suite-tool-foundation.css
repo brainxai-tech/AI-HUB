@@ -1,0 +1,477 @@
+/*
+ * Shared foundation for AI Hub tool projects.
+ * The shell loads this file only when data-suite-kind="tool"; games and Hub
+ * administration pages keep their own presentation layers.
+ */
+
+html[data-suite-kind="tool"] {
+  --suite-tool-bg: #f3f6fa;
+  --suite-tool-bg-soft: #e9eff6;
+  --suite-tool-surface: #ffffff;
+  --suite-tool-surface-subtle: #f7f9fc;
+  --suite-tool-ink: #111b2e;
+  --suite-tool-muted: #526176;
+  --suite-tool-faint: #77859a;
+  --suite-tool-line: #d6dfeb;
+  --suite-tool-line-strong: #bcc9da;
+  --suite-tool-primary: #3457e8;
+  --suite-tool-primary-strong: #2744c7;
+  --suite-tool-primary-soft: #edf1ff;
+  --suite-tool-route: #3457e8;
+  --suite-tool-pulse: #ff6b3d;
+  --suite-tool-circuit: #159a9d;
+  --suite-tool-success: #0b7a70;
+  --suite-tool-success-soft: #ecfdf5;
+  --suite-tool-warning: #b45309;
+  --suite-tool-warning-soft: #fff7ed;
+  --suite-tool-danger: #be123c;
+  --suite-tool-danger-soft: #fff1f2;
+  --suite-tool-radius-sm: 10px;
+  --suite-tool-radius: 14px;
+  --suite-tool-radius-lg: 16px;
+  --suite-tool-shadow: 0 8px 24px rgba(17, 27, 46, 0.065);
+  --suite-tool-shadow-hover: 0 14px 34px rgba(17, 27, 46, 0.1);
+  --suite-tool-focus: 0 0 0 3px rgba(52, 87, 232, 0.2);
+  --suite-tool-font-display: "Bahnschrift", "Segoe UI Variable Display", "Microsoft YaHei UI", sans-serif;
+  --suite-tool-font-body: "Segoe UI Variable Text", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --suite-tool-font-utility: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+  color-scheme: light;
+  background: var(--suite-tool-bg);
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced {
+  --suite-bg: var(--suite-tool-bg);
+  --suite-bg-soft: var(--suite-tool-bg-soft);
+  --suite-surface: var(--suite-tool-surface);
+  --suite-surface-soft: var(--suite-tool-surface-subtle);
+  --suite-text: var(--suite-tool-ink);
+  --suite-muted: var(--suite-tool-muted);
+  --suite-subtle: var(--suite-tool-faint);
+  --suite-border: var(--suite-tool-line);
+  --suite-primary: var(--suite-tool-primary);
+  --suite-primary-strong: var(--suite-tool-primary-strong);
+  --suite-success: var(--suite-tool-success);
+  --suite-warning: var(--suite-tool-warning);
+  --suite-danger: var(--suite-tool-danger);
+  --suite-radius-sm: var(--suite-tool-radius-sm);
+  --suite-radius: var(--suite-tool-radius);
+  --suite-shadow-sm: var(--suite-tool-shadow);
+  --suite-shadow: var(--suite-tool-shadow-hover);
+  --suite-focus: var(--suite-tool-focus);
+  color: var(--suite-tool-ink) !important;
+  background:
+    radial-gradient(circle at 12% -8%, rgba(52, 87, 232, 0.09), transparent 28rem),
+    radial-gradient(circle at 92% 8%, rgba(21, 154, 157, 0.06), transparent 24rem),
+    linear-gradient(180deg, #fafcff 0, var(--suite-tool-bg) 180px, var(--suite-tool-bg-soft) 100%) !important;
+  font-family: var(--suite-tool-font-body) !important;
+  font-size: 15px;
+  line-height: 1.55;
+  text-rendering: optimizeLegibility;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced::before {
+  display: block !important;
+  height: 100dvh;
+  background-image:
+    linear-gradient(rgba(52, 87, 232, 0.026) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(52, 87, 232, 0.026) 1px, transparent 1px) !important;
+  background-size: 48px 48px !important;
+  opacity: 0.55;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced .suite-topbar {
+  min-height: 58px;
+  border-bottom-color: rgba(188, 201, 218, 0.88);
+  background: rgba(252, 253, 255, 0.95);
+  box-shadow: 0 6px 22px rgba(17, 27, 46, 0.05);
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced .suite-topbar::after {
+  content: "";
+  position: absolute;
+  right: auto;
+  bottom: -1px;
+  left: clamp(14px, 3vw, 32px);
+  width: clamp(116px, 15vw, 210px);
+  height: 2px;
+  background: linear-gradient(90deg, var(--suite-tool-route) 0 76%, var(--suite-tool-pulse) 76% 88%, var(--suite-tool-circuit) 88%);
+  pointer-events: none;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced .suite-mark {
+  position: relative;
+  border-radius: 8px;
+  background: var(--suite-tool-route);
+  box-shadow: inset 0 -2px 0 rgba(17, 27, 46, 0.2);
+  font-family: var(--suite-tool-font-utility);
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced .suite-project::before {
+  background: var(--suite-tool-pulse);
+  box-shadow: 0 0 0 4px rgba(255, 107, 61, 0.12);
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(.suite-brand, .suite-action-link) {
+  border-radius: var(--suite-tool-radius-sm);
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced .suite-model-trigger {
+  border-radius: var(--suite-tool-radius-sm) !important;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced > main,
+html[data-suite-kind="tool"] body.suite-enhanced > #root > main,
+html[data-suite-kind="tool"] body.suite-enhanced > #app > main {
+  width: min(100%, 1440px);
+  margin-inline: auto;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(h1, h2, h3) {
+  color: var(--suite-tool-ink) !important;
+  font-family: var(--suite-tool-font-display) !important;
+  letter-spacing: -0.025em !important;
+  text-wrap: balance;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced h1 {
+  font-size: clamp(30px, 3.2vw, 40px) !important;
+  font-weight: 800 !important;
+  line-height: 1.14 !important;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced h2 {
+  font-size: clamp(22px, 2.2vw, 28px) !important;
+  font-weight: 760 !important;
+  line-height: 1.2 !important;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced h3 {
+  font-size: clamp(17px, 1.6vw, 21px) !important;
+  font-weight: 720 !important;
+  line-height: 1.28 !important;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(.hero, .landing-hero, .report-hero) h1 {
+  font-size: clamp(38px, 4.6vw, 54px) !important;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(p, li, dd) {
+  line-height: 1.62;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(.muted, .subtitle, .description, .helper, .hint, small) {
+  color: var(--suite-tool-muted) !important;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(
+  [class~="panel"],
+  [class$="-panel"],
+  [class*="-panel "],
+  [class~="card"],
+  [class$="-card"],
+  [class*="-card "]
+):not(.tarot-card):not(.card-back):not(.card-front):not(.playing-card) {
+  border-color: var(--suite-tool-line) !important;
+  border-radius: var(--suite-tool-radius-lg) !important;
+  background-color: var(--suite-tool-surface) !important;
+  box-shadow: var(--suite-tool-shadow) !important;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(
+  [class~="panel"],
+  [class$="-panel"],
+  [class*="-panel "],
+  [class~="card"],
+  [class$="-card"],
+  [class*="-card "]
+):not(.tarot-card):not(.card-back):not(.card-front):not(.playing-card):hover {
+  border-color: color-mix(in srgb, var(--suite-tool-primary) 22%, var(--suite-tool-line)) !important;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+  textarea,
+  select
+) {
+  min-height: 44px;
+  border: 1px solid var(--suite-tool-line-strong) !important;
+  border-radius: 10px !important;
+  background-color: var(--suite-tool-surface) !important;
+  color: var(--suite-tool-ink) !important;
+  box-shadow: none !important;
+  padding: 10px 12px;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced textarea {
+  min-height: 112px;
+  resize: vertical;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(input, textarea, select)::placeholder {
+  color: var(--suite-tool-faint) !important;
+  opacity: 1;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(input, textarea, select):focus-visible {
+  border-color: var(--suite-tool-primary) !important;
+  box-shadow: var(--suite-tool-focus) !important;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(button, [role="button"], .button) {
+  min-height: 44px;
+  border-radius: 10px !important;
+  font-family: inherit !important;
+  font-weight: 700 !important;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(
+  button[type="submit"],
+  .primary-button,
+  .primary-action,
+  .submit-button,
+  .generate-button,
+  [data-variant="primary"]
+) {
+  border-color: var(--suite-tool-primary) !important;
+  background: var(--suite-tool-primary) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 0 rgba(17, 27, 46, 0.18) !important;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(
+  button[type="submit"],
+  .primary-button,
+  .primary-action,
+  .submit-button,
+  .generate-button,
+  [data-variant="primary"]
+):hover:not(:disabled) {
+  background: var(--suite-tool-primary-strong) !important;
+  transform: translateY(-1px);
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(
+  .secondary-button,
+  .secondary-action,
+  .ghost-button,
+  .quiet-button,
+  [data-variant="secondary"]
+) {
+  border: 1px solid var(--suite-tool-line-strong) !important;
+  background: var(--suite-tool-surface) !important;
+  color: var(--suite-tool-ink) !important;
+  box-shadow: none !important;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(
+  .upload-zone,
+  .upload-area,
+  .upload-box,
+  .drop-zone,
+  .dropzone,
+  [data-upload-zone]
+) {
+  border: 1px dashed var(--suite-tool-line-strong) !important;
+  border-radius: var(--suite-tool-radius) !important;
+  background: var(--suite-tool-surface-subtle) !important;
+  color: var(--suite-tool-muted) !important;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(
+  .badge,
+  .chip,
+  .pill,
+  .tag,
+  .status-pill,
+  .source-pill,
+  .api-status,
+  [data-badge]
+) {
+  max-width: 100%;
+  border-radius: 999px !important;
+  white-space: nowrap;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(.success, .status-success, [data-state="success"], [data-status="ready"]) {
+  border-color: color-mix(in srgb, var(--suite-tool-success) 25%, var(--suite-tool-line)) !important;
+  background-color: var(--suite-tool-success-soft) !important;
+  color: var(--suite-tool-success) !important;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(.warning, .status-warning, [data-state="warning"]) {
+  border-color: color-mix(in srgb, var(--suite-tool-warning) 25%, var(--suite-tool-line)) !important;
+  background-color: var(--suite-tool-warning-soft) !important;
+  color: var(--suite-tool-warning) !important;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(.error, .status-error, [data-state="error"], [role="alert"]) {
+  border-color: color-mix(in srgb, var(--suite-tool-danger) 24%, var(--suite-tool-line)) !important;
+  background-color: var(--suite-tool-danger-soft) !important;
+  color: var(--suite-tool-danger) !important;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--suite-tool-ink);
+  font-size: 13px;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(th, td) {
+  border-bottom: 1px solid var(--suite-tool-line);
+  padding: 11px 12px;
+  text-align: left;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced th {
+  background: var(--suite-tool-surface-subtle);
+  color: var(--suite-tool-muted);
+  font-weight: 700;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(
+  .eyebrow,
+  .kicker,
+  .section-kicker,
+  .panel-label,
+  [class$="-kicker"]
+) {
+  color: var(--suite-tool-route) !important;
+  font-family: var(--suite-tool-font-utility) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.045em !important;
+  text-transform: uppercase;
+}
+
+html[data-suite-kind="tool"][data-suite-id="ai-counterfactual-life-simulator"] {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+html[data-suite-kind="tool"][data-suite-id="ai-counterfactual-life-simulator"] body.suite-enhanced :is(
+  main,
+  .app-shell,
+  .workspace,
+  .main-grid,
+  .panel
+) {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(.empty-state, [data-empty="true"]) {
+  padding: clamp(28px, 5vw, 64px);
+  color: var(--suite-tool-muted) !important;
+  text-align: center;
+}
+
+html[data-suite-kind="tool"] body.suite-enhanced :is(.progress, .progress-track, [role="progressbar"]) {
+  border-radius: 999px !important;
+  overflow: hidden;
+}
+
+@media (max-width: 760px) {
+  html[data-suite-kind="tool"] body.suite-enhanced .suite-topbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    min-height: 54px;
+    padding: 7px 10px;
+  }
+
+  html[data-suite-kind="tool"] body.suite-enhanced .suite-actions {
+    display: flex;
+    align-items: center;
+    width: auto;
+  }
+
+  html[data-suite-kind="tool"] body.suite-enhanced .suite-brand-wrap {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  html[data-suite-kind="tool"] body.suite-enhanced .suite-brand {
+    flex: 0 0 auto;
+    min-height: 38px;
+    padding: 6px 9px 6px 6px;
+  }
+
+  html[data-suite-kind="tool"] body.suite-enhanced .suite-project {
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow: hidden;
+  }
+
+  html[data-suite-kind="tool"] body.suite-enhanced .suite-project > span {
+    display: none;
+  }
+
+  html[data-suite-kind="tool"] body.suite-enhanced .suite-project > strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-suite-kind="tool"] body.suite-enhanced .suite-model-trigger {
+    width: 100%;
+    max-width: none;
+    justify-content: flex-start;
+  }
+
+  html[data-suite-kind="tool"] body.suite-enhanced .suite-action-link {
+    width: auto;
+    min-width: 82px;
+    min-height: 38px;
+    padding-inline: 10px;
+  }
+
+  html[data-suite-kind="tool"] body.suite-enhanced .suite-topbar:has(.suite-model-trigger:not([hidden])) {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  html[data-suite-kind="tool"] body.suite-enhanced .suite-topbar:has(.suite-model-trigger:not([hidden])) .suite-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: 100%;
+  }
+
+  html[data-suite-kind="tool"] body.suite-enhanced h1 {
+    font-size: clamp(28px, 9vw, 36px) !important;
+  }
+
+  html[data-suite-kind="tool"] body.suite-enhanced h2 {
+    font-size: clamp(21px, 6vw, 26px) !important;
+  }
+
+  html[data-suite-kind="tool"] body.suite-enhanced :is(.hero, .landing-hero, .report-hero) h1 {
+    font-size: clamp(34px, 10vw, 44px) !important;
+  }
+
+  html[data-suite-kind="tool"] body.suite-enhanced :is(
+    [class~="panel"],
+    [class$="-panel"],
+    [class*="-panel "],
+    [class~="card"],
+    [class$="-card"],
+    [class*="-card "]
+  ):not(.tarot-card):not(.card-back):not(.card-front):not(.playing-card) {
+    border-radius: var(--suite-tool-radius) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-suite-kind="tool"] body.suite-enhanced *,
+  html[data-suite-kind="tool"] body.suite-enhanced *::before,
+  html[data-suite-kind="tool"] body.suite-enhanced *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

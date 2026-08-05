@@ -1,0 +1,70 @@
+/* Grassland preserves its open, playful field-notes identity. */
+html[data-suite-kind="tool"][data-suite-id="grassland"] {
+  --suite-tool-bg: #f3f7ef;
+  --suite-tool-bg-soft: #e8f0e3;
+  --suite-tool-surface: #fffef9;
+  --suite-tool-surface-subtle: #f8faef;
+  --suite-tool-ink: #203326;
+  --suite-tool-muted: #617064;
+  --suite-tool-faint: #859087;
+  --suite-tool-line: #d9e3d4;
+  --suite-tool-line-strong: #c3d2bd;
+  --suite-tool-primary: #3f774c;
+  --suite-tool-primary-strong: #2f603a;
+  --suite-tool-primary-soft: #eaf4e8;
+  --suite-tool-route: #3f774c;
+  --suite-tool-pulse: #e39a32;
+  --suite-tool-circuit: #6391a2;
+  --grassland-sun: #e5a33d;
+  --grassland-sky: #6f9bab;
+  background: var(--suite-tool-bg);
+}
+
+html[data-suite-kind="tool"][data-suite-id="grassland"] body.suite-enhanced {
+  background:
+    radial-gradient(circle at 88% 4%, rgba(229, 163, 61, 0.17), transparent 24rem),
+    linear-gradient(180deg, #f8fbf5 0 48%, #edf4e8 100%) !important;
+}
+
+html[data-suite-kind="tool"][data-suite-id="grassland"] body.suite-enhanced::before {
+  background-image:
+    linear-gradient(115deg, transparent 0 47%, rgba(63, 119, 76, 0.035) 47% 49%, transparent 49% 100%) !important;
+  background-size: 84px 56px !important;
+}
+
+html[data-suite-kind="tool"][data-suite-id="grassland"] body.suite-enhanced .suite-project::before {
+  background: var(--grassland-sun);
+  box-shadow: 0 0 0 4px rgba(229, 163, 61, 0.15);
+}
+
+html[data-suite-kind="tool"][data-suite-id="grassland"] body.suite-enhanced :is(.paper-panel, .story-card, .question-card, .result-hero) {
+  border-color: rgba(195, 210, 189, 0.94) !important;
+  background: rgba(255, 254, 249, 0.96) !important;
+}
+
+html[data-suite-kind="tool"][data-suite-id="grassland"] body.suite-enhanced .brand-stamp {
+  border-color: rgba(111, 155, 171, 0.35) !important;
+  background: #eff7f8 !important;
+  color: #477786 !important;
+}
+
+html[data-suite-kind="tool"][data-suite-id="grassland"] body.suite-enhanced :is(.terrain-strip, .progress-fill, .generation-meter span) {
+  background: linear-gradient(90deg, var(--suite-tool-primary), var(--grassland-sun), var(--grassland-sky)) !important;
+}
+
+html[data-suite-kind="tool"][data-suite-id="grassland"] body.suite-enhanced .mode-card[data-selected="true"] {
+  border-color: rgba(63, 119, 76, 0.55) !important;
+  background: #eef7eb !important;
+}
+
+@media (max-width: 760px) {
+  html[data-suite-kind="tool"][data-suite-id="grassland"] body.suite-enhanced .grassland-shell {
+    padding-inline: 12px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-suite-kind="tool"][data-suite-id="grassland"] body.suite-enhanced :is(.mode-card, .answer-button, .progress-fill) {
+    transition: none !important;
+  }
+}

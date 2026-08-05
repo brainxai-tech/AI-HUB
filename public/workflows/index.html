@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>工作流控制台 · AI HUB</title>
+    <meta
+      name="description"
+      content="AI HUB 管理员工作流控制台：启动、审核、继续和删除需要人工确认的 AI 任务。"
+    />
+    <meta name="theme-color" content="#edf4f7" />
+    <link rel="stylesheet" href="/hub/workflows/workflows.css?v=20260804-workflow1" />
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">跳到主要内容</a>
+    <header class="workflow-topbar">
+      <a class="workflow-brand" href="/hub/" aria-label="返回 AI 项目汇集库">
+        <span class="workflow-brand__mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span>
+          <span class="eyebrow">AI HUB · ADMIN</span>
+          <strong>工作流控制台</strong>
+        </span>
+      </a>
+      <a class="quiet-link" href="/hub/">返回项目库</a>
+    </header>
+
+    <main id="mainContent" class="workflow-shell">
+      <section class="workflow-hero" aria-labelledby="pageTitle">
+        <div>
+          <span class="eyebrow">Human-in-the-loop</span>
+          <h1 id="pageTitle">把 AI 任务推进到<br />每一个确认点</h1>
+        </div>
+        <div class="workflow-hero__note">
+          <strong>私有管理入口</strong>
+          <p>这里会保存运行内容和审核记录。生产服务器当前仅提供 HTTP，请先通过 SSH 隧道打开本页，再输入管理员口令。</p>
+        </div>
+      </section>
+
+      <section id="unlockPanel" class="unlock-panel" aria-labelledby="unlockTitle">
+        <div class="unlock-panel__copy">
+          <span class="step-kicker">ACCESS GATE</span>
+          <h2 id="unlockTitle">验证管理员身份</h2>
+          <p>口令只保存在本页内存中，验证后立即清空输入框；刷新或关闭页面后需要重新输入。</p>
+        </div>
+        <form id="unlockForm" class="unlock-form">
+          <label for="adminTokenInput">Hub 管理员口令</label>
+          <div class="inline-control">
+            <input
+              id="adminTokenInput"
+              name="adminToken"
+              type="password"
+              autocomplete="off"
+              required
+              minlength="16"
+              aria-describedby="unlockHint"
+            />
+            <button type="submit">解锁控制台</button>
+          </div>
+          <p id="unlockHint" class="field-hint">不会写入 localStorage、sessionStorage 或服务器日志。</p>
+          <p id="unlockStatus" class="form-status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section id="workspace" class="workspace" aria-label="工作流工作区" hidden>
+        <aside class="skill-drawer" aria-labelledby="skillTitle">
+          <div class="panel-heading">
+            <span class="step-kicker">01 · CHOOSE</span>
+            <h2 id="skillTitle">选择工作流</h2>
+          </div>
+          <nav id="skillList" class="skill-list" aria-label="工作流列表"></nav>
+        </aside>
+
+        <section class="command-panel" aria-labelledby="commandTitle">
+          <div class="panel-heading panel-heading--split">
+            <div>
+              <span class="step-kicker">02 · PREPARE</span>
+              <h2 id="commandTitle">准备任务</h2>
+            </div>
+            <span id="skillAvailability" class="availability-badge">等待选择</span>
+          </div>
+          <div id="startFormContainer"></div>
+
+          <div class="run-finder">
+            <div>
+              <span class="step-kicker">OPEN BY ID</span>
+              <h3>继续已有运行</h3>
+            </div>
+            <form id="openRunForm" class="inline-control">
+              <label class="visually-hidden" for="runIdInput">工作流运行 ID</label>
+              <input id="runIdInput" name="runId" autocomplete="off" placeholder="粘贴 run id" required />
+              <button type="submit" class="button-secondary">打开</button>
+            </form>
+            <div id="recentRuns" class="recent-runs" aria-label="本次浏览会话中的运行 ID"></div>
+          </div>
+        </section>
+
+        <section class="run-console" aria-labelledby="runConsoleTitle">
+          <div class="panel-heading panel-heading--split">
+            <div>
+              <span class="step-kicker">03 · REVIEW</span>
+              <h2 id="runConsoleTitle">运行审阅台</h2>
+            </div>
+            <span id="runStatusBadge" class="run-status">未打开</span>
+          </div>
+
+          <div id="runEmpty" class="run-empty">
+            <div class="run-empty__rail" aria-hidden="true"><span></span><span></span><span></span></div>
+            <p>创建任务或输入运行 ID 后，这里会显示状态、检查点、事件和可执行动作。</p>
+          </div>
+
+          <div id="runDetail" hidden>
+            <dl class="run-docket">
+              <div><dt>运行 ID</dt><dd id="runIdValue"></dd></div>
+              <div><dt>当前步骤</dt><dd id="runStepValue"></dd></div>
+              <div><dt>检查点</dt><dd id="runCheckpointValue"></dd></div>
+            </dl>
+            <div class="run-actions" role="group" aria-label="运行操作">
+              <button id="refreshRunButton" type="button" class="button-secondary">刷新</button>
+              <button id="retryRunButton" type="button" class="button-secondary">重试失败步骤</button>
+              <button id="deleteRunButton" type="button" class="button-danger">删除运行</button>
+            </div>
+            <div id="checkpointContainer" class="checkpoint-container"></div>
+            <div id="actionContainer" class="checkpoint-container"></div>
+
+            <section class="event-ledger" aria-labelledby="eventsTitle">
+              <div class="section-title-row">
+                <h3 id="eventsTitle">事件轨迹</h3>
+                <span>只读审计记录</span>
+              </div>
+              <ol id="eventList"></ol>
+            </section>
+
+            <details class="run-json">
+              <summary>查看完整运行数据</summary>
+              <pre id="runJson"></pre>
+            </details>
+          </div>
+          <p id="workspaceStatus" class="form-status" role="status" aria-live="polite"></p>
+        </section>
+      </section>
+
+      <section class="data-notice" aria-labelledby="dataNoticeTitle">
+        <div>
+          <span class="step-kicker">DATA BOUNDARY</span>
+          <h2 id="dataNoticeTitle">运行记录默认保留 30 天</h2>
+        </div>
+        <div class="data-notice__grid">
+          <p><strong>服务器会保存</strong>任务输入、生成结果、检查点和审核动作；可随时用“删除运行”清除指定记录。</p>
+          <p><strong>浏览器只保存</strong>本次会话打开过的运行 ID，不保存管理员口令或运行正文。</p>
+          <p><strong>TraceSheet 例外</strong>只提交文件名、字段名、行数等元数据；原始单元格始终留在浏览器。</p>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/hub/workflows/workflows.js?v=20260804-workflow1"></script>
+  </body>
+</html>

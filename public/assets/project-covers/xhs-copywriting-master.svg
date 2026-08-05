@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">小红书写作大师封面</title>
+  <desc id="desc">红色文案工作台界面和笔记卡片构成的项目封面</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#fff7f7"/>
+      <stop offset="52%" stop-color="#fffefe"/>
+      <stop offset="100%" stop-color="#effaf5"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#fff1f3"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="#621d2a" flood-opacity=".16"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="720" fill="url(#bg)"/>
+  <rect x="78" y="78" width="1044" height="564" rx="32" fill="url(#panel)" filter="url(#shadow)"/>
+  <rect x="126" y="130" width="332" height="460" rx="22" fill="#ffffff" stroke="#f1c7cf" stroke-width="2"/>
+  <rect x="164" y="174" width="206" height="24" rx="12" fill="#f43f5e"/>
+  <rect x="164" y="230" width="242" height="18" rx="9" fill="#202124" opacity=".78"/>
+  <rect x="164" y="268" width="204" height="18" rx="9" fill="#202124" opacity=".28"/>
+  <rect x="164" y="330" width="246" height="76" rx="16" fill="#fff4f6" stroke="#f6b7c2"/>
+  <rect x="188" y="355" width="142" height="14" rx="7" fill="#f43f5e" opacity=".82"/>
+  <rect x="188" y="380" width="184" height="12" rx="6" fill="#f43f5e" opacity=".35"/>
+  <rect x="164" y="438" width="104" height="38" rx="19" fill="#f43f5e"/>
+  <rect x="284" y="438" width="104" height="38" rx="19" fill="#111827"/>
+  <rect x="520" y="130" width="552" height="206" rx="28" fill="#111827"/>
+  <text x="562" y="205" fill="#ffffff" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="56" font-weight="700">小红书写作大师</text>
+  <text x="566" y="262" fill="#ffd7de" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="30">标题 · 正文 · 标签 · 发布建议</text>
+  <rect x="520" y="382" width="250" height="208" rx="24" fill="#ffffff" stroke="#e5e7eb"/>
+  <rect x="560" y="426" width="156" height="20" rx="10" fill="#f43f5e"/>
+  <rect x="560" y="466" width="166" height="14" rx="7" fill="#111827" opacity=".45"/>
+  <rect x="560" y="496" width="130" height="14" rx="7" fill="#111827" opacity=".22"/>
+  <rect x="560" y="536" width="78" height="28" rx="14" fill="#ecfdf5"/>
+  <rect x="650" y="536" width="86" height="28" rx="14" fill="#fff1f3"/>
+  <rect x="822" y="382" width="250" height="208" rx="24" fill="#ffffff" stroke="#e5e7eb"/>
+  <path d="M884 485c28-58 76-58 104 0-28 58-76 58-104 0Z" fill="#f43f5e" opacity=".14"/>
+  <path d="M926 430h42v110h-42z" fill="#f43f5e"/>
+  <path d="M890 466h114v42H890z" fill="#111827"/>
+  <text x="878" y="566" fill="#111827" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="22" font-weight="700">AI Hub API Key</text>
+</svg>

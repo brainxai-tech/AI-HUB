@@ -1,0 +1,12 @@
+/var/log/ai-project-hub/observability-events.jsonl {
+    su admin admin
+    daily
+    maxsize 20M
+    rotate 14
+    missingok
+    notifempty
+    compress
+    delaycompress
+    dateext
+    create 0600 admin admin
+}

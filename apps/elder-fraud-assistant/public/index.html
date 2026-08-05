@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-CN" >
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>先问问 - 老人防骗助手</title>
+    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="/hub/suite-theme.css?v=20260628-suite2" />
+  </head>
+  <body >
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">问</div>
+          <div>
+            <h1>先问问</h1>
+            <p>转账前，先让家里人帮你看一眼</p>
+          </div>
+        </div>
+        <div class="topbar-actions" aria-label="示例">
+          <button class="button secondary" type="button" data-sample="investment">投资群</button>
+          <button class="button secondary" type="button" data-sample="authority">陌生电话</button>
+          <button class="button secondary" type="button" data-sample="refund">退款短信</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="input-panel" aria-labelledby="inputTitle">
+          <div class="section-head">
+            <div>
+              <h2 id="inputTitle">收到的内容</h2>
+              <p>短信、电话话术、群消息都可以</p>
+            </div>
+            <button class="button text" id="clearButton" type="button">清空</button>
+          </div>
+
+          <label class="upload-box" for="imageInput">
+            <span class="upload-title">截图</span>
+            <span class="upload-note" id="uploadNote">选择图片</span>
+            <input id="imageInput" type="file" accept="image/*">
+          </label>
+          <div class="image-preview empty" id="imagePreview" aria-live="polite">还没有截图</div>
+
+          <label class="field" for="messageText">
+            <span>消息文字</span>
+            <textarea id="messageText" rows="10" placeholder="把短信、群消息、电话里对方说的话放在这里"></textarea>
+          </label>
+
+          <section class="model-config" aria-labelledby="modelConfigTitle">
+            <div class="model-config-head">
+              <div>
+                <h3 id="modelConfigTitle">智能复核</h3>
+                <p>先用本地规则判断；需要更细的解释时，可以让智能助手再复核一遍。</p>
+              </div>
+            </div>
+          </section>
+
+          <div class="submit-row">
+            <button class="button primary" id="modelAnalyzeButton" type="button">智能复核</button>
+            <button class="button secondary" id="analyzeButton" type="button">本地判断</button>
+            <span class="privacy-note" id="analysisModeNote">默认先做本地判断；需要时可使用智能复核。</span>
+          </div>
+        </section>
+
+        <section class="result-panel" aria-labelledby="resultTitle">
+          <div class="section-head">
+            <div>
+              <h2 id="resultTitle">风险判断</h2>
+              <p id="resultHint">先放入一段可疑内容</p>
+            </div>
+          </div>
+
+          <div class="risk-banner risk-empty" id="riskBanner">
+            <div>
+              <span class="risk-kicker">等待判断</span>
+              <strong id="riskLabel">未开始</strong>
+            </div>
+            <span class="risk-score" id="riskScore">0</span>
+          </div>
+
+          <div class="plain-summary" id="plainSummary" role="status" aria-live="polite">
+            这里会用大白话说明哪里可疑。
+          </div>
+
+          <div class="result-grid">
+            <section class="result-block" aria-labelledby="signalsTitle">
+              <h3 id="signalsTitle">可疑点</h3>
+              <div class="signal-list" id="signalList"></div>
+            </section>
+
+            <section class="result-block" aria-labelledby="actionsTitle">
+              <h3 id="actionsTitle">现在先做</h3>
+              <ol class="action-list" id="actionList"></ol>
+            </section>
+          </div>
+
+          <section class="family-panel" aria-labelledby="familyTitle">
+            <div class="family-head">
+              <h3 id="familyTitle">发给子女确认</h3>
+              <button class="button secondary" id="copyChildButton" type="button">复制</button>
+            </div>
+            <textarea id="childMessage" rows="8" aria-labelledby="familyTitle" readonly></textarea>
+          </section>
+
+          <section class="family-panel compact" aria-labelledby="replyTitle">
+            <div class="family-head">
+              <h3 id="replyTitle">子女可直接回复</h3>
+              <button class="button secondary" id="copyReplyButton" type="button">复制</button>
+            </div>
+            <p id="childReply">等判断后生成。</p>
+          </section>
+        </section>
+      </main>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+    <script defer src="/hub/suite-shell.js?v=20260628-suite2" data-suite-project="AI · 长辈防诈" data-suite-hub="/hub/"></script>
+  </body>
+</html>

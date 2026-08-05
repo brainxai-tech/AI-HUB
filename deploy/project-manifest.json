@@ -1,0 +1,59 @@
+{
+  "version": 2,
+  "hub": {
+    "route": "/hub/",
+    "package": ".",
+    "port": 4194
+  },
+  "sharedApi": {
+    "package": "packages/shared-project-runtime",
+    "port": 4195
+  },
+  "workflowApi": {
+    "package": "packages/agent-workflow-runtime",
+    "skills": "skills",
+    "port": 4196
+  },
+  "projects": [
+    { "id": "idol-match-test", "route": "/idol-match/", "source": "apps/idol-match-test", "stack": "next", "api": "shared" },
+    { "id": "qisheng-emotional-companion", "runtimeId": "ai-emotional-companion-local", "route": "/qisheng/", "source": "apps/qisheng-emotional-companion", "stack": "node-static", "api": "shared" },
+    { "id": "ai-tarot-sanctum", "route": "/tarot/", "source": "apps/ai-tarot-sanctum", "stack": "next", "api": "shared" },
+    { "id": "qingqing-grassland-personality", "route": "/grassland/", "source": "apps/qingqing-grassland-personality", "stack": "next", "api": "shared" },
+    { "id": "ai-cooking-coach", "route": "/cooking/", "source": "apps/ai-cooking-coach", "stack": "node-static", "api": "shared" },
+    { "id": "ai-legal-clause-translator", "route": "/legal/", "source": "apps/ai-legal-clause-translator", "stack": "next", "api": "shared" },
+    { "id": "xhs-copywriting-master", "route": "/xhs/", "source": "apps/xhs-copywriting-master", "stack": "next", "api": "shared" },
+    { "id": "ai-book-decomposer", "route": "/book/", "source": "apps/ai-book-decomposer", "stack": "node-static", "api": "shared" },
+    { "id": "ai-bedtime-story-factory", "route": "/story/", "source": "apps/ai-bedtime-story-factory", "stack": "vite", "api": "shared" },
+    { "id": "ai-data-analyst", "route": "/data/", "source": "apps/ai-data-analyst", "stack": "next", "api": "shared" },
+    { "id": "trace-sheet-workbench", "route": "/tracesheet/", "source": "apps/trace-sheet-workbench", "stack": "next", "api": "shared" },
+    { "id": "ai-english-theater", "route": "/english/", "source": "apps/ai-english-theater", "stack": "node-static", "api": "shared" },
+    { "id": "ai-course-teaching-assistant", "route": "/course/", "source": "apps/ai-course-teaching-assistant", "stack": "next", "api": "shared" },
+    { "id": "ai-dream-director", "route": "/dream/", "source": "apps/ai-dream-director", "stack": "vite", "api": "shared" },
+    { "id": "ai-paper-reading-coach", "route": "/paper/", "source": "apps/ai-paper-reading-coach", "stack": "vite", "api": "shared" },
+    { "id": "ai-counterfactual-life-simulator", "route": "/life/", "source": "apps/ai-counterfactual-life-simulator", "stack": "vite", "api": "shared" },
+    { "id": "ai-zhougong-dream", "route": "/zhougong/", "source": "apps/ai-zhougong-dream", "stack": "vite", "api": "shared" },
+    { "id": "ai-one-person-board", "route": "/board/", "source": "apps/ai-one-person-board", "stack": "vite", "api": "shared" },
+    { "id": "ai-anti-motivation-coach", "route": "/anti-coach/", "source": "apps/ai-anti-motivation-coach", "stack": "vite", "api": "shared" },
+    { "id": "ai-aesthetic-fingerprint", "route": "/aesthetic/", "source": "apps/ai-aesthetic-fingerprint", "stack": "vite", "api": "shared" },
+    { "id": "ai-misunderstanding-simulator", "route": "/misunderstanding/", "source": "apps/ai-misunderstanding-simulator", "stack": "vite", "api": "shared" },
+    { "id": "ai-life-villain-generator", "route": "/villain/", "source": "apps/ai-life-villain-generator", "stack": "vite", "api": "shared" },
+    { "id": "ai-parallel-universe-daily", "route": "/parallel-daily/", "source": "apps/ai-parallel-universe-daily", "stack": "vite", "api": "shared" },
+    { "id": "ai-tone-dressing-room", "route": "/tone/", "source": "apps/ai-tone-dressing-room", "stack": "vite", "api": "shared" },
+    { "id": "ai-life-version-controller", "route": "/life-version/", "source": "apps/ai-life-version-controller", "stack": "vite", "api": "shared" },
+    { "id": "ai-reality-filter-translator", "route": "/reality-filter/", "source": "apps/ai-reality-filter-translator", "stack": "vite", "api": "shared" },
+    { "id": "ai-cold-start-brand-lab", "route": "/brand-lab/", "source": "apps/ai-cold-start-brand-lab", "stack": "vite", "api": "shared" },
+    { "id": "ai-ppt-report-coach", "route": "/ppt-report-coach/", "source": "apps/ai-ppt-report-coach", "stack": "vite", "api": "dedicated", "port": 4201 },
+    { "id": "ai-work-report-generator", "route": "/work-report/", "source": "apps/ai-work-report-generator", "stack": "vite", "api": "dedicated", "port": 4202 },
+    { "id": "mbti-persona-compass", "route": "/mbti/", "source": "apps/mbti-persona-compass", "stack": "vite", "api": "dedicated", "port": 4203 },
+    { "id": "ai-essay-coach", "route": "/essay/", "source": "apps/ai-essay-coach", "stack": "vite", "api": "dedicated", "port": 4204 },
+    { "id": "yingzhou-ai", "route": "/poetry/", "source": "apps/yingzhou-ai", "stack": "vite", "api": "dedicated", "port": 4205 },
+    { "id": "elder-fraud-assistant", "route": "/elder/", "source": "apps/elder-fraud-assistant", "stack": "node-static", "api": "shared" }
+  ],
+  "games": [
+    { "id": "ai-xiangqi-duel", "route": "/xiangqi/", "source": "games/ai-xiangqi-duel", "stack": "next", "api": "dedicated", "port": 4211 },
+    { "id": "ai-chess-duel", "route": "/chess/", "source": "games/ai-chess-duel", "stack": "next", "api": "dedicated", "port": 4212 },
+    { "id": "ai-go-duel", "route": "/go/", "source": "games/ai-go-duel", "stack": "next", "api": "dedicated", "port": 4213 },
+    { "id": "fury-flock", "route": "/fury-flock/", "source": "games/fury-flock", "stack": "vite-static", "api": "none" },
+    { "id": "dice-estate-duel", "route": "/hub/dice-estate/", "source": "public/dice-estate", "stack": "hub-static", "api": "hub" }
+  ]
+}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">吟舟 AI 古诗共创工作台</title><desc id="desc">水墨山水、月亮与一叶小舟组成的古诗产品封面</desc>
+  <defs><linearGradient id="paper" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f6f1e4"/><stop offset="1" stop-color="#d9dfd4"/></linearGradient><linearGradient id="ink" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#263831"/><stop offset="1" stop-color="#61766e"/></linearGradient></defs>
+  <rect width="1200" height="675" fill="url(#paper)"/><circle cx="924" cy="170" r="88" fill="#e6bd73" opacity=".88"/>
+  <path d="M0 510c140-95 230-120 350-70 88 37 142-7 210-74 84-82 176-56 258 21 74 68 154 66 382-52v340H0z" fill="#a6b7ac" opacity=".58"/><path d="M0 564c148-47 260-42 370 6 122 53 260 34 382-23 124-57 241-62 448-5v133H0z" fill="#60766d" opacity=".78"/>
+  <path d="M640 475c63 25 131 28 204 8-23 39-58 59-104 61-48 2-81-20-100-69z" fill="#283a33"/><path d="M739 365v119M739 375l84 75h-84z" fill="#b44b35" stroke="#283a33" stroke-width="5"/>
+  <g font-family="STKaiti,KaiTi,Microsoft YaHei,serif"><text x="92" y="176" font-size="38" fill="#7a3328" letter-spacing="9">POETRY WORKSHOP</text><text x="84" y="316" font-size="116" fill="url(#ink)" font-weight="700">吟舟 AI</text><text x="94" y="392" font-size="34" fill="#41534b">触景 · 起稿 · 照律 · 炼字 · 成笺</text><text x="96" y="470" font-size="26" fill="#637169">五言、七言与藏头诗的可解释共创工作台</text></g>
+  <rect x="92" y="516" width="300" height="62" rx="31" fill="#b4472e"/><text x="242" y="557" fill="#fff8ed" font-size="25" font-family="STKaiti,KaiTi,serif" text-anchor="middle" font-weight="700">与 AI 共写，也由你落笔</text>
+</svg>

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "read-research-paper",
+  "projectId": "ai-paper-reading-coach",
+  "title": "论文证据阅读工作流",
+  "description": "导入论文、构建论文地图，并按原文段落检索完成解释、问答和复习。",
+  "adapter": "scripts/adapter.mjs",
+  "workflow": {
+    "id": "paper-reading-v1",
+    "version": 1,
+    "steps": ["import", "paper-map", "evidence-session", "complete"],
+    "checkpoints": ["paper-task"],
+    "actions": []
+  },
+  "knowledge": {
+    "mode": "run-scoped-document-rag",
+    "sources": ["imported-paper-paragraphs"],
+    "citationRequired": true
+  }
+}

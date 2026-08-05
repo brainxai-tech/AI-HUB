@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">迹算 Excel 清洗工作台</title>
+  <desc id="desc">带有表格、清洗步骤和版本轨迹的绿色数据工作台插画</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7fbf9"/>
+      <stop offset="1" stop-color="#e7f1ee"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#11846c"/>
+      <stop offset="1" stop-color="#075744"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#173c33" flood-opacity=".14"/>
+    </filter>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#0f7a65" stroke-opacity=".08"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <rect width="1200" height="675" fill="url(#grid)"/>
+  <circle cx="1090" cy="70" r="178" fill="#0f7a65" opacity=".07"/>
+  <circle cx="72" cy="624" r="212" fill="#26799a" opacity=".055"/>
+
+  <g transform="translate(64 58)">
+    <rect width="56" height="56" rx="15" fill="url(#green)"/>
+    <path d="M18 17h8M18 28h20M18 39h12M36 17h2M34 39h4" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    <text x="76" y="30" fill="#17211f" font-family="Segoe UI,Microsoft YaHei,sans-serif" font-size="30" font-weight="800">迹算</text>
+    <text x="77" y="50" fill="#66736f" font-family="ui-monospace,monospace" font-size="11" font-weight="700" letter-spacing="3">TRACE SHEET</text>
+  </g>
+
+  <g transform="translate(64 164)">
+    <text fill="#0f7a65" font-family="ui-monospace,monospace" font-size="13" font-weight="800" letter-spacing="2">EXCEL / CSV · LOCAL FIRST</text>
+    <text y="58" fill="#17211f" font-family="Segoe UI,Microsoft YaHei,sans-serif" font-size="46" font-weight="800">每一步清洗，</text>
+    <text y="112" fill="#17211f" font-family="Segoe UI,Microsoft YaHei,sans-serif" font-size="46" font-weight="800">都有证据可回溯。</text>
+    <text y="158" fill="#66736f" font-family="Segoe UI,Microsoft YaHei,sans-serif" font-size="17">合并 · 清洗 · 预览 · 版本 · 审计导出</text>
+  </g>
+
+  <g transform="translate(64 445)">
+    <path d="M18 28H430" fill="none" stroke="#9fc9be" stroke-width="4" stroke-linecap="round"/>
+    <g font-family="Segoe UI,Microsoft YaHei,sans-serif" font-size="12" font-weight="700" text-anchor="middle">
+      <g transform="translate(18 28)"><circle r="14" fill="#0f7a65"/><path d="m-5 0 3 3 7-8" fill="none" stroke="#fff" stroke-width="2.5"/><text y="35" fill="#4e625c">合并</text></g>
+      <g transform="translate(155 28)"><circle r="14" fill="#0f7a65"/><path d="m-5 0 3 3 7-8" fill="none" stroke="#fff" stroke-width="2.5"/><text y="35" fill="#4e625c">清洗</text></g>
+      <g transform="translate(292 28)"><circle r="14" fill="#0f7a65"/><path d="m-5 0 3 3 7-8" fill="none" stroke="#fff" stroke-width="2.5"/><text y="35" fill="#4e625c">复核</text></g>
+      <g transform="translate(430 28)"><circle r="14" fill="#17211f"/><path d="m-5 0 3 3 7-8" fill="none" stroke="#fff" stroke-width="2.5"/><text y="35" fill="#4e625c">导出</text></g>
+    </g>
+  </g>
+
+  <g transform="translate(555 82)" filter="url(#shadow)">
+    <rect width="580" height="514" rx="26" fill="#fff" stroke="#cbdad5"/>
+    <rect x="20" y="20" width="540" height="58" rx="16" fill="#f0f6f4"/>
+    <circle cx="48" cy="49" r="10" fill="#0f7a65"/>
+    <rect x="70" y="40" width="126" height="11" rx="5.5" fill="#24483e" opacity=".88"/>
+    <rect x="70" y="57" width="82" height="7" rx="3.5" fill="#7a928b"/>
+    <rect x="408" y="36" width="132" height="28" rx="9" fill="url(#green)"/>
+    <text x="474" y="55" fill="#fff" font-family="Segoe UI,sans-serif" font-size="11" font-weight="700" text-anchor="middle">导出 Excel</text>
+
+    <g transform="translate(20 98)">
+      <rect width="166" height="96" rx="15" fill="#f7faf9" stroke="#d8e3df"/>
+      <text x="18" y="26" fill="#66736f" font-family="ui-monospace,monospace" font-size="9" font-weight="700">QUALITY</text>
+      <text x="18" y="62" fill="#0f7a65" font-family="ui-monospace,monospace" font-size="31" font-weight="800">94</text>
+      <rect x="18" y="76" width="130" height="6" rx="3" fill="#dce7e3"/><rect x="18" y="76" width="122" height="6" rx="3" fill="#0f7a65"/>
+      <rect x="182" width="358" height="96" rx="15" fill="#f7faf9" stroke="#d8e3df"/>
+      <text x="202" y="27" fill="#66736f" font-family="Segoe UI,sans-serif" font-size="10" font-weight="700">CURRENT VERSION</text>
+      <text x="202" y="58" fill="#17211f" font-family="Segoe UI,Microsoft YaHei,sans-serif" font-size="17" font-weight="800">订单表 · 清洗后 V4</text>
+      <text x="202" y="78" fill="#0f7a65" font-family="ui-monospace,monospace" font-size="9">6 ROWS · 9 COLUMNS · 1 WARNING</text>
+    </g>
+
+    <g transform="translate(20 214)">
+      <rect width="540" height="190" rx="15" fill="#fff" stroke="#d8e3df"/>
+      <path d="M0 44h540M0 82h540M0 120h540M0 158h540M62 0v190M172 0v190M306 0v190M430 0v190" stroke="#e4ece9"/>
+      <rect width="540" height="44" rx="15" fill="#edf5f2"/><rect y="29" width="540" height="15" fill="#edf5f2"/>
+      <g fill="#4f625d" font-family="ui-monospace,monospace" font-size="9" font-weight="700">
+        <text x="22" y="27">#</text><text x="82" y="27">ORDER_ID</text><text x="194" y="27">DATE</text><text x="328" y="27">AMOUNT</text><text x="450" y="27">STATUS</text>
+      </g>
+      <g fill="#17342d" font-family="ui-monospace,monospace" font-size="9">
+        <text x="22" y="68">01</text><text x="82" y="68">A-1001</text><text x="194" y="68">2026-07-01</text><text x="328" y="68">1,280</text><text x="450" y="68">CLEAN</text>
+        <text x="22" y="106">02</text><text x="82" y="106">A-1002</text><text x="194" y="106">2026-07-02</text><text x="328" y="106">860</text><text x="450" y="106">CLEAN</text>
+        <text x="22" y="144">03</text><text x="82" y="144">A-1003</text><text x="194" y="144">2026-07-03</text><text x="328" y="144">2,150</text><text x="450" y="144" fill="#b86a12">REVIEW</text>
+        <text x="22" y="182">04</text><text x="82" y="182">A-1004</text><text x="194" y="182">2026-07-04</text><text x="328" y="182">4,380</text><text x="450" y="182">CLEAN</text>
+      </g>
+    </g>
+
+    <g transform="translate(20 426)">
+      <rect width="540" height="68" rx="15" fill="#eaf6f2" stroke="#b9d8cf"/>
+      <circle cx="34" cy="34" r="13" fill="#0f7a65"/>
+      <path d="m28 34 4 4 8-10" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+      <text x="58" y="30" fill="#0b5a47" font-family="Segoe UI,Microsoft YaHei,sans-serif" font-size="12" font-weight="800">差异预览已生成</text>
+      <text x="58" y="48" fill="#5b746d" font-family="Segoe UI,Microsoft YaHei,sans-serif" font-size="10">原文件不覆盖 · 可随时回滚</text>
+      <text x="512" y="39" fill="#0f7a65" font-family="ui-monospace,monospace" font-size="22" font-weight="800" text-anchor="end">V4</text>
+    </g>
+  </g>
+</svg>

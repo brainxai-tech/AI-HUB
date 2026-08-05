@@ -1,0 +1,58 @@
+name: Fresh clone verification
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - codex/unify-hub-routing
+      - codex/unify-game-routing
+      - codex/aihub-workflow-skills
+
+concurrency:
+  group: fresh-clone-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install-build-test-e2e:
+    runs-on: windows-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout without generated files
+        uses: actions/checkout@v4
+        with:
+          clean: true
+          fetch-depth: 1
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            packages/shared-project-runtime/package-lock.json
+            apps/*/package-lock.json
+            games/*/package-lock.json
+
+      - name: Scan the fresh checkout
+        run: npm run security:scan
+
+      - name: Install every locked workspace package
+        run: npm run workspace:install
+        env:
+          NPM_CONFIG_OFFLINE: "false"
+
+      - name: Install the E2E browser
+        run: npm exec --prefix apps/ai-ppt-report-coach -- playwright install chromium
+
+      - name: Test, typecheck, and build the complete workspace
+        run: npm run workspace:verify
+
+      - name: Re-scan tracked source and routing boundaries
+        run: npm run security:scan
+
+      - name: Run the complete local-suite browser E2E
+        run: npm run e2e

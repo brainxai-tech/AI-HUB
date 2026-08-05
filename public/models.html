@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>大模型差异图鉴 · AI HUB</title>
+    <meta
+      name="description"
+      content="使用 LiveBench 与 Artificial Analysis 的国际第三方测评，比较 AI HUB 可选 GPT 型号的能力、速度、短板和每百万 Token 成本。"
+    />
+    <meta name="theme-color" content="#f7f9fc" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='Arial' font-size='30' font-weight='700' fill='white'%3EAI%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/hub/styles.css?v=20260724-routing-promo1" />
+    <link rel="stylesheet" href="/hub/suite-theme.css?v=20260717-frontend5" />
+    <link rel="stylesheet" href="/hub/model-guide.css?v=20260730-comparison1" />
+  </head>
+  <body>
+    <main id="suite-main" class="app-shell model-guide-shell">
+      <section id="comparison" class="model-compare" aria-labelledby="compareTitle">
+        <div class="section-heading model-compare__heading">
+          <div class="section-heading__copy">
+            <span class="eyebrow">MODEL COMPASS</span>
+            <h2 id="compareTitle">先选任务，再看取舍</h2>
+            <p class="section-description">横轴是 80 万输入 + 20 万输出的估算成本，纵轴随任务切换为对应能力或速度。点击图中型号即可加入下方同屏比较。</p>
+          </div>
+          <div class="model-compare__source-note">
+            <span>能力</span><strong>LiveBench</strong>
+            <span>速度</span><strong>Artificial Analysis</strong>
+            <span>成本</span><strong>官方单价</strong>
+          </div>
+        </div>
+
+        <div id="comparisonPresets" class="model-preset-tabs" role="group" aria-label="按任务查看模型"></div>
+
+        <div class="model-compare__stage">
+          <article class="model-landscape-card" aria-labelledby="landscapeTitle">
+            <div class="model-landscape-card__head">
+              <div>
+                <span class="eyebrow">能力 × 成本</span>
+                <h3 id="landscapeTitle">型号位置图</h3>
+              </div>
+              <p id="landscapeAxisLabel">纵轴：LiveBench 综合</p>
+            </div>
+            <div id="modelLandscape" class="model-landscape" aria-live="polite"></div>
+            <div class="model-landscape__legend" aria-label="坐标说明">
+              <span>← 成本更低</span>
+              <span><i></i> 已加入比较</span>
+              <span><i></i> 当前任务推荐</span>
+              <span>成本更高 →</span>
+            </div>
+          </article>
+          <aside id="comparisonRecommendation" class="model-recommendation" aria-live="polite"></aside>
+        </div>
+
+        <div class="model-compare__picker-head">
+          <div>
+            <span class="eyebrow">同屏比较</span>
+            <h3>选择 2–4 个型号</h3>
+          </div>
+          <p id="compareStatus" role="status" aria-live="polite"></p>
+        </div>
+        <div id="comparePicker" class="model-compare-picker" aria-label="选择要比较的型号" aria-describedby="compareStatus"></div>
+        <div class="model-comparison-frame" tabindex="0" aria-label="模型横向对比表，可横向滚动">
+          <table id="modelComparisonTable" class="model-comparison-table"></table>
+        </div>
+        <p class="model-comparison-footnote">“领先”只表示当前所选型号在该行数据中最优；缺少完全匹配的第三方数据时显示“暂无”，不会用近似型号补齐。</p>
+      </section>
+
+      <section id="methodology" class="model-guide-method" aria-labelledby="methodTitle">
+        <div>
+          <span class="eyebrow">评分怎么看</span>
+          <h2 id="methodTitle">LiveBench 能力实测 + Artificial Analysis 性能数据</h2>
+          <p class="section-description">比较工作台只提取最常用的决策数据；完整口径和边界仍保留在这里。</p>
+        </div>
+        <div class="model-guide-method__notes">
+          <p><strong>官方事实</strong><span>型号名称、上下文、输入输出模态、工具与 Token 单价（每 100 万输入/输出 Token）均链接到官方模型页或定价页。</span></p>
+          <p><strong>能力实测</strong><span>综合、推理、编程、Agent 编程、数学、数据分析、语言与指令遵循均来自 LiveBench 2026-06-25 原始数据；综合分是七个类别均值的平均值。</span></p>
+          <p><strong>性能测评</strong><span>Intelligence Index、输出速度和首段延迟来自 Artificial Analysis 当前公开榜单，并显示实际被测档位。</span></p>
+          <p><strong>严格匹配</strong><span>只有型号与推理档位能完全对应的条目才参与榜单；未收录型号显示“暂无第三方测评”，不使用近似型号或编辑分补齐。</span></p>
+          <p><strong>编辑解读</strong><span>优劣势、推理档位用途与任务适配是 AI HUB 对官方资料和第三方测评的解释，不作为测评分数。</span></p>
+          <p><strong>成本示例</strong><span>“80 万输入 + 20 万输出”由页面按公开单价直接计算；长上下文、缓存、批处理和区域处理另计。</span></p>
+          <p><strong>数据时点</strong><span>LiveBench 发布版为 2026-06-25；Artificial Analysis 与厂商资料核对于 2026-07-27。榜单更新后需重新核对型号映射。</span></p>
+        </div>
+      </section>
+
+      <section class="model-provider-section" aria-labelledby="providerTitle">
+        <div class="section-heading">
+          <div class="section-heading__copy">
+            <span class="eyebrow">GPT 能力地图</span>
+            <h2 id="providerTitle">先理解 GPT 路线，再比较具体型号</h2>
+            <p class="section-description">能力指纹取自 GPT 系列被 LiveBench 收录型号的测评均值；没有完全匹配记录的型号不计入平均值。</p>
+          </div>
+        </div>
+        <div id="providerProfiles" class="model-provider-grid"></div>
+      </section>
+
+      <section class="model-guide-ranking" aria-labelledby="rankingTitle">
+        <div class="section-heading">
+          <div class="section-heading__copy">
+            <span class="eyebrow">LIVEBENCH 2026-06-25</span>
+            <h2 id="rankingTitle">第三方测评结果，不再使用编辑能力分</h2>
+            <p class="section-description">切换八项指标查看前五名；只排列 LiveBench 中能完全匹配型号与档位的条目。</p>
+          </div>
+        </div>
+        <div id="rankingTabs" class="model-ranking-tabs" role="tablist" aria-label="选择模型榜单"></div>
+        <div id="leaderboard" class="model-leaderboard" aria-live="polite"></div>
+      </section>
+
+      <section class="model-guide-catalog" aria-labelledby="catalogTitle">
+        <div class="section-heading">
+          <div class="section-heading__copy">
+            <span class="eyebrow">型号目录</span>
+            <h2 id="catalogTitle">查看每个模型的推理档位、优劣势与成本</h2>
+            <p class="section-description">覆盖当前主流文本与多模态对话型号；同一型号会按快速、均衡、深度等档位说明适用任务和成本取舍。</p>
+          </div>
+        </div>
+        <div class="model-catalog-toolbar" aria-label="筛选模型">
+          <label for="modelSearch">搜索型号或适用任务</label>
+          <input id="modelSearch" type="search" placeholder="例如：编程、长文本、低成本" autocomplete="off" />
+          <label for="modelSort">排序</label>
+          <select id="modelSort">
+            <option value="overall">LiveBench 综合</option>
+            <option value="reasoning">推理</option>
+            <option value="coding">编程</option>
+            <option value="agentic">Agent 编程</option>
+            <option value="math">数学</option>
+            <option value="data">数据分析</option>
+            <option value="language">语言</option>
+            <option value="instruction">指令遵循</option>
+          </select>
+        </div>
+        <div id="providerFilters" class="model-provider-filters" aria-label="按 GPT 型号筛选"></div>
+        <p id="modelResultCount" class="model-result-count" role="status"></p>
+        <div id="modelGrid" class="model-guide-grid"></div>
+        <div id="modelEmpty" class="empty-state" hidden>
+          <h3>没有找到匹配型号</h3>
+          <p>换一个关键词或清空筛选条件。</p>
+        </div>
+      </section>
+
+      <section class="model-guide-sources" aria-labelledby="sourcesTitle">
+        <div>
+          <span class="eyebrow">数据来源</span>
+          <h2 id="sourcesTitle">每组数据都有对应来源</h2>
+        </div>
+        <div id="sourceList" class="model-source-list"></div>
+        <p><strong>来源标签说明：</strong>能力分数与榜单指向 LiveBench 原始 CSV，综合指数与性能指向 Artificial Analysis；官方资料只负责型号资料与 Token 定价。“编辑口径”仅解释优劣势与选型建议。价格、可用地区和型号可能随时变化，实际接入前仍需二次校验。</p>
+      </section>
+    </main>
+
+    <script src="/hub/model-guide-data.js?v=20260728-gpt-only1"></script>
+    <script src="/hub/model-guide.js?v=20260730-comparison1"></script>
+    <script src="/hub/suite-shell.js?v=20260730-model-atlas1" data-suite-project="大模型差异图鉴" data-suite-id="hub-model-atlas" data-suite-hub="/hub/"></script>
+  </body>
+</html>

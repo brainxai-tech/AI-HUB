@@ -1,0 +1,88 @@
+/* Elder fraud assistant: the common Hub grammar with larger, calmer controls. */
+html[data-suite-kind="tool"][data-suite-id="elder"] {
+  --suite-tool-bg: #f2f6f2;
+  --suite-tool-bg-soft: #e7efe9;
+  --suite-tool-surface: #fffefb;
+  --suite-tool-surface-subtle: #f8fbf8;
+  --suite-tool-ink: #17251f;
+  --suite-tool-muted: #59675f;
+  --suite-tool-faint: #758178;
+  --suite-tool-line: #d2ddd5;
+  --suite-tool-line-strong: #b8cabd;
+  --suite-tool-primary: #1d765d;
+  --suite-tool-primary-strong: #145c49;
+  --suite-tool-primary-soft: #e8f5ef;
+  --suite-tool-route: #1d765d;
+  --suite-tool-pulse: #c78325;
+  --suite-tool-circuit: #477e75;
+  font-size: 18px;
+}
+
+html[data-suite-kind="tool"][data-suite-id="elder"] body.suite-enhanced {
+  font-size: 18px;
+  line-height: 1.65;
+  background:
+    radial-gradient(circle at 88% 4%, rgba(199, 131, 37, 0.1), transparent 24rem),
+    linear-gradient(180deg, #fafcf9, #eef4ef) !important;
+}
+
+html[data-suite-kind="tool"][data-suite-id="elder"] body.suite-enhanced .app-shell {
+  width: min(100%, 1320px);
+  min-height: calc(100dvh - 58px);
+  margin-inline: auto;
+  padding: clamp(14px, 2.5vw, 30px) !important;
+}
+
+html[data-suite-kind="tool"][data-suite-id="elder"] body.suite-enhanced .app-shell > .topbar {
+  align-items: center;
+  margin-bottom: 22px;
+  padding: 18px 20px;
+  border: 1px solid var(--suite-tool-line) !important;
+  border-radius: var(--suite-tool-radius-lg);
+  background: rgba(255, 254, 251, 0.96);
+  box-shadow: var(--suite-tool-shadow);
+}
+
+html[data-suite-kind="tool"][data-suite-id="elder"] body.suite-enhanced .brand-mark {
+  border-radius: 12px !important;
+  background: var(--suite-tool-primary) !important;
+  color: #fff !important;
+}
+
+html[data-suite-kind="tool"][data-suite-id="elder"] body.suite-enhanced :is(.input-panel, .result-panel) {
+  padding: clamp(18px, 2.5vw, 28px) !important;
+  border-radius: var(--suite-tool-radius-lg) !important;
+}
+
+html[data-suite-kind="tool"][data-suite-id="elder"] body.suite-enhanced :is(.button, button) {
+  min-height: 52px;
+  padding-inline: 20px;
+  font-size: 17px;
+}
+
+html[data-suite-kind="tool"][data-suite-id="elder"] body.suite-enhanced textarea {
+  min-height: 210px;
+  font-size: 18px;
+}
+
+html[data-suite-kind="tool"][data-suite-id="elder"] body.suite-enhanced .plain-summary {
+  border-left-color: var(--suite-tool-primary) !important;
+  background: var(--suite-tool-primary-soft) !important;
+}
+
+@media (max-width: 760px) {
+  html[data-suite-kind="tool"][data-suite-id="elder"] body.suite-enhanced {
+    font-size: 17px;
+  }
+
+  html[data-suite-kind="tool"][data-suite-id="elder"] body.suite-enhanced .app-shell > .topbar {
+    align-items: stretch;
+    padding: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-suite-kind="tool"][data-suite-id="elder"] body.suite-enhanced :is(.button, .input-panel, .result-panel) {
+    transition: none !important;
+  }
+}

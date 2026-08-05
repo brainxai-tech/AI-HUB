@@ -1,0 +1,16 @@
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+node_modules
+.next
+out
+*.tsbuildinfo
+dev-server.err.log
+dev-server.out.log
+dev-server.pid
+dev-server.port
+dev-server.manifest.json
+prod-server.manifest.json
+.playwright-cli

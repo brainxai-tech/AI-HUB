@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" role="img" aria-labelledby="title desc">
+  <title id="title">Meal prep board</title>
+  <desc id="desc">A structured weekly meal prep board with bowls, containers, and grocery notes.</desc>
+  <rect width="720" height="420" fill="#f7f4ee"/>
+  <rect x="34" y="34" width="652" height="352" rx="24" fill="#fffdf8" stroke="#24302b" stroke-width="3"/>
+  <rect x="64" y="70" width="180" height="270" rx="14" fill="#e8f0dd" stroke="#24302b" stroke-width="2"/>
+  <rect x="274" y="70" width="382" height="70" rx="14" fill="#24302b"/>
+  <rect x="274" y="162" width="112" height="178" rx="16" fill="#f06a3e" stroke="#24302b" stroke-width="2"/>
+  <rect x="409" y="162" width="112" height="178" rx="16" fill="#f3c84b" stroke="#24302b" stroke-width="2"/>
+  <rect x="544" y="162" width="112" height="178" rx="16" fill="#7aa874" stroke="#24302b" stroke-width="2"/>
+  <circle cx="154" cy="144" r="46" fill="#fffdf8" stroke="#24302b" stroke-width="3"/>
+  <path d="M126 144c22-23 45-23 67 0-20 19-44 19-67 0Z" fill="#7aa874"/>
+  <circle cx="145" cy="137" r="9" fill="#f06a3e"/>
+  <circle cx="166" cy="151" r="8" fill="#f3c84b"/>
+  <path d="M93 232h122M93 260h104M93 288h132" stroke="#24302b" stroke-width="8" stroke-linecap="round"/>
+  <path d="M310 207h42M310 239h36M310 271h48" stroke="#fffdf8" stroke-width="9" stroke-linecap="round"/>
+  <path d="M445 207h42M445 239h36M445 271h48" stroke="#24302b" stroke-width="9" stroke-linecap="round" opacity=".65"/>
+  <path d="M580 207h42M580 239h36M580 271h48" stroke="#fffdf8" stroke-width="9" stroke-linecap="round"/>
+  <path d="M312 106h270" stroke="#fffdf8" stroke-width="10" stroke-linecap="round"/>
+  <path d="M312 126h180" stroke="#f3c84b" stroke-width="8" stroke-linecap="round"/>
+</svg>

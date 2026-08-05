@@ -1,0 +1,4 @@
+interface:
+  display_name: "Weekly Meal Planner"
+  short_description: "Plan, adjust, and review grounded weekly household meals"
+  default_prompt: "Use $plan-weekly-meals to create a grounded household meal plan, handle substitutions, and review execution."

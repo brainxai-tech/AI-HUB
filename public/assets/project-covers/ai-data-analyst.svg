@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-label="AI 数据分析师封面">
+  <rect width="1200" height="760" fill="#f5f7f8"/>
+  <rect x="92" y="96" width="1016" height="568" rx="24" fill="#ffffff" stroke="#d9e1df" stroke-width="4"/>
+  <rect x="150" y="160" width="252" height="88" rx="14" fill="#eef4f3"/>
+  <rect x="150" y="292" width="252" height="252" rx="14" fill="#f8faf9"/>
+  <rect x="478" y="174" width="92" height="342" rx="10" fill="#0f766e"/>
+  <rect x="618" y="268" width="92" height="248" rx="10" fill="#2563eb"/>
+  <rect x="758" y="222" width="92" height="294" rx="10" fill="#ca8a04"/>
+  <path d="M484 564c98-86 154-56 224-132 50-54 101-48 155-8 52 38 100 30 160-52" fill="none" stroke="#c2410c" stroke-width="14" stroke-linecap="round"/>
+  <text x="150" y="128" fill="#20272c" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="30" font-weight="700">AI · 数据分析师</text>
+  <text x="150" y="618" fill="#20272c" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="42" font-weight="800">CSV / Excel 洞察与报告工作台</text>
+</svg>

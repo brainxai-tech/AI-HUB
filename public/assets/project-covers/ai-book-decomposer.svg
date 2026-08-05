@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">AI 读书拆解器</title>
+  <desc id="desc">书页、结构化笔记和模型节点组成的项目封面。</desc>
+  <rect width="1200" height="760" fill="#f6f7f4"/>
+  <rect x="80" y="74" width="1040" height="612" rx="28" fill="#ffffff" stroke="#d8e0da" stroke-width="2"/>
+  <rect x="136" y="132" width="320" height="496" rx="14" fill="#126b62"/>
+  <rect x="176" y="176" width="238" height="18" rx="9" fill="#dcebe7"/>
+  <rect x="176" y="226" width="210" height="12" rx="6" fill="#a7c7bf"/>
+  <rect x="176" y="260" width="240" height="12" rx="6" fill="#a7c7bf"/>
+  <rect x="176" y="294" width="178" height="12" rx="6" fill="#a7c7bf"/>
+  <rect x="176" y="372" width="118" height="118" rx="16" fill="#ffffff" opacity=".92"/>
+  <path d="M224 405h52M224 432h42M224 459h58" stroke="#126b62" stroke-width="12" stroke-linecap="round"/>
+  <rect x="520" y="148" width="500" height="84" rx="14" fill="#f1f4f2" stroke="#d8e0da"/>
+  <rect x="552" y="178" width="250" height="16" rx="8" fill="#126b62"/>
+  <rect x="552" y="204" width="356" height="10" rx="5" fill="#8b9992"/>
+  <rect x="520" y="278" width="228" height="112" rx="14" fill="#ffffff" stroke="#d8e0da"/>
+  <rect x="780" y="278" width="240" height="112" rx="14" fill="#ffffff" stroke="#d8e0da"/>
+  <rect x="520" y="430" width="228" height="112" rx="14" fill="#ffffff" stroke="#d8e0da"/>
+  <rect x="780" y="430" width="240" height="112" rx="14" fill="#ffffff" stroke="#d8e0da"/>
+  <path d="M560 318h96M560 346h146M560 474h112M560 502h150M820 318h110M820 346h146M820 474h126M820 502h118" stroke="#33433c" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="748" cy="334" r="7" fill="#a2632e"/>
+  <circle cx="780" cy="334" r="7" fill="#a2632e"/>
+  <circle cx="748" cy="486" r="7" fill="#a2632e"/>
+  <circle cx="780" cy="486" r="7" fill="#a2632e"/>
+  <path d="M456 380h64M748 334h32M748 486h32" stroke="#a2632e" stroke-width="4" stroke-linecap="round"/>
+</svg>

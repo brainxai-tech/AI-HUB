@@ -1,0 +1,4 @@
+interface:
+  display_name: "合同条款审阅"
+  short_description: "分阶段分析合同条款风险、保留证据版本并准备人工律师复核材料"
+  default_prompt: "Use $review-legal-clause to analyze this contract clause and prepare a human lawyer review packet."

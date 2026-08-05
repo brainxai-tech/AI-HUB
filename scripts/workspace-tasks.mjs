@@ -1,0 +1,150 @@
+import { existsSync, readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { runWithTransientWindowsRetry } from "./workspace-process-policy.mjs";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const manifest = JSON.parse(readFileSync(path.join(root, "deploy/project-manifest.json"), "utf8"));
+const npmCommand = process.platform === "win32" ? process.execPath : "npm";
+const npmArgumentPrefix = process.platform === "win32" ? [resolveWindowsNpmCli()] : [];
+const command = process.argv[2] || "check";
+
+const packages = [
+  { id: "shared-project-runtime", directory: path.join(root, manifest.sharedApi.package), route: "", stack: "shared" },
+  { id: "agent-workflow-runtime", directory: path.join(root, manifest.workflowApi.package), route: "", stack: "workflow" },
+  ...manifest.projects.map((project) => ({
+    ...project,
+    directory: path.join(root, project.source),
+  })),
+  ...manifest.games
+    .filter((game) => existsSync(path.join(root, game.source, "package.json")))
+    .map((game) => ({
+      ...game,
+      directory: path.join(root, game.source),
+    })),
+];
+
+if (command === "install") {
+  installPackage(root, "root");
+  for (const item of packages) installPackage(item.directory, item.id);
+} else if (command === "build") {
+  for (const item of packages.filter(({ stack }) => ["next", "vite", "vite-static"].includes(stack))) {
+    runNpm(item, "build");
+  }
+  checkBuilds();
+} else if (command === "verify") {
+  runNpm({ id: "hub", directory: root, route: "", stack: "hub" }, "verify");
+  runNpm(packages[0], "verify");
+  runNpm(packages[1], "verify");
+  for (const item of packages.slice(2)) runNpm(item, "verify");
+  checkBuilds();
+} else if (command === "check") {
+  checkBuilds();
+} else {
+  throw new Error(`Unknown workspace command: ${command}`);
+}
+
+function installPackage(directory, id) {
+  const packagePath = path.join(directory, "package.json");
+  if (!existsSync(packagePath)) throw new Error(`Missing package.json for ${id}`);
+  const packageJson = JSON.parse(readFileSync(packagePath, "utf8"));
+  const hasDependencies = Object.keys(packageJson.dependencies || {}).length > 0 || Object.keys(packageJson.devDependencies || {}).length > 0;
+  const hasLock = existsSync(path.join(directory, "package-lock.json"));
+  if (!hasLock && !hasDependencies) {
+    console.log(`[install] ${id}: no dependencies`);
+    return;
+  }
+  if (!hasLock) throw new Error(`${id} has dependencies but no package-lock.json`);
+  run(npmCommand, [...npmArgumentPrefix, "ci", "--no-audit", "--no-fund"], directory, `[install] ${id}`);
+}
+
+function runNpm(item, script) {
+  run(npmCommand, [...npmArgumentPrefix, "run", script], item.directory, `[${script}] ${item.id}`, projectEnvironment(item));
+}
+
+function resolveWindowsNpmCli() {
+  const candidates = [
+    process.env.npm_execpath,
+    path.join(path.dirname(process.execPath), "node_modules", "npm", "bin", "npm-cli.js"),
+    ...String(process.env.PATH || "")
+      .split(path.delimiter)
+      .filter(Boolean)
+      .map((directory) => path.join(directory, "node_modules", "npm", "bin", "npm-cli.js")),
+  ];
+  const npmCli = candidates.find((candidate) => candidate && existsSync(candidate));
+  if (!npmCli) throw new Error("Unable to locate npm-cli.js for the current Node.js installation.");
+  return npmCli;
+}
+
+function projectEnvironment(item) {
+  const route = item.route ? item.route.replace(/\/$/, "") : "";
+  return {
+    ...process.env,
+    ...(route ? {
+      BASE_PATH: route,
+      NEXT_PUBLIC_BASE_PATH: route,
+      VITE_BASE_PATH: `${route}/`,
+    } : {}),
+  };
+}
+
+function run(executable, args, cwd, label, env = process.env) {
+  console.log(`\n${label}`);
+  const result = runWithTransientWindowsRetry(
+    () => spawnSync(executable, args, { cwd, env, stdio: "inherit", shell: false }),
+    {
+      onRetry: () => console.warn(`${label} hit transient Windows process fast-fail 0xC0000409; retrying once.`),
+    },
+  );
+  if (result.error) throw result.error;
+  if (result.status !== 0) throw new Error(`${label} failed with exit code ${result.status}`);
+}
+
+function checkBuilds() {
+  const missing = [];
+  for (const item of packages.slice(2)) {
+    const expected = item.stack === "next"
+      ? path.join(item.directory, ".next", "BUILD_ID")
+      : item.stack === "node-static"
+        ? path.join(item.directory, "public", "index.html")
+        : path.join(item.directory, "dist", "index.html");
+    if (!existsSync(expected)) missing.push(`${item.id}: ${path.relative(root, expected)}`);
+    if (item.stack === "next" && existsSync(expected)) checkNextRoute(item, missing);
+    if (["vite", "vite-static"].includes(item.stack) && existsSync(expected)) {
+      checkViteRoute(item, expected, missing);
+    }
+  }
+  for (const item of packages.filter(({ api, stack }) => api === "dedicated" && stack !== "next")) {
+    const server = path.join(item.directory, "dist-server", "server", "index.js");
+    if (!existsSync(server)) missing.push(`${item.id}: ${path.relative(root, server)}`);
+  }
+  if (missing.length) throw new Error(`Missing workspace runtime artifacts:\n${missing.join("\n")}`);
+  console.log(`\nWorkspace runtime artifacts ready: ${manifest.projects.length} tools and ${manifest.games.length} games.`);
+}
+
+function checkViteRoute(item, indexPath, missing) {
+  const html = readFileSync(indexPath, "utf8");
+  if (/(?:src|href)=["']\/assets\//i.test(html)) {
+    missing.push(`${item.id}: Vite build uses root /assets/ instead of ${item.route}assets/`);
+  }
+}
+
+function checkNextRoute(item, missing) {
+  const routesManifestPath = path.join(item.directory, ".next", "routes-manifest.json");
+  if (!existsSync(routesManifestPath)) {
+    missing.push(`${item.id}: ${path.relative(root, routesManifestPath)}`);
+    return;
+  }
+  const routes = JSON.parse(readFileSync(routesManifestPath, "utf8"));
+  const basePath = item.route.replace(/\/$/, "");
+  if (routes.basePath !== basePath) {
+    missing.push(`${item.id}: Next basePath ${JSON.stringify(routes.basePath)} does not match ${basePath}`);
+  }
+  const redirectsAwayFromSuiteRoute = routes.redirects?.some(({ source, destination }) =>
+    source === item.route && destination === basePath);
+  if (redirectsAwayFromSuiteRoute) {
+    missing.push(`${item.id}: Next build redirects the suite route ${item.route} away from its manifest path`);
+  }
+}

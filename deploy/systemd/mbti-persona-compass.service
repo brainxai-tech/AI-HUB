@@ -1,0 +1,55 @@
+[Unit]
+Description=AI HUB MBTI Persona Compass
+Wants=network-online.target ai-project-hub.service
+After=network-online.target ai-project-hub.service
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=admin
+Group=admin
+WorkingDirectory=/opt/ai-project-hub/current/apps/mbti-persona-compass
+Environment=NODE_ENV=production
+Environment=PORT=4203
+Environment=BASE_PATH=/mbti
+Environment=VITE_BASE_PATH=/mbti/
+Environment=HUB_MODEL_CONFIG_URL=http://127.0.0.1:4194/hub/api/model-config
+Environment=HUB_CHAT_COMPLETIONS_URL=http://127.0.0.1:4194/hub/api/v1/chat/completions
+EnvironmentFile=/home/admin/.config/ai-project-hub/clients/mbti-persona-compass.env
+ExecStart=/usr/bin/node /opt/ai-project-hub/current/apps/mbti-persona-compass/dist-server/server/index.js --prod
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=15
+UMask=0077
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectHostname=true
+ProtectClock=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectProc=invisible
+ProcSubset=pid
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RemoveIPC=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+ReadOnlyPaths=/opt/ai-project-hub /home/admin/.config/ai-project-hub/clients/mbti-persona-compass.env
+InaccessiblePaths=-/home/admin/backups
+MemoryHigh=192M
+MemoryMax=256M
+TasksMax=48
+
+[Install]
+WantedBy=multi-user.target

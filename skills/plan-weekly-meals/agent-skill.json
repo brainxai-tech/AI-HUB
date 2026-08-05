@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "plan-weekly-meals",
+  "projectId": "ai-cooking-coach",
+  "title": "每周备餐闭环",
+  "description": "基于本地营养和菜谱资料生成周计划，支持换餐、执行记录与周复盘。",
+  "adapter": "scripts/adapter.mjs",
+  "workflow": {
+    "id": "weekly-meal-loop-v1",
+    "version": 1,
+    "steps": ["plan", "weekly-execution", "review"],
+    "checkpoints": ["weekly-execution"],
+    "actions": ["adjust-meal"]
+  },
+  "knowledge": {
+    "mode": "project-local-structured-rag",
+    "sources": ["ingredient-nutrition-rag", "menu-library-rag"],
+    "citationRequired": true
+  }
+}

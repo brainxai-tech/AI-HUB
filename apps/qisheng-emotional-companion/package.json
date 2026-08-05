@@ -1,0 +1,14 @@
+{
+  "name": "ai-emotional-companion-local",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node scripts/hub-contract-test.mjs",
+    "verify": "node scripts/smoke-test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
