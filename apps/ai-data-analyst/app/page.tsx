@@ -84,7 +84,7 @@ export default function Home() {
   const [providers, setProviders] = useState<HubProvider[]>(fallbackProviders);
   const provider: Provider = "routing";
   const [model, setModel] = useState(providerDefaults.routing);
-  const [hubUrl, setHubUrl] = useState("/hub/key-config/");
+  const [hubUrl, setHubUrl] = useState("/hub/admin/");
   const [configError, setConfigError] = useState("");
   const [isConfigLoading, setIsConfigLoading] = useState(true);
   const [question, setQuestion] = useState("请生成一份面向业务负责人的中文分析报告，包含风险、异常解释和下一步行动建议。");
@@ -136,7 +136,7 @@ export default function Home() {
 
         setProviders(nextProviders);
         setModel(pickModel(nextProvider, model));
-        setHubUrl(payload.hubUrl || "/hub/key-config/");
+        setHubUrl(payload.hubUrl || "/hub/admin/");
       } catch (error) {
         if (!cancelled) {
           setConfigError(error instanceof Error ? error.message : "读取 Hub 模型配置失败。");

@@ -18,8 +18,6 @@ export interface HubRuntime {
   projectId: string;
   projectPath: string;
   projectToken: string;
-  relayId?: string;
-  relayName?: string;
 }
 
 export class HubRuntimeError extends Error {
@@ -62,8 +60,6 @@ export async function resolveHubRuntime(options: RuntimeOptions = {}): Promise<H
       enabledModels?: string[];
       enabled?: boolean;
       configured?: boolean;
-      relayId?: string;
-      relayName?: string;
     }>;
   };
   if (!response.ok) {
@@ -88,8 +84,6 @@ export async function resolveHubRuntime(options: RuntimeOptions = {}): Promise<H
     model: selectedModel,
     models,
     chatUrl: env.HUB_CHAT_COMPLETIONS_URL?.trim() || DEFAULT_CHAT_URL,
-    relayId: typeof provider?.relayId === "string" ? provider.relayId.trim() : "",
-    relayName: typeof provider?.relayName === "string" ? provider.relayName.trim() : "",
     ...identity,
   };
 }
@@ -98,16 +92,12 @@ export async function readHubModelSelection(options: RuntimeOptions = {}) {
   return requestHubModelSelection("GET", undefined, options);
 }
 
-export async function writeHubModelSelection(selection: unknown, options: RuntimeOptions = {}) {
-  const input = selection && typeof selection === "object" && !Array.isArray(selection)
-    ? selection as { model?: unknown; relayId?: unknown }
-    : { model: selection };
-  const normalized = String(input.model || "").trim();
+export async function writeHubModelSelection(model: unknown, options: RuntimeOptions = {}) {
+  const normalized = String(model || "").trim();
   if (!isGptModel(normalized)) {
     throw new HubRuntimeError(400, "PROJECT_MODEL_INVALID", "本项目只允许选择 gpt-* 型号。");
   }
-  const relayId = String(input.relayId || "").trim();
-  return requestHubModelSelection("PUT", { model: normalized, ...(relayId ? { relayId } : {}) }, options);
+  return requestHubModelSelection("PUT", normalized, options);
 }
 
 export function hubProviderPayload(runtime: HubRuntime | null) {
@@ -133,7 +123,7 @@ export function hubChatHeaders(runtime: HubRuntime): Record<string, string> {
   return hubHeaders({ "Content-Type": "application/json" }, runtime);
 }
 
-async function requestHubModelSelection(method: "GET" | "PUT", selection: { model: string; relayId?: string } | undefined, options: RuntimeOptions) {
+async function requestHubModelSelection(method: "GET" | "PUT", model: string | undefined, options: RuntimeOptions) {
   const env = options.env || process.env;
   const configUrl = env.HUB_MODEL_CONFIG_URL?.trim() || DEFAULT_CONFIG_URL;
   const url = new URL(configUrl);
@@ -146,7 +136,7 @@ async function requestHubModelSelection(method: "GET" | "PUT", selection: { mode
         Accept: "application/json",
         ...(method === "PUT" ? { "Content-Type": "application/json" } : {}),
       }, runtimeIdentity(env)),
-      body: method === "PUT" ? JSON.stringify(selection) : undefined,
+      body: method === "PUT" ? JSON.stringify({ model }) : undefined,
       signal: AbortSignal.timeout(options.timeoutMs || 10_000),
     });
   } catch {

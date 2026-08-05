@@ -250,31 +250,6 @@ test("model configuration stores one AI Routing provider without exposing its Ke
   assert.equal(JSON.stringify(config).includes("test-routing-key"), false);
 });
 
-test("project route selection binds a relay and keeps the project gateway compatible", async () => {
-  const saved = await fetch(`${baseUrl}/api/project-model-selection`, {
-    method: "PUT",
-    headers: {
-      "content-type": "application/json",
-      "x-hub-project-token": legacyToken,
-    },
-    body: JSON.stringify({ relayId: "ai-routing-current", model: "gpt-test" }),
-  });
-  const selection = await saved.json();
-
-  assert.equal(saved.status, 200);
-  assert.equal(selection.relayId, "ai-routing-current");
-  assert.equal(selection.relayAvailable, true);
-  assert.deepEqual(selection.models, ["gpt-test"]);
-  assert.equal(selection.relays[0].runtimeProviderId, undefined);
-
-  const config = await fetch(`${baseUrl}/api/model-config`, {
-    headers: { "x-hub-project-token": legacyToken },
-  }).then((response) => response.json());
-  const alias = config.providers.find((provider) => provider.id === "openai");
-  assert.equal(alias?.relayId, "ai-routing-current");
-  assert.equal(alias?.relayName, "AI Routing（当前 Hub 通道）");
-});
-
 test("authenticated projects receive a legacy-compatible view of the central routing model", async () => {
   const response = await fetch(`${baseUrl}/api/model-config`, {
     headers: { "x-hub-project-token": legacyToken },

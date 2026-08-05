@@ -1,7 +1,7 @@
 import { createReadStream, realpathSync } from "node:fs";
 import { stat } from "node:fs/promises";
 import { createServer } from "node:http";
-import { randomUUID, timingSafeEqual } from "node:crypto";
+import { timingSafeEqual } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createProjectAuthorizer, loadProjectTokenRegistry } from "./auth.mjs";
@@ -16,41 +16,11 @@ import { createLocalGameStatic } from "./local-game-static.mjs";
 import { createLocalProjectProxy } from "./local-project-proxy.mjs";
 import { createWorkflowProxy } from "./workflow-proxy.mjs";
 import {
-  DEFAULT_PROVIDER_RELAY_ID,
-  defaultProviderRelayConfig,
-  normalizeProviderRelays,
-  publicProviderModelPrices,
-  publicProviderRelays,
-} from "./provider-relays.mjs";
-import {
   buildObservabilitySummary,
   createAnonymousEventLimiter,
   readObservabilityEvents,
   recordObservabilityEvent,
 } from "./observability.mjs";
-import {
-  addLedgerEntry,
-  calculateUsageCost,
-  createApiKeyRecord,
-  createSessionRecord,
-  createUserRecord,
-  defaultRelayCommerceConfig,
-  estimateUsageTokens,
-  findUserByApiKey,
-  findUserByEmail,
-  findUserBySessionToken,
-  hashOpaqueToken,
-  hashPassword,
-  microsPerYuan,
-  normalizeEmail,
-  normalizeRelayCommerce,
-  normalizeRelayPricing,
-  publicApiKey,
-  publicPricing,
-  publicUser,
-  publicWallet,
-  verifyPassword,
-} from "./relay-commerce.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, "public");
@@ -58,10 +28,6 @@ const dataDir = path.join(__dirname, "data");
 const configPath = process.env.HUB_CONFIG_PATH || "/var/lib/ai-project-hub/model-config.json";
 const projectModelsPath =
   process.env.HUB_PROJECT_MODELS_PATH || "/var/lib/ai-project-hub/project-model-selections.json";
-const providerRelaysPath =
-  process.env.HUB_PROVIDER_RELAYS_PATH || path.join(dataDir, "provider-relays.json");
-const relayCommercePath =
-  process.env.HUB_RELAY_COMMERCE_PATH || path.join(dataDir, "relay-commerce.json");
 const observabilityLogPath =
   process.env.HUB_OBSERVABILITY_LOG_PATH || "/var/log/ai-project-hub/observability-events.jsonl";
 const port = Number.parseInt(process.env.PORT || "4194", 10);
@@ -154,7 +120,6 @@ const trackRateLimitPerMinute = Math.min(
   1000,
 );
 const anonymousTrackLimiter = createAnonymousEventLimiter({ limit: trackRateLimitPerMinute });
-const relayAuthLimiter = createAnonymousEventLimiter({ limit: 10, windowMs: 15 * 60 * 1000 });
 const configStore = createConfigStore({
   configPath,
   defaultConfig: createDefaultConfig,
@@ -162,20 +127,9 @@ const configStore = createConfigStore({
 });
 const projectModelStore = createConfigStore({
   configPath: projectModelsPath,
-  defaultConfig: () => ({ version: 2, projects: {} }),
+  defaultConfig: () => ({ version: 1, projects: {} }),
   normalize: normalizeProjectModelSelections,
 });
-const providerRelayStore = createConfigStore({
-  configPath: providerRelaysPath,
-  defaultConfig: defaultProviderRelayConfig,
-  normalize: (value) => ({ version: 1, providers: normalizeProviderRelays(value) }),
-});
-const relayCommerceStore = createConfigStore({
-  configPath: relayCommercePath,
-  defaultConfig: defaultRelayCommerceConfig,
-  normalize: normalizeRelayCommerce,
-});
-let relayCommerceMutationQueue = Promise.resolve();
 
 const contentTypes = new Map([
   [".html", "text/html; charset=utf-8"],
@@ -239,19 +193,6 @@ function normalizeModelList(value) {
   return Array.from(new Set(value.map(normalizeModelName).filter(Boolean))).slice(0, 500);
 }
 
-function normalizeRelayId(value) {
-  if (typeof value !== "string") return "";
-  const relayId = value.trim().toLowerCase();
-  return /^[a-z0-9][a-z0-9-]{1,79}$/.test(relayId) ? relayId : "";
-}
-
-function normalizeProjectRoute(value) {
-  const isObject = Boolean(value) && typeof value === "object" && !Array.isArray(value);
-  const model = normalizeModelName(isObject ? value.model : value);
-  const relayId = normalizeRelayId(isObject ? (value.relayId || value.providerRelayId) : "") || DEFAULT_PROVIDER_RELAY_ID;
-  return { relayId, model };
-}
-
 function normalizeProjectModelSelections(value) {
   const projects = {};
   const rawProjects =
@@ -259,13 +200,13 @@ function normalizeProjectModelSelections(value) {
       ? value.projects
       : {};
 
-  for (const [projectId, rawSelection] of Object.entries(rawProjects)) {
+  for (const [projectId, rawModel] of Object.entries(rawProjects)) {
     if (!/^[a-z0-9][a-z0-9-]{1,79}$/.test(projectId)) continue;
-    const route = normalizeProjectRoute(rawSelection);
-    if (route.model && isSelectableRoutingModel(route.model)) projects[projectId] = route;
+    const model = normalizeModelName(rawModel);
+    if (model && isSelectableRoutingModel(model)) projects[projectId] = model;
   }
 
-  return { version: 2, projects };
+  return { version: 1, projects };
 }
 
 function createDefaultConfig() {
@@ -306,12 +247,11 @@ function sendText(response, statusCode, message) {
   response.end(message);
 }
 
-function sendJson(response, statusCode, value, extraHeaders = {}) {
+function sendJson(response, statusCode, value) {
   response.writeHead(statusCode, {
     ...securityHeaders,
     "content-type": "application/json; charset=utf-8",
     "cache-control": "no-store",
-    ...extraHeaders,
   });
   response.end(JSON.stringify(value));
 }
@@ -372,278 +312,6 @@ function getBearerToken(request) {
   const authorization = request.headers.authorization || "";
   const match = authorization.match(/^Bearer\s+(.+)$/i);
   return match ? match[1] : "";
-}
-
-const relaySessionCookieName = "ahub_relay_session";
-const relayCookieMaxAgeSeconds = 7 * 24 * 60 * 60;
-const relayCookieSecure = process.env.HUB_RELAY_COOKIE_SECURE === "true";
-
-function relayError(statusCode, code, message) {
-  const error = new Error(message);
-  error.statusCode = statusCode;
-  error.body = { error: { code, message } };
-  return error;
-}
-
-function parseCookies(request) {
-  const raw = request.headers.cookie || "";
-  const cookies = {};
-  for (const part of raw.split(";")) {
-    const index = part.indexOf("=");
-    if (index <= 0) continue;
-    const name = part.slice(0, index).trim();
-    const value = part.slice(index + 1).trim();
-    if (!name || !value) continue;
-    try {
-      cookies[name] = decodeURIComponent(value);
-    } catch {
-      // Ignore malformed cookies rather than failing the request.
-    }
-  }
-  return cookies;
-}
-
-function relaySessionCookie(token, maxAge = relayCookieMaxAgeSeconds, request = null) {
-  const attributes = [
-    `${relaySessionCookieName}=${encodeURIComponent(token)}`,
-    "Path=/",
-    "HttpOnly",
-    "SameSite=Lax",
-    `Max-Age=${maxAge}`,
-  ];
-  const forwardedProto = request?.headers?.["x-forwarded-proto"];
-  if (relayCookieSecure || request?.socket?.encrypted || forwardedProto === "https") attributes.push("Secure");
-  return attributes.join("; ");
-}
-
-function relayMutationHasValidOrigin(request) {
-  const origin = request.headers.origin;
-  if (!origin) return true;
-  try {
-    const forwardedProto = request.headers["x-forwarded-proto"];
-    const protocol = forwardedProto === "https" || request.socket?.encrypted ? "https" : "http";
-    return new URL(origin).origin === `${protocol}://${request.headers.host || "127.0.0.1"}`;
-  } catch {
-    return false;
-  }
-}
-
-async function relayCommerceMutation(mutator) {
-  const next = relayCommerceMutationQueue.then(async () => {
-    const current = await relayCommerceStore.read();
-    const result = await mutator(current);
-    const saved = await relayCommerceStore.write(current);
-    return { result, config: saved };
-  });
-  relayCommerceMutationQueue = next.then(() => undefined, () => undefined);
-  return next;
-}
-
-async function getRelaySession(request) {
-  const token = parseCookies(request)[relaySessionCookieName] || "";
-  if (!token) return null;
-  const config = await relayCommerceStore.read();
-  return findUserBySessionToken(config, token);
-}
-
-async function requireRelaySession(request) {
-  const auth = await getRelaySession(request);
-  if (!auth) throw relayError(401, "RELAY_AUTH_REQUIRED", "请先登录中转服务控制台。");
-  return auth;
-}
-
-function relayApiKeyFromRequest(request) {
-  const header = request.headers["x-ai-hub-api-key"];
-  if (typeof header === "string" && header.trim()) return header.trim();
-  return getBearerToken(request);
-}
-
-async function requireRelayApiKey(request) {
-  const token = relayApiKeyFromRequest(request);
-  const config = await relayCommerceStore.read();
-  const auth = findUserByApiKey(config, token);
-  if (!auth) throw relayError(401, "RELAY_API_KEY_INVALID", "AI HUB API Key 无效或已撤销。");
-  return { ...auth, config };
-}
-
-function relayPublicAccountPayload(config, user) {
-  return {
-    account: publicUser(user),
-    wallet: publicWallet(user, config.ledger),
-    keys: Object.values(config.apiKeys)
-      .filter((key) => key.userId === user.id)
-      .map(publicApiKey),
-  };
-}
-
-function validateRelayCredentials(payload) {
-  const email = normalizeEmail(payload?.email);
-  const password = typeof payload?.password === "string" ? payload.password : "";
-  if (!email) throw relayError(422, "RELAY_EMAIL_INVALID", "请输入有效的邮箱地址。");
-  if (password.length < 8 || password.length > 128) {
-    throw relayError(422, "RELAY_PASSWORD_INVALID", "密码长度需要为 8 至 128 个字符。");
-  }
-  return { email, password };
-}
-
-function relayPriceForModel(config, model) {
-  const normalized = typeof model === "string" ? model.trim() : "";
-  return normalized ? config.pricing[normalized] || null : null;
-}
-
-function relayUsageFromResponse(body, estimate) {
-  const usage = body?.usage && typeof body.usage === "object" ? body.usage : {};
-  const inputTokens = Number.isInteger(usage.prompt_tokens)
-    ? usage.prompt_tokens
-    : Number.isInteger(usage.input_tokens)
-      ? usage.input_tokens
-      : estimate.inputTokens;
-  const outputTokens = Number.isInteger(usage.completion_tokens)
-    ? usage.completion_tokens
-    : Number.isInteger(usage.output_tokens)
-      ? usage.output_tokens
-      : estimate.outputTokens;
-  return {
-    inputTokens: Math.min(100_000_000, Math.max(0, inputTokens)),
-    outputTokens: Math.min(100_000_000, Math.max(0, outputTokens)),
-    estimatedUsage: !Number.isInteger(usage.prompt_tokens) && !Number.isInteger(usage.input_tokens),
-  };
-}
-
-function relayRequestId(request) {
-  const supplied = request.headers["idempotency-key"];
-  if (typeof supplied === "string" && /^[A-Za-z0-9_-]{32,160}$/.test(supplied.trim())) {
-    return supplied.trim();
-  }
-  return `relay_${randomUUID().replaceAll("-", "")}`;
-}
-
-async function reserveRelayFunds({ userId, requestId, model, estimate, pricing }) {
-  const estimatedMicros = Math.max(1, calculateUsageCost(pricing, estimate.inputTokens, estimate.outputTokens));
-  const { result } = await relayCommerceMutation((commerce) => {
-    const existing = commerce.idempotency[requestId];
-    if (existing) {
-      if (existing.userId !== userId) throw relayError(409, "IDEMPOTENCY_KEY_REUSED", "Idempotency-Key 已被其他账户使用。");
-      if (existing.status === "completed" && existing.response) return { existing };
-      throw relayError(409, "IDEMPOTENCY_REQUEST_IN_PROGRESS", "相同请求正在处理中，请稍后重试。");
-    }
-    const user = commerce.users[userId];
-    if (!user || user.balanceMicros < estimatedMicros) {
-      throw relayError(402, "RELAY_INSUFFICIENT_BALANCE", "余额不足，请先充值或联系管理员发放测试额度。");
-    }
-    addLedgerEntry(commerce, userId, {
-      type: "hold",
-      amountMicros: -estimatedMicros,
-      requestId,
-      model,
-      inputTokens: estimate.inputTokens,
-      outputTokens: estimate.outputTokens,
-      note: "调用额度预留",
-    });
-    commerce.idempotency[requestId] = {
-      userId,
-      requestId,
-      status: "pending",
-      response: null,
-      createdAt: new Date().toISOString(),
-    };
-    return { estimatedMicros };
-  });
-  return result;
-}
-
-async function settleRelaySuccess({ userId, apiKeyId, requestId, model, estimate, pricing, body }) {
-  const usage = relayUsageFromResponse(body, estimate);
-  const { result } = await relayCommerceMutation((commerce) => {
-    const idempotency = commerce.idempotency[requestId];
-    if (!idempotency || idempotency.userId !== userId) throw relayError(409, "RELAY_RESERVATION_MISSING", "调用额度预留不存在。");
-    if (idempotency.status === "completed" && idempotency.response) return { replay: true, usage };
-    const hold = [...commerce.ledger].reverse().find((entry) => entry.userId === userId && entry.requestId === requestId && entry.type === "hold");
-    const heldMicros = hold ? Math.abs(hold.amountMicros) : 0;
-    const calculatedMicros = Math.max(0, calculateUsageCost(pricing, usage.inputTokens, usage.outputTokens));
-    const chargedMicros = Math.min(calculatedMicros, heldMicros);
-    if (chargedMicros > 0) {
-      addLedgerEntry(commerce, userId, {
-        type: "usage",
-        amountMicros: -chargedMicros,
-        requestId,
-        model,
-        inputTokens: usage.inputTokens,
-        outputTokens: usage.outputTokens,
-        estimatedUsage: usage.estimatedUsage || calculatedMicros > heldMicros,
-        note: "模型调用消费",
-      });
-    }
-    const releaseMicros = Math.max(0, heldMicros - chargedMicros);
-    if (releaseMicros > 0) {
-      addLedgerEntry(commerce, userId, {
-        type: "release",
-        amountMicros: releaseMicros,
-        requestId,
-        model,
-        note: "释放未使用的预留额度",
-      });
-    }
-    idempotency.status = "completed";
-    idempotency.response = body;
-    if (commerce.apiKeys[apiKeyId]) commerce.apiKeys[apiKeyId].lastUsedAt = new Date().toISOString();
-    return { replay: false, usage, chargedMicros };
-  });
-  return result;
-}
-
-async function releaseRelayFunds({ userId, requestId, model }) {
-  await relayCommerceMutation((commerce) => {
-    const idempotency = commerce.idempotency[requestId];
-    if (!idempotency || idempotency.userId !== userId) return;
-    const hold = [...commerce.ledger].reverse().find((entry) => entry.userId === userId && entry.requestId === requestId && entry.type === "hold");
-    if (hold) {
-      addLedgerEntry(commerce, userId, {
-        type: "release",
-        amountMicros: Math.abs(hold.amountMicros),
-        requestId,
-        model,
-        note: "上游请求失败，释放预留额度",
-      });
-    }
-    delete commerce.idempotency[requestId];
-  });
-}
-
-async function handleRelayChat(request, response) {
-  if (!relayMutationHasValidOrigin(request)) throw relayError(403, "RELAY_ORIGIN_INVALID", "请求来源校验失败。");
-  const auth = await requireRelayApiKey(request);
-  const requestId = relayRequestId(request);
-  const payload = await readJsonBody(request, 4 * 1024 * 1024);
-  validateChatPayload(payload, { maxOutputTokens: 100_000 });
-  const model = typeof payload.model === "string" ? payload.model.trim() : "";
-  const pricing = relayPriceForModel(auth.config, model);
-  if (!pricing?.enabled) throw relayError(400, "RELAY_MODEL_NOT_SALEABLE", "该模型尚未完成价格核验或暂未开放销售。");
-
-  const estimate = estimateUsageTokens(payload);
-  const reservation = await reserveRelayFunds({ userId: auth.user.id, requestId, model, estimate, pricing });
-  if (reservation.existing?.response) {
-    sendJson(response, 200, reservation.existing.response, { "x-ai-hub-idempotent-replay": "true" });
-    return;
-  }
-
-  try {
-    const runtimeConfig = await readConfig();
-    if (!runtimeConfig.providers.routing?.models?.includes(model)) {
-      throw relayError(400, "RELAY_UPSTREAM_MODEL_NOT_CONFIGURED", "该模型尚未在上游通道中启用。");
-    }
-    const selection = getProviderSelection(runtimeConfig, { ...payload, provider: "routing", model });
-    const body = await callModel(selection, payload, { timeoutMs: upstreamTimeoutMs });
-    const settled = await settleRelaySuccess({ userId: auth.user.id, apiKeyId: auth.apiKey.id, requestId, model, estimate, pricing, body });
-    const wallet = (await relayCommerceStore.read()).users[auth.user.id];
-    sendJson(response, 200, body, {
-      "x-ai-hub-billed-cny": String((settled.chargedMicros || 0) / microsPerYuan),
-      "x-ai-hub-balance-cny": String((wallet?.balanceMicros || 0) / microsPerYuan),
-    });
-  } catch (error) {
-    await releaseRelayFunds({ userId: auth.user.id, requestId, model });
-    throw error;
-  }
 }
 
 function hasAdminAccess(request) {
@@ -939,84 +607,24 @@ function defaultProjectModel(models) {
   );
 }
 
-function fallbackProviderRelay(config) {
-  return {
-    id: DEFAULT_PROVIDER_RELAY_ID,
-    name: "AI Routing（当前 Hub 通道）",
-    kind: "internal",
-    status: "connected",
-    statusLabel: "已接入",
-    models: [],
-    modelOffers: [],
-    runtimeProviderId: config.defaultProvider,
-  };
-}
-
-function projectRelayEntries(config, providerRelayConfig) {
-  const entries = normalizeProviderRelays(providerRelayConfig?.providers || providerRelayConfig);
-  return entries.length > 0 ? entries : [fallbackProviderRelay(config)];
-}
-
-function runtimeModelsForRelay(config, relay) {
-  const providerId = relay.runtimeProviderId || (relay.id === DEFAULT_PROVIDER_RELAY_ID ? config.defaultProvider : "");
-  const provider = providerCatalog[providerId] ? config.providers[providerId] : null;
-  if (!provider?.enabled || !isProviderConfigured(config, providerId)) return [];
-
-  const models = normalizeModelList(provider.enabledModels).filter(isSelectableRoutingModel);
-  if (relay.kind === "internal") return models;
-
-  const advertised = normalizeModelList(relay.models).filter(isSelectableRoutingModel);
-  return advertised.length > 0 ? models.filter((model) => advertised.includes(model)) : models;
-}
-
-function projectRelayOptions(config, providerRelayConfig) {
-  return projectRelayEntries(config, providerRelayConfig).map((relay) => {
-    const models = runtimeModelsForRelay(config, relay);
-    const providerId = relay.runtimeProviderId || (relay.id === DEFAULT_PROVIDER_RELAY_ID ? config.defaultProvider : "");
-    return {
-      id: relay.id,
-      name: relay.name,
-      kind: relay.kind,
-      status: relay.status,
-      statusLabel: relay.statusLabel,
-      models,
-      available: models.length > 0,
-      provider: providerId,
-    };
-  });
-}
-
-function publicProjectRelayOptions(options) {
-  return options.map(({ provider: _provider, ...option }) => option);
-}
-
-export function resolveProjectModelSelection(config, selections, projectId, providerRelayConfig) {
-  const relays = projectRelayOptions(config, providerRelayConfig);
-  const storedRoute = normalizeProjectRoute(selections?.projects?.[projectId]);
-  const selectedRelay =
-    relays.find((relay) => relay.id === storedRoute.relayId && relay.available) ||
-    relays.find((relay) => relay.available) ||
-    relays.find((relay) => relay.id === storedRoute.relayId) ||
-    relays[0] ||
-    fallbackProviderRelay(config);
-  const models = selectedRelay.models;
-  const hasStoredRoute = selectedRelay.id === storedRoute.relayId && models.includes(storedRoute.model);
-  const model = hasStoredRoute ? storedRoute.model : defaultProjectModel(models);
+export function resolveProjectModelSelection(config, selections, projectId) {
+  const providerId = config.defaultProvider;
+  const provider = config.providers[providerId];
+  const models = provider?.enabled && isProviderConfigured(config, providerId)
+    ? normalizeModelList(provider.enabledModels).filter(isSelectableRoutingModel)
+    : [];
+  const storedModel = normalizeModelName(selections?.projects?.[projectId]);
+  const hasStoredModel = models.includes(storedModel);
+  const model = hasStoredModel ? storedModel : defaultProjectModel(models);
 
   return {
     projectId,
-    provider: selectedRelay.provider || config.defaultProvider,
-    relayId: selectedRelay.id,
-    relayName: selectedRelay.name,
-    relayKind: selectedRelay.kind,
-    relayStatus: selectedRelay.status,
-    relayAvailable: selectedRelay.available,
+    provider: providerId,
     model,
     models,
-    relays: publicProjectRelayOptions(relays),
-    inherited: Boolean(model && !hasStoredRoute),
-    configured: Boolean(model && selectedRelay.available),
-    selectionRequired: !Boolean(model && selectedRelay.available),
+    inherited: Boolean(model && !hasStoredModel),
+    configured: Boolean(model),
+    selectionRequired: false,
   };
 }
 
@@ -1031,8 +639,8 @@ export function isSelectableRoutingModel(model) {
   return /^gpt-/i.test(String(model || "")) && isProjectChatModel(model);
 }
 
-export function getProjectProviderSelection(config, selections, projectId, payload = {}, providerRelayConfig) {
-  const projectSelection = resolveProjectModelSelection(config, selections, projectId, providerRelayConfig);
+export function getProjectProviderSelection(config, selections, projectId, payload = {}) {
+  const projectSelection = resolveProjectModelSelection(config, selections, projectId);
   if (!projectSelection.configured) {
     const error = new Error("Select a model inside this AI Hub project before generating.");
     error.statusCode = 409;
@@ -1048,7 +656,7 @@ export function getProjectProviderSelection(config, selections, projectId, paylo
     ...payload,
     provider: projectSelection.provider,
     model: projectSelection.model,
-  }, projectSelection);
+  });
 }
 
 export function projectCompatibleConfig(config, projectSelection) {
@@ -1067,18 +675,8 @@ export function projectCompatibleConfig(config, projectSelection) {
     model: effectiveModel,
     models: [effectiveModel],
     enabledModels: [effectiveModel],
-    relayId: projectSelection?.relayId || "",
-    relayName: projectSelection?.relayName || "",
-    relayKind: projectSelection?.relayKind || "",
-    relayStatus: projectSelection?.relayStatus || "",
   };
-  return {
-    ...basePublicValue,
-    defaultProvider: "openai",
-    providers: [alias],
-    relayId: projectSelection?.relayId || "",
-    relayName: projectSelection?.relayName || "",
-  };
+  return { ...basePublicValue, defaultProvider: "openai", providers: [alias] };
 }
 
 function applyConfigUpdate(currentConfig, payload) {
@@ -1168,7 +766,7 @@ function cozeRuntimeConfig(config) {
   };
 }
 
-function getProviderSelection(config, payload, projectRoute = null) {
+function getProviderSelection(config, payload) {
   const providerId = providerCatalog[payload.provider] ? payload.provider : config.defaultProvider;
   const providerConfig = config.providers[providerId];
   const providerMeta = providerCatalog[providerId];
@@ -1212,8 +810,6 @@ function getProviderSelection(config, payload, projectRoute = null) {
       apiKey,
     },
     model: requestedModel,
-    relayId: projectRoute?.relayId || "",
-    relayName: projectRoute?.relayName || "",
   };
 }
 
@@ -1721,25 +1317,6 @@ async function recordHubEvent(payload, defaults = {}) {
   }
 }
 
-function providerRelayPagination(requestUrl, items) {
-  const rawPage = Number.parseInt(requestUrl.searchParams.get("page") || "1", 10);
-  const rawPageSize = Number.parseInt(requestUrl.searchParams.get("pageSize") || "20", 10);
-  const pageSize = Number.isInteger(rawPageSize) ? Math.min(Math.max(rawPageSize, 1), 50) : 20;
-  const totalItems = items.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-  const page = Number.isInteger(rawPage) ? Math.min(Math.max(rawPage, 1), totalPages) : 1;
-  const start = (page - 1) * pageSize;
-  return {
-    data: items.slice(start, start + pageSize),
-    pagination: { page, pageSize, totalItems, totalPages },
-  };
-}
-
-async function readPublicProviderRelays() {
-  const config = await providerRelayStore.read();
-  return publicProviderRelays(config.providers);
-}
-
 function projectPathFromRequest(request, payload, fallback) {
   return (
     request.headers["x-hub-project-path"] ||
@@ -1761,7 +1338,7 @@ async function handleApi(request, response, pathname) {
     sendNoContent(response, {
       "access-control-allow-methods": "GET,POST,PUT,OPTIONS",
       "access-control-allow-headers":
-        "content-type,authorization,idempotency-key,x-ai-hub-api-key,x-hub-admin-token,x-hub-project-id,x-hub-project-token",
+        "content-type,authorization,x-hub-admin-token,x-hub-project-id,x-hub-project-token",
     });
     return;
   }
@@ -1799,245 +1376,6 @@ async function handleApi(request, response, pathname) {
       projectPath: projectPathFromRequest(request, payload, "/hub/"),
     });
     sendJson(response, 202, { ok: true });
-    return;
-  }
-
-  if (pathname === "/api/relay-pricing" && request.method === "GET") {
-    const commerce = await relayCommerceStore.read();
-    sendJson(response, 200, {
-      data: publicPricing(commerce.pricing),
-      billing: { currency: "CNY", unit: "每百万 tokens", mode: "usage_based" },
-    });
-    return;
-  }
-
-  if (pathname === "/api/relay-auth/register" && request.method === "POST") {
-    if (!relayMutationHasValidOrigin(request)) throw relayError(403, "RELAY_ORIGIN_INVALID", "请求来源校验失败。");
-    if (!relayAuthLimiter.allow(trackingClientKey(request))) {
-      sendJson(response, 429, { error: { code: "RELAY_AUTH_RATE_LIMITED", message: "登录或注册尝试过于频繁，请稍后再试。" } });
-      return;
-    }
-    const { email, password } = validateRelayCredentials(await readJsonBody(request, 16 * 1024));
-    const passwordHash = await hashPassword(password);
-    let sessionToken = "";
-    let payload;
-    await relayCommerceMutation((commerce) => {
-      if (findUserByEmail(commerce, email)) throw relayError(409, "RELAY_ACCOUNT_EXISTS", "该邮箱已注册，请直接登录。");
-      const user = createUserRecord({ email, passwordHash });
-      commerce.users[user.id] = user;
-      const session = createSessionRecord(user.id, `session_${randomUUID().replaceAll("-", "")}`);
-      sessionToken = session.token;
-      commerce.sessions[session.record.id] = session.record;
-      payload = relayPublicAccountPayload(commerce, user);
-    });
-    sendJson(response, 201, payload, { "set-cookie": relaySessionCookie(sessionToken, relayCookieMaxAgeSeconds, request) });
-    return;
-  }
-
-  if (pathname === "/api/relay-auth/login" && request.method === "POST") {
-    if (!relayMutationHasValidOrigin(request)) throw relayError(403, "RELAY_ORIGIN_INVALID", "请求来源校验失败。");
-    if (!relayAuthLimiter.allow(trackingClientKey(request))) {
-      sendJson(response, 429, { error: { code: "RELAY_AUTH_RATE_LIMITED", message: "登录或注册尝试过于频繁，请稍后再试。" } });
-      return;
-    }
-    const { email, password } = validateRelayCredentials(await readJsonBody(request, 16 * 1024));
-    let sessionToken = "";
-    let payload;
-    await relayCommerceMutation(async (commerce) => {
-      const user = findUserByEmail(commerce, email);
-      if (!user || !user.enabled || !(await verifyPassword(password, user.passwordHash))) {
-        throw relayError(401, "RELAY_LOGIN_FAILED", "邮箱或密码不正确。");
-      }
-      const session = createSessionRecord(user.id, `session_${randomUUID().replaceAll("-", "")}`);
-      sessionToken = session.token;
-      commerce.sessions[session.record.id] = session.record;
-      user.lastLoginAt = new Date().toISOString();
-      payload = relayPublicAccountPayload(commerce, user);
-    });
-    sendJson(response, 200, payload, { "set-cookie": relaySessionCookie(sessionToken, relayCookieMaxAgeSeconds, request) });
-    return;
-  }
-
-  if (pathname === "/api/relay-auth/logout" && request.method === "POST") {
-    if (!relayMutationHasValidOrigin(request)) throw relayError(403, "RELAY_ORIGIN_INVALID", "请求来源校验失败。");
-    const token = parseCookies(request)[relaySessionCookieName] || "";
-    await relayCommerceMutation((commerce) => {
-      const tokenHash = hashOpaqueToken(token);
-      const session = Object.values(commerce.sessions).find((value) => value.tokenHash === tokenHash);
-      if (session) session.revokedAt = new Date().toISOString();
-    });
-    sendJson(response, 200, { ok: true }, { "set-cookie": relaySessionCookie("", 0, request) });
-    return;
-  }
-
-  if (pathname === "/api/relay-auth/me" && request.method === "GET") {
-    const auth = await getRelaySession(request);
-    if (!auth) {
-      sendJson(response, 200, { authenticated: false });
-      return;
-    }
-    const commerce = await relayCommerceStore.read();
-    sendJson(response, 200, { authenticated: true, ...relayPublicAccountPayload(commerce, auth.user) });
-    return;
-  }
-
-  if (pathname === "/api/relay-wallet" && request.method === "GET") {
-    const auth = await requireRelaySession(request);
-    const commerce = await relayCommerceStore.read();
-    sendJson(response, 200, publicWallet(commerce.users[auth.user.id], commerce.ledger));
-    return;
-  }
-
-  if (pathname === "/api/relay-wallet/topup-intent" && request.method === "POST") {
-    await requireRelaySession(request);
-    sendJson(response, 503, {
-      error: {
-        code: "RELAY_PAYMENT_NOT_CONFIGURED",
-        message: "在线充值尚未配置支付服务；当前仅支持管理员测试额度。",
-      },
-    });
-    return;
-  }
-
-  if (pathname === "/api/relay-keys" && request.method === "GET") {
-    const auth = await requireRelaySession(request);
-    const commerce = await relayCommerceStore.read();
-    sendJson(response, 200, {
-      data: Object.values(commerce.apiKeys).filter((key) => key.userId === auth.user.id).map(publicApiKey),
-    });
-    return;
-  }
-
-  if (pathname === "/api/relay-keys" && request.method === "POST") {
-    if (!relayMutationHasValidOrigin(request)) throw relayError(403, "RELAY_ORIGIN_INVALID", "请求来源校验失败。");
-    const auth = await requireRelaySession(request);
-    const payload = await readJsonBody(request, 16 * 1024);
-    let created;
-    await relayCommerceMutation((commerce) => {
-      const activeKeys = Object.values(commerce.apiKeys).filter((key) => key.userId === auth.user.id && !key.revokedAt);
-      if (activeKeys.length >= 10) throw relayError(409, "RELAY_KEY_LIMIT_REACHED", "每个账户最多保留 10 枚有效 Key。");
-      const next = createApiKeyRecord(auth.user.id, payload.name);
-      commerce.apiKeys[next.record.id] = next.record;
-      created = next;
-    });
-    sendJson(response, 201, { key: created.rawKey, data: publicApiKey(created.record), warning: "请立即复制完整 Key；之后只显示掩码。" });
-    return;
-  }
-
-  const relayKeyMatch = pathname.match(/^\/api\/relay-keys\/([a-z0-9_-]{3,120})$/i);
-  if (relayKeyMatch && request.method === "DELETE") {
-    if (!relayMutationHasValidOrigin(request)) throw relayError(403, "RELAY_ORIGIN_INVALID", "请求来源校验失败。");
-    const auth = await requireRelaySession(request);
-    await relayCommerceMutation((commerce) => {
-      const key = commerce.apiKeys[relayKeyMatch[1]];
-      if (!key || key.userId !== auth.user.id) throw relayError(404, "RELAY_KEY_NOT_FOUND", "API Key 不存在。");
-      key.revokedAt = new Date().toISOString();
-    });
-    sendJson(response, 200, { ok: true });
-    return;
-  }
-
-  if (pathname === "/api/admin/relay-pricing" && request.method === "PUT") {
-    if (!hasAdminAccess(request)) {
-      sendJson(response, 401, { error: { code: "ADMIN_AUTH_REQUIRED", message: "Admin token is required." } });
-      return;
-    }
-    const payload = await readJsonBody(request, 128 * 1024);
-    const pricing = normalizeRelayPricing(payload?.pricing || payload?.models || payload);
-    if (Object.keys(pricing).length > 100) throw relayError(422, "RELAY_PRICING_INVALID", "最多配置 100 个模型价格。");
-    let saved;
-    await relayCommerceMutation((commerce) => {
-      commerce.pricing = pricing;
-      saved = publicPricing(commerce.pricing);
-    });
-    sendJson(response, 200, { data: saved });
-    return;
-  }
-
-  if (pathname === "/api/admin/relay-wallet/grant" && request.method === "POST") {
-    if (!hasAdminAccess(request)) {
-      sendJson(response, 401, { error: { code: "ADMIN_AUTH_REQUIRED", message: "Admin token is required." } });
-      return;
-    }
-    const payload = await readJsonBody(request, 16 * 1024);
-    const email = normalizeEmail(payload?.email);
-    const amountCny = typeof payload?.amountCny === "number" ? payload.amountCny : Number(payload?.amountCny);
-    if (!email || !Number.isFinite(amountCny) || amountCny <= 0 || amountCny > 100_000) {
-      throw relayError(422, "RELAY_GRANT_INVALID", "邮箱或测试额度无效。");
-    }
-    let wallet;
-    await relayCommerceMutation((commerce) => {
-      const user = findUserByEmail(commerce, email);
-      if (!user) throw relayError(404, "RELAY_ACCOUNT_NOT_FOUND", "账户不存在。");
-      const amountMicros = Math.round(amountCny * microsPerYuan);
-      addLedgerEntry(commerce, user.id, { type: "grant", amountMicros, note: String(payload.note || "管理员测试额度").slice(0, 240) });
-      wallet = publicWallet(user, commerce.ledger);
-    });
-    sendJson(response, 200, { data: wallet, demo: true });
-    return;
-  }
-
-  if ((pathname === "/api/relay/chat" || pathname === "/api/relay/v1/chat/completions") && request.method === "POST") {
-    await handleRelayChat(request, response);
-    return;
-  }
-
-  if (pathname === "/api/provider-relays" && request.method === "GET") {
-    const requestUrl = new URL(request.url || "/api/provider-relays", `http://${request.headers.host || "127.0.0.1"}`);
-    const status = requestUrl.searchParams.get("status") || "";
-    const model = requestUrl.searchParams.get("model")?.trim().toLowerCase() || "";
-    const providers = (await readPublicProviderRelays())
-      .filter((provider) => !status || provider.status === status)
-      .filter((provider) => !model || provider.models.some((item) => item.toLowerCase().includes(model))
-        || provider.modelOffers.some((offer) => offer.model.toLowerCase().includes(model)))
-      .sort((left, right) => Number(right.featured) - Number(left.featured) || left.name.localeCompare(right.name, "zh-CN"));
-    sendJson(response, 200, providerRelayPagination(requestUrl, providers));
-    return;
-  }
-
-  if (pathname === "/api/provider-model-prices" && request.method === "GET") {
-    const requestUrl = new URL(request.url || "/api/provider-model-prices", `http://${request.headers.host || "127.0.0.1"}`);
-    const model = requestUrl.searchParams.get("model") || "";
-    const prices = publicProviderModelPrices((await providerRelayStore.read()).providers, model);
-    sendJson(response, 200, { data: prices });
-    return;
-  }
-
-  const providerRelayMatch = pathname.match(/^\/api\/provider-relays\/([a-z0-9][a-z0-9-]{1,79})$/);
-  if (providerRelayMatch && request.method === "GET") {
-    const provider = (await readPublicProviderRelays()).find((item) => item.id === providerRelayMatch[1]);
-    if (!provider) {
-      sendJson(response, 404, {
-        error: { code: "PROVIDER_RELAY_NOT_FOUND", message: "中转站不存在或尚未公开。" },
-      });
-      return;
-    }
-    sendJson(response, 200, { data: provider });
-    return;
-  }
-
-  if (pathname === "/api/admin/provider-relays" && request.method === "PUT") {
-    if (!hasAdminAccess(request)) {
-      sendJson(response, 401, { error: { code: "ADMIN_AUTH_REQUIRED", message: "Admin token is required." } });
-      return;
-    }
-    const payload = await readJsonBody(request, 256 * 1024);
-    const rawProviders = Array.isArray(payload) ? payload : payload?.providers;
-    if (!Array.isArray(rawProviders) || rawProviders.length > 50) {
-      sendJson(response, 422, {
-        error: { code: "PROVIDER_RELAY_CATALOG_INVALID", message: "providers must be an array with at most 50 entries." },
-      });
-      return;
-    }
-    const providers = normalizeProviderRelays(rawProviders);
-    if (rawProviders.length > 0 && providers.length === 0) {
-      sendJson(response, 422, {
-        error: { code: "PROVIDER_RELAY_CATALOG_INVALID", message: "No valid provider relay entries were supplied." },
-      });
-      return;
-    }
-    const saved = await providerRelayStore.write({ version: 1, providers });
-    sendJson(response, 200, { data: publicProviderRelays(saved.providers) });
     return;
   }
 
@@ -2103,7 +1441,6 @@ async function handleApi(request, response, pathname) {
       config,
       await projectModelStore.read(),
       access.projectId,
-      await providerRelayStore.read(),
     );
     sendJson(response, 200, projectCompatibleConfig(config, projectSelection));
     return;
@@ -2119,12 +1456,7 @@ async function handleApi(request, response, pathname) {
     sendJson(
       response,
       200,
-      resolveProjectModelSelection(
-        config,
-        await projectModelStore.read(),
-        access.projectId,
-        await providerRelayStore.read(),
-      ),
+      resolveProjectModelSelection(config, await projectModelStore.read(), access.projectId),
     );
     return;
   }
@@ -2139,31 +1471,19 @@ async function handleApi(request, response, pathname) {
     const model = normalizeModelName(payload.model);
     const config = await readConfig();
     const selections = await projectModelStore.read();
-    const providerRelays = await providerRelayStore.read();
-    const current = resolveProjectModelSelection(config, selections, access.projectId, providerRelays);
-    const relayId = normalizeRelayId(payload.relayId || payload.providerRelayId) || current.relayId;
-    const relay = current.relays.find((candidate) => candidate.id === relayId);
-    if (!relay || !relay.available) {
-      sendJson(response, 400, {
-        error: {
-          code: "PROJECT_RELAY_NOT_AVAILABLE",
-          message: "所选中转商当前未接入可用的 Hub 服务。",
-        },
-      });
-      return;
-    }
-    if (!model || !relay.models.includes(model)) {
+    const current = resolveProjectModelSelection(config, selections, access.projectId);
+    if (!model || !current.models.includes(model)) {
       sendJson(response, 400, {
         error: {
           code: "PROJECT_MODEL_NOT_AVAILABLE",
-          message: "所选模型不在该中转商当前可用的模型列表中。",
+          message: "The selected model is not available to this AI Hub API Key.",
         },
       });
       return;
     }
-    selections.projects[access.projectId] = { relayId, model };
+    selections.projects[access.projectId] = model;
     const saved = await projectModelStore.write(selections);
-    sendJson(response, 200, resolveProjectModelSelection(config, saved, access.projectId, providerRelays));
+    sendJson(response, 200, resolveProjectModelSelection(config, saved, access.projectId));
     return;
   }
 
@@ -2250,7 +1570,6 @@ async function handleApi(request, response, pathname) {
         await projectModelStore.read(),
         DICE_ESTATE_PROJECT_ID,
         chatPayload,
-        await providerRelayStore.read(),
       );
       const upstreamBody = await callModel(selection, chatPayload, {
         timeoutMs: resolveUpstreamTimeoutForProject(DICE_ESTATE_PROJECT_ID),
@@ -2330,7 +1649,6 @@ async function handleApi(request, response, pathname) {
         await projectModelStore.read(),
         access.projectId,
         payload,
-        await providerRelayStore.read(),
       );
       const body = await callModel(selection, payload, {
         timeoutMs: resolveUpstreamTimeoutForProject(access.projectId),

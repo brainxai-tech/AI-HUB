@@ -61,7 +61,7 @@ apiRouter.get("/model-selection", async (_req, res) => {
 });
 
 apiRouter.put("/model-selection", async (req, res) => {
-  try { return res.json(await writeHubModelSelection(req.body)); } catch (error) { return handleError(res, error); }
+  try { return res.json(await writeHubModelSelection(req.body?.model)); } catch (error) { return handleError(res, error); }
 });
 
 apiRouter.post("/analyze", async (req, res) => {

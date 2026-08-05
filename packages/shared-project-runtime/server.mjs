@@ -417,8 +417,6 @@ export function unifiedProviderPayload(selection = {}) {
   }
 
   const providerId = "openai";
-  const relayId = typeof selection.relayId === "string" ? selection.relayId.trim() : "";
-  const relayName = typeof selection.relayName === "string" ? selection.relayName.trim() : "";
   const label = "GPT · AI Routing";
   const provider = {
     id: providerId,
@@ -432,16 +430,11 @@ export function unifiedProviderPayload(selection = {}) {
     enabledModels: [model],
     enabled: true,
     configured: true,
-    relayId,
-    relayName,
   };
   return {
     providers: [provider],
     configured: true,
     defaultProvider: providerId,
-    relayId,
-    relayName,
-    relays: Array.isArray(selection.relays) ? selection.relays : [],
     hubUrl: "/hub/",
   };
 }

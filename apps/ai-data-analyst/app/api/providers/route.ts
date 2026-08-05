@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.json({
       providers,
       configured: providers.some((provider) => provider.enabled && provider.configured),
-      hubUrl: "/hub/key-config/",
+      hubUrl: "/hub/admin/",
     });
   } catch (error) {
     if (error instanceof HubModelError) {

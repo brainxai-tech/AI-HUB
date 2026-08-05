@@ -73,7 +73,7 @@ api.get("/model-selection", async (_request, response) => {
 });
 
 api.put("/model-selection", async (request, response) => {
-  try { return response.json(await writeHubModelSelection(request.body)); } catch (error) { return handleError(response, error); }
+  try { return response.json(await writeHubModelSelection(request.body?.model)); } catch (error) { return handleError(response, error); }
 });
 
 api.post("/poems/generate", async (request, response) => {

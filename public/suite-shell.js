@@ -2,7 +2,6 @@
   const script = document.currentScript;
   const projectName = script?.dataset?.suiteProject || document.title || "AI Project";
   const hubHref = script?.dataset?.suiteHub || "/hub/";
-  const hideTopbar = script?.dataset?.suiteHideTopbar === "true";
   const projectId = script?.dataset?.suiteId || inferProjectId(projectName, window.location.pathname);
   const projectApiBase = script?.dataset?.suiteApi || inferProjectApiBase(window.location.pathname);
   const gameProjectIds = new Set([
@@ -49,10 +48,6 @@
 
     const existingSkip = document.querySelector(".suite-skip-link");
     if (existingSkip && firstMain) existingSkip.href = `#${firstMain.id}`;
-    if (hideTopbar) {
-      document.querySelector(".suite-topbar")?.remove();
-      return;
-    }
     if (document.querySelector(".suite-topbar")) return;
 
     let skip = null;
@@ -128,16 +123,12 @@
       <section class="suite-model-panel" role="dialog" aria-modal="true" aria-labelledby="suite-model-title">
         <div class="suite-model-panel-head">
           <div>
-            <span class="suite-model-eyebrow">PROJECT ROUTE</span>
-            <h2 id="suite-model-title">选择本项目的中转商和模型</h2>
+            <span class="suite-model-eyebrow">PROJECT MODEL</span>
+            <h2 id="suite-model-title">选择本项目调用的模型</h2>
           </div>
           <button class="suite-model-close" type="button" aria-label="关闭模型选择">×</button>
         </div>
-        <p class="suite-model-description">项目只提交路由选择，实际凭证仍由 AI HUB 服务端保管。保存后，只影响这个项目。</p>
-        <label class="suite-model-field">
-          <span>中转商</span>
-          <select class="suite-model-relay-select" aria-describedby="suite-model-status"></select>
-        </label>
+        <p class="suite-model-description">候选项只包含管理员 API Key 当前可用的具体 GPT 型号。保存后，只影响这个项目。</p>
         <label class="suite-model-field">
           <span>大模型</span>
           <select class="suite-model-select" aria-describedby="suite-model-status"></select>
@@ -153,7 +144,6 @@
 
     const panel = backdrop.querySelector(".suite-model-panel");
     const closeButton = backdrop.querySelector(".suite-model-close");
-    const relaySelect = backdrop.querySelector(".suite-model-relay-select");
     const select = backdrop.querySelector(".suite-model-select");
     const current = backdrop.querySelector(".suite-model-current");
     const status = backdrop.querySelector(".suite-model-status");
@@ -172,20 +162,10 @@
       status.dataset.state = "neutral";
       status.textContent = select.value === state?.model ? "当前选择已生效。" : "选择已更改，保存后生效。";
     });
-    relaySelect.addEventListener("change", () => {
-      const relay = selectedRelay();
-      const models = modelsForRelay(relay);
-      select.replaceChildren(...models.map((model) => new Option(model, model)));
-      select.value = models[0] || "";
-      status.dataset.state = "neutral";
-      status.textContent = relay?.available === false
-        ? "该中转商当前不可用，请选择其他中转商。"
-        : "中转商已更换，请继续选择模型并保存。";
-    });
     saveButton.addEventListener("click", save);
     window.addEventListener("aihub:model-selection-changed", (event) => {
       const payload = event.detail;
-      if (payload?.projectId !== projectId) return;
+      if (payload?.projectId !== projectId || !Array.isArray(payload.models)) return;
       state = payload;
       render();
     });
@@ -200,15 +180,11 @@
         });
         if (!response.ok) return;
         const payload = await response.json();
-        const relays = normalizeRelays(payload);
-        if (relays.length === 0 || relays.every((relay) => relay.models.length === 0)) return;
-        state = {
-          ...payload,
-          relays,
-          models: Array.isArray(payload?.models)
-            ? payload.models.filter((model) => modelFamilyPattern.test(String(model || "")))
-            : [],
-        };
+        const models = Array.isArray(payload?.models)
+          ? payload.models.filter((model) => modelFamilyPattern.test(String(model || "")))
+          : [];
+        if (models.length === 0) return;
+        state = { ...payload, models };
         render();
         actions.prepend(trigger);
         trigger.hidden = false;
@@ -217,64 +193,21 @@
       }
     }
 
-    function normalizeRelays(payload) {
-      const rawRelays = Array.isArray(payload?.relays) ? payload.relays : [];
-      if (rawRelays.length > 0) {
-        return rawRelays.map((relay) => ({
-          ...relay,
-          id: String(relay.id || "").trim(),
-          name: String(relay.name || relay.id || "中转商").trim(),
-          models: Array.isArray(relay.models)
-            ? relay.models.filter((model) => modelFamilyPattern.test(String(model || "")))
-            : [],
-          available: relay.available !== false,
-        })).filter((relay) => relay.id);
-      }
-      return [{
-        id: String(payload?.relayId || payload?.provider || "routing"),
-        name: String(payload?.relayName || "AI Routing"),
-        models: Array.isArray(payload?.models)
-          ? payload.models.filter((model) => modelFamilyPattern.test(String(model || "")))
-          : [],
-        available: true,
-      }];
-    }
-
-    function selectedRelay() {
-      return state?.relays?.find((relay) => relay.id === relaySelect.value) || state?.relays?.[0] || null;
-    }
-
-    function modelsForRelay(relay) {
-      const fallbackModels = state.models.filter((model) => modelFamilyPattern.test(String(model || "")));
-      return Array.isArray(relay?.models)
-        ? relay.models.filter((model) => modelFamilyPattern.test(String(model || "")))
-        : fallbackModels;
-    }
-
     function render() {
       const selectedModel = state.model || "请选择";
       trigger.innerHTML = `<span>模型</span><strong>${escapeHtml(selectedModel)}</strong>`;
       trigger.title = state.model ? `本项目当前调用：${state.model}` : "为本项目选择调用模型";
-      relaySelect.replaceChildren();
-      for (const relay of state.relays || []) {
-        const option = new Option(relay.name, relay.id);
-        option.disabled = relay.available === false || modelsForRelay(relay).length === 0;
-        relaySelect.append(option);
-      }
-      relaySelect.value = state.relayId || state.relays?.find((relay) => relay.available)?.id || state.relays?.[0]?.id || "";
-      const relay = selectedRelay();
-      const models = modelsForRelay(relay);
       select.replaceChildren();
-      for (const model of models) {
+      for (const model of state.models.filter((item) => modelFamilyPattern.test(item))) {
         select.append(new Option(model, model));
       }
-      select.value = models.includes(state.model) ? state.model : models[0] || "";
+      select.value = state.model || state.models[0] || "";
         current.innerHTML = state.model
-          ? `<span>当前状态</span><strong>${state.inherited ? "统一默认" : "本项目专用"} · ${escapeHtml(relay?.name || "中转商")} · ${escapeHtml(state.model)}</strong>`
+          ? `<span>当前状态</span><strong>${state.inherited ? "统一默认" : "本项目专用"} · ${escapeHtml(state.model)}</strong>`
           : "<span>当前状态</span><strong>尚未选择，生成前必须保存一个模型</strong>";
         status.dataset.state = "neutral";
         status.textContent = state.model
-          ? `${relay?.name || "中转商"} · ${models.length} 个可用模型${state.inherited ? "；当前使用统一默认，可按项目调整" : ""}`
+          ? `API Key 可用模型 ${state.models.length} 个${state.inherited ? "；当前使用统一默认，可按项目调整" : ""}`
           : `API Key 提供 ${state.models.length} 个模型，请为本项目选择`;
     }
 
@@ -298,12 +231,11 @@
         status.textContent = "请选择一个模型。";
         return;
       }
-      if (model === state?.model && relaySelect.value === state?.relayId) {
+      if (model === state?.model) {
         status.textContent = "当前模型已经生效。";
         return;
       }
       saveButton.disabled = true;
-      relaySelect.disabled = true;
       select.disabled = true;
       status.dataset.state = "working";
       status.textContent = "正在保存到本项目…";
@@ -311,7 +243,7 @@
         const response = await fetch(`${projectApiBase}/api/model-selection`, {
           method: "PUT",
           headers: { accept: "application/json", "content-type": "application/json" },
-          body: JSON.stringify({ relayId: relaySelect.value, model }),
+          body: JSON.stringify({ model }),
           cache: "no-store",
         });
         const payload = await response.json().catch(() => ({}));
@@ -327,7 +259,6 @@
         status.textContent = error instanceof Error ? error.message : "模型选择保存失败。";
       } finally {
         saveButton.disabled = false;
-        relaySelect.disabled = false;
         select.disabled = false;
       }
     }
@@ -412,7 +343,6 @@
       }
 
       for (const select of document.querySelectorAll("select:not(.suite-model-select)")) {
-        if (select.matches("[data-suite-preserve]") || select.closest("[data-suite-preserve]")) continue;
         const selectOptions = Array.from(select.options);
         const labelText = associatedLabelText(select);
         const signature = [
@@ -446,7 +376,7 @@
       }
 
       for (const input of document.querySelectorAll("input:not([type='hidden']):not([type='radio']):not([type='checkbox'])")) {
-        if (input.matches("[data-suite-preserve]") || input.closest("[data-suite-preserve], .suite-model-backdrop, [data-user-content], [contenteditable='true']")) continue;
+        if (input.closest(".suite-model-backdrop, [data-user-content], [contenteditable='true']")) continue;
         const labelText = associatedLabelText(input);
         const signature = [
           input.id,
