@@ -18,6 +18,7 @@ test("provider relay catalog has safe public defaults", () => {
     assert.ok(["connected", "trial", "maintenance", "pending"].includes(provider.status));
     assert.equal(Object.hasOwn(provider, "apiKey"), false);
     assert.equal(Object.hasOwn(provider, "adminToken"), false);
+    assert.equal(Object.hasOwn(provider, "runtimeProviderId"), false);
     assert.ok(Array.isArray(provider.modelOffers));
   }
 });

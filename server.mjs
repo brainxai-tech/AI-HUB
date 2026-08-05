@@ -2101,6 +2101,7 @@ async function handleApi(request, response, pathname) {
       config,
       await projectModelStore.read(),
       access.projectId,
+      await providerRelayStore.read(),
     );
     sendJson(response, 200, projectCompatibleConfig(config, projectSelection));
     return;
@@ -2116,7 +2117,12 @@ async function handleApi(request, response, pathname) {
     sendJson(
       response,
       200,
-      resolveProjectModelSelection(config, await projectModelStore.read(), access.projectId),
+      resolveProjectModelSelection(
+        config,
+        await projectModelStore.read(),
+        access.projectId,
+        await providerRelayStore.read(),
+      ),
     );
     return;
   }
@@ -2131,19 +2137,31 @@ async function handleApi(request, response, pathname) {
     const model = normalizeModelName(payload.model);
     const config = await readConfig();
     const selections = await projectModelStore.read();
-    const current = resolveProjectModelSelection(config, selections, access.projectId);
-    if (!model || !current.models.includes(model)) {
+    const providerRelays = await providerRelayStore.read();
+    const current = resolveProjectModelSelection(config, selections, access.projectId, providerRelays);
+    const relayId = normalizeRelayId(payload.relayId || payload.providerRelayId) || current.relayId;
+    const relay = current.relays.find((candidate) => candidate.id === relayId);
+    if (!relay || !relay.available) {
       sendJson(response, 400, {
         error: {
-          code: "PROJECT_MODEL_NOT_AVAILABLE",
-          message: "The selected model is not available to this AI Hub API Key.",
+          code: "PROJECT_RELAY_NOT_AVAILABLE",
+          message: "所选中转商当前未接入可用的 Hub 服务。",
         },
       });
       return;
     }
-    selections.projects[access.projectId] = model;
+    if (!model || !relay.models.includes(model)) {
+      sendJson(response, 400, {
+        error: {
+          code: "PROJECT_MODEL_NOT_AVAILABLE",
+          message: "所选模型不在该中转商当前可用的模型列表中。",
+        },
+      });
+      return;
+    }
+    selections.projects[access.projectId] = { relayId, model };
     const saved = await projectModelStore.write(selections);
-    sendJson(response, 200, resolveProjectModelSelection(config, saved, access.projectId));
+    sendJson(response, 200, resolveProjectModelSelection(config, saved, access.projectId, providerRelays));
     return;
   }
 
@@ -2230,6 +2248,7 @@ async function handleApi(request, response, pathname) {
         await projectModelStore.read(),
         DICE_ESTATE_PROJECT_ID,
         chatPayload,
+        await providerRelayStore.read(),
       );
       const upstreamBody = await callModel(selection, chatPayload, {
         timeoutMs: resolveUpstreamTimeoutForProject(DICE_ESTATE_PROJECT_ID),
@@ -2309,6 +2328,7 @@ async function handleApi(request, response, pathname) {
         await projectModelStore.read(),
         access.projectId,
         payload,
+        await providerRelayStore.read(),
       );
       const body = await callModel(selection, payload, {
         timeoutMs: resolveUpstreamTimeoutForProject(access.projectId),

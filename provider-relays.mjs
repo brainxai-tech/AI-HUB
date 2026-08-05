@@ -212,7 +212,8 @@ export function normalizeProviderRelay(value) {
     stability: normalizeMetric(value.stability, "待核验"),
     supportsRecharge,
     apiBaseUrl: safeUrl(value.apiBaseUrl, { allowRelative: true }),
-    runtimeProviderId: boundedString(value.runtimeProviderId, 80).toLowerCase(),
+    runtimeProviderId: boundedString(value.runtimeProviderId, 80).toLowerCase() ||
+      (id === DEFAULT_PROVIDER_RELAY_ID ? "routing" : ""),
     concurrency: boundedString(value.concurrency, 180, "待平台资料核验"),
     usage: boundedString(value.usage, 500, "请先阅读平台使用说明。"),
     docs: boundedString(value.docs, 500, "公开文档待补充。"),

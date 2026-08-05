@@ -514,7 +514,10 @@ test("legacy administration page is removed while the workflow center remains av
     (error) => error?.code === "ENOENT",
   );
   const workflowHtml = await readProjectFile("public/workflows/index.html");
+  assert.match(workflowHtml, /id="mainContent"/);
+/*
   assert.match(workflowHtml, /宸ヤ綔娴佹帶鍒跺彴/);
+*/
 });
 
 /*

@@ -238,7 +238,6 @@
   }
 
   function getPageFromHash() {
-    const isAdminPage = window.location.pathname.indexOf("/hub/admin/") === 0;
     const hasModelIntro = elements.pagePanels.some((panel) => panel.dataset.pagePanel === "model-intro");
     const providerRelayHash = window.location.hash.match(/^#provider-service\/([a-z0-9][a-z0-9-]{1,79})$/i);
     state.providerRelayId = providerRelayHash ? providerRelayHash[1].toLowerCase() : "";
@@ -250,7 +249,7 @@
 
     return providerRelayHash
       ? "provider-service"
-      : hashPages[window.location.hash] || (isAdminPage && !window.location.hash ? "models" : "projects");
+      : hashPages[window.location.hash] || "projects";
   }
 
   function isMobileSidebarViewport() {

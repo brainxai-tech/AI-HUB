@@ -84,6 +84,33 @@ test("an uninitialized project inherits a callable default instead of reporting 
   assert.equal(selection.selectionRequired, false);
 });
 
+test("project selections can bind a callable relay without exposing its runtime provider id", () => {
+  const config = configuredRoutingConfig(["gpt-5.4", "gpt-5.5"]);
+  const selection = resolveProjectModelSelection(
+    config,
+    { version: 2, projects: { "example-project": { relayId: "cheap-relay", model: "gpt-5.5" } } },
+    "example-project",
+    {
+      version: 1,
+      providers: [{
+        id: "cheap-relay",
+        name: "Cheap Relay",
+        kind: "relay",
+        status: "connected",
+        runtimeProviderId: "routing",
+        models: ["gpt-5.5"],
+      }],
+    },
+  );
+
+  assert.equal(selection.relayId, "cheap-relay");
+  assert.equal(selection.relayName, "Cheap Relay");
+  assert.deepEqual(selection.models, ["gpt-5.5"]);
+  assert.equal(selection.model, "gpt-5.5");
+  assert.equal(selection.configured, true);
+  assert.equal(selection.relays[0].runtimeProviderId, undefined);
+});
+
 test("project-scoped compatibility exposes only its selected GPT model", () => {
   const config = configuredRoutingConfig(["gpt-5.5", "gpt-5.3-codex-spark"]);
   const selection = resolveProjectModelSelection(

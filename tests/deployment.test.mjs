@@ -110,7 +110,7 @@ test("Nginx no longer exposes the removed legacy administration page", async () 
   assert.doesNotMatch(config, /location = \/hub\/admin\b/);
   assert.doesNotMatch(config, /location \^~ \/hub\/admin\//);
   assert.match(config, /HUB_ADMIN_TOKEN can authorize them centrally/);
-  assert.match(config, /configuration write[\s\S]*protected by HUB_ADMIN_TOKEN/);
+  assert.match(config, /Single-purpose credential configuration UI[\s\S]*write remains protected[\s\S]*by HUB_ADMIN_TOKEN/);
 });
 
 test("release deployment is atomic, secret-free, and health checked", async () => {

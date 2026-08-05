@@ -79,7 +79,7 @@ api.get("/model-selection", async (_req, res) => {
 
 api.put("/model-selection", async (req, res) => {
   try {
-    return res.json(await writeHubModelSelection(req.body?.model));
+    return res.json(await writeHubModelSelection(req.body));
   } catch (error) {
     return handleError(res, error);
   }
